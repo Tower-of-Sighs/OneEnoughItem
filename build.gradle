@@ -21,7 +21,7 @@ group = mod_group_id
 version = mod_version
 
 base {
-    archivesName = mod_id
+    archivesName = mod_name
 }
 
 java {
@@ -97,11 +97,21 @@ minecraft {
         client {
             // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
             property 'forge.enabledGameTestNamespaces', mod_id
+            workingDirectory project.file('./run')
+        }
+
+        client2 {
+            // Comma-separated list of namespaces to load gametests from. Empty = all namespaces.
+            parent minecraft.runs.client
+            property 'forge.enabledGameTestNamespaces', mod_id
+            workingDirectory project.file('./run/client_a')
+            args '--username', 'Mafuyu404'
         }
 
         server {
+            workingDirectory project.file('run/server')
             property 'forge.enabledGameTestNamespaces', mod_id
-            args '--nogui'
+//            args '--nogui'
         }
 
         // This run config launches GameTestServer and runs all registered gametests, then exits.
@@ -141,6 +151,15 @@ repositories {
     // }
     maven { url 'https://maven.aliyun.com/repository/public' }
     maven { url 'https://maven.aliyun.com/repository/google' }
+    maven {
+        // location of the maven that hosts JEI files since January 2023
+        // Patchouli
+        name = "Jared's maven"
+        url = "https://maven.blamejared.com/"
+        content {
+            includeGroup "mezz.jei"
+        }
+    }
 }
 
 dependencies {
@@ -167,6 +186,9 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    compileOnly fg.deobf("mezz.jei:jei-1.20.1-forge-api:15.20.0.104")
+    implementation fg.deobf("mezz.jei:jei-1.20.1-forge:15.20.0.104")
 
 }
 

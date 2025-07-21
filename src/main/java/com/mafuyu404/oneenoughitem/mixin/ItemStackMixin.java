@@ -1,7 +1,7 @@
 package com.mafuyu404.oneenoughitem.mixin;
 
+import com.mafuyu404.oneenoughitem.Utils;
 import net.minecraft.core.Holder;
-import net.minecraft.world.item.EggItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import javax.annotation.Nullable;
 
-@Mixin(value = ItemStack.class)
+@Mixin(value = ItemStack.class, remap = false)
 public class ItemStackMixin {
     @Mutable
     @Shadow @Final @Deprecated @Nullable private Item item;
@@ -24,8 +24,10 @@ public class ItemStackMixin {
     @Shadow @Final @org.jetbrains.annotations.Nullable private Holder.@org.jetbrains.annotations.Nullable Reference<Item> delegate;
 
     @Inject(method = "forgeInit", at = @At("HEAD"))
-    private void qqq(CallbackInfo ci) {
-        item = new EggItem(new Item.Properties()).asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem().asItem();
-        delegate = ForgeRegistries.ITEMS.getDelegateOrThrow(item);
+    private void replace(CallbackInfo ci) {
+        if (Utils.toPathString(item.getDescriptionId()).equals("minecraft:iron_ingot")) {
+            item = Utils.getItemById("minecraft:egg");
+            delegate = ForgeRegistries.ITEMS.getDelegateOrThrow(item);
+        }
     }
 }
