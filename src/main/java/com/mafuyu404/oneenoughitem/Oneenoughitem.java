@@ -1,5 +1,6 @@
 package com.mafuyu404.oneenoughitem;
 
+import com.mafuyu404.oneenoughitem.init.Config;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;

@@ -1,5 +1,6 @@
-package com.mafuyu404.oneenoughitem;
+package com.mafuyu404.oneenoughitem.init;
 
+import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.common.ForgeConfigSpec;

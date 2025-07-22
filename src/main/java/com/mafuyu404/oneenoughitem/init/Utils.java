@@ -1,4 +1,4 @@
-package com.mafuyu404.oneenoughitem;
+package com.mafuyu404.oneenoughitem.init;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;

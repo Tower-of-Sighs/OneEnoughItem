@@ -1,6 +1,7 @@
 package com.mafuyu404.oneenoughitem.mixin;
 
-import com.mafuyu404.oneenoughitem.Utils;
+import com.mafuyu404.oneenoughitem.init.Cache;
+import com.mafuyu404.oneenoughitem.init.Utils;
 import net.minecraft.core.Holder;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -25,8 +26,10 @@ public class ItemStackMixin {
 
     @Inject(method = "forgeInit", at = @At("HEAD"))
     private void replace(CallbackInfo ci) {
-        if (Utils.toPathString(item.getDescriptionId()).equals("minecraft:iron_ingot")) {
-            item = Utils.getItemById("minecraft:egg");
+        String originItemId = Utils.toPathString(item.getDescriptionId());
+        String targetItemId = Cache.matchItem(originItemId);
+        if (targetItemId != null) {
+            item = Utils.getItemById(targetItemId);
             delegate = ForgeRegistries.ITEMS.getDelegateOrThrow(item);
         }
     }
