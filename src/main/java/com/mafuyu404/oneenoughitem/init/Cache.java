@@ -12,8 +12,12 @@ public class Cache {
     }
 
     public static void putReplacement(Replacements replacement) {
-        for (String matchItem : replacement.matchItems()) {
-            ItemMapCache.put(matchItem, replacement.resultItem());
+        for (String target : replacement.matchItems()) {
+            ItemMapCache.put(target, replacement.resultItems());
         }
+    }
+
+    public static void clearCache() {
+        ItemMapCache.clear();
     }
 }

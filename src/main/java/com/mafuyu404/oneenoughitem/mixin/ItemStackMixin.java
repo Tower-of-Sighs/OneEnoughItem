@@ -16,15 +16,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import javax.annotation.Nullable;
 
-@Mixin(value = ItemStack.class, remap = false)
+@Mixin(value = ItemStack.class)
 public class ItemStackMixin {
     @Mutable
     @Shadow @Final @Deprecated @Nullable private Item item;
 
     @Mutable
-    @Shadow @Final @org.jetbrains.annotations.Nullable private Holder.@org.jetbrains.annotations.Nullable Reference<Item> delegate;
+    @Shadow @Final @org.jetbrains.annotations.Nullable private Holder.Reference<Item> delegate;
 
-    @Inject(method = "forgeInit", at = @At("HEAD"))
+    @Inject(method = "forgeInit", at = @At("HEAD"), remap = false)
     private void replace(CallbackInfo ci) {
         String originItemId = Utils.toPathString(item.getDescriptionId());
         String targetItemId = Cache.matchItem(originItemId);
