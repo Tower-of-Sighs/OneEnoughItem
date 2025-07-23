@@ -1,26 +1,28 @@
 package com.mafuyu404.oneenoughitem.event;
 
-import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.data.ReplacementDataManager;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.AddReloadListenerEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.minecraft.server.packs.PackType;
 
-@Mod.EventBusSubscriber(modid = Oneenoughitem.MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
 public class ServerEventHandler {
     private static final ReplacementDataManager DATA_MANAGER = new ReplacementDataManager();
 
-    @SubscribeEvent
-    public static void onAddReloadListener(AddReloadListenerEvent event) {
-        event.addListener(DATA_MANAGER);
-    }
+    //Fuck fabric api
+    public static void register() {
+        ResourceManagerHelper.get(PackType.SERVER_DATA).registerReloadListener(DATA_MANAGER);
 
-    @SubscribeEvent
-    public static void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
-        if (event.getEntity() instanceof ServerPlayer serverPlayer) {
-            ReplacementDataManager.syncToPlayer(serverPlayer);
-        }
+        ServerLifecycleEvents.SERVER_STARTED.register(ReplacementDataManager::setServer);
+
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+            ReplacementDataManager.setServer(null);
+        });
+
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            ServerPlayer player = handler.getPlayer();
+            ReplacementDataManager.syncToPlayer(player);
+        });
     }
 }

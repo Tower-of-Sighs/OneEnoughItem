@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "oneenoughitem",
+  "version": "${version}",
+  "name": "OneEnoughItem",
+  "description": "",
+  "authors": [
+    "Flechazo",
+    "Mafuyu404"
+  ],
+  "contact": {},
+  "license": "GPL-3.0",
+  "icon": "cover.png",
+  "environment": "*",
+  "entrypoints": {
+    "client": [
+      "com.mafuyu404.oneenoughitem.client.OneenoughitemClient"
+    ],
+    "main": [
+      "com.mafuyu404.oneenoughitem.Oneenoughitem"
+    ]
+  },
+  "mixins": [
+    "oneenoughitem.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": "*",
+    "fabric": "*",
+    "minecraft": "*"
+  }
+}

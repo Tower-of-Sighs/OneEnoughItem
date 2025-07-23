@@ -8,42 +8,58 @@ import com.mafuyu404.oneenoughitem.init.Cache;
 import com.mafuyu404.oneenoughitem.network.NetworkHandler;
 import com.mafuyu404.oneenoughitem.network.ReplacementSyncPacket;
 import com.mojang.serialization.JsonOps;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
-import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.server.ServerLifecycleHooks;
 
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class ReplacementDataManager extends SimpleJsonResourceReloadListener {
+public class ReplacementDataManager implements SimpleSynchronousResourceReloadListener {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final List<Replacements> replacements = new ArrayList<>();
+    private static final ResourceLocation ID = new ResourceLocation(Oneenoughitem.MODID, "replacement_data_manager");
+    private static MinecraftServer currentServer = null;
 
-    public ReplacementDataManager() {
-        super(GSON, "replacements");
+    @Override
+    public ResourceLocation getFabricId() {
+        return ID;
+    }
+
+    public static void setServer(MinecraftServer server) {
+        currentServer = server;
     }
 
     @Override
-    protected void apply(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler) {
+    public void onResourceManagerReload(ResourceManager resourceManager) {
         replacements.clear();
         Cache.clearCache();
 
-        for (Map.Entry<ResourceLocation, JsonElement> entry : object.entrySet()) {
-            try {
-                if (entry.getValue().isJsonArray()) {
-                    var array = entry.getValue().getAsJsonArray();
+        Map<ResourceLocation, net.minecraft.server.packs.resources.Resource> resources =
+                resourceManager.listResources("replacements", path -> path.getPath().endsWith(".json"));
+
+        for (Map.Entry<ResourceLocation, net.minecraft.server.packs.resources.Resource> entry : resources.entrySet()) {
+            try (InputStream inputStream = entry.getValue().open();
+                 InputStreamReader reader = new InputStreamReader(inputStream)) {
+
+                JsonElement jsonElement = GSON.fromJson(reader, JsonElement.class);
+
+                if (jsonElement.isJsonArray()) {
+                    var array = jsonElement.getAsJsonArray();
                     for (var element : array) {
                         var result = Replacements.CODEC.parse(JsonOps.INSTANCE, element);
                         if (result.result().isPresent()) {
                             Replacements replacement = result.result().get();
                             replacements.add(replacement);
                             Cache.putReplacement(replacement);
+                            Oneenoughitem.LOGGER.info("Added replacement rule: {} -> {}",
+                                    replacement.matchItems(), replacement.resultItems());
                         } else {
                             Oneenoughitem.LOGGER.error("Failed to parse replacement data from {}: {}",
                                     entry.getKey(), result.error().orElse(null));
@@ -55,32 +71,36 @@ public class ReplacementDataManager extends SimpleJsonResourceReloadListener {
             }
         }
 
-        Oneenoughitem.LOGGER.info("Loaded {} replacement rules", replacements.size());
+        Oneenoughitem.LOGGER.debug("Loaded {} replacement rules", replacements.size());
 
-        // 数据重新加载后，同步到所有在线玩家
-        syncToAllPlayersIfServerRunning();
-    }
-
-    private static void syncToAllPlayersIfServerRunning() {
-        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-        if (server != null && !server.getPlayerList().getPlayers().isEmpty()) {
-            Oneenoughitem.LOGGER.info("Syncing replacement data to {} online players",
-                    server.getPlayerList().getPlayerCount());
-            syncToAllPlayers();
-        }
+        Oneenoughitem.LOGGER.debug("Cache contents: {}", Cache.getCacheContents());
+        syncToAllPlayers();
     }
 
     public static void syncToPlayer(ServerPlayer player) {
-        NetworkHandler.INSTANCE.send(PacketDistributor.PLAYER.with(() -> player),
-                new ReplacementSyncPacket(replacements));
+        NetworkHandler.sendToPlayer(player, new ReplacementSyncPacket(replacements));
+        Oneenoughitem.LOGGER.debug("Synced replacement data to player: {}", player.getName().getString());
     }
 
     public static void syncToAllPlayers() {
-        NetworkHandler.INSTANCE.send(PacketDistributor.ALL.noArg(),
-                new ReplacementSyncPacket(replacements));
+        if (currentServer != null) {
+            try {
+                // Fuck fabric api
+                var allPlayers = PlayerLookup.all(currentServer);
+                ReplacementSyncPacket packet = new ReplacementSyncPacket(replacements);
+                for (ServerPlayer player : allPlayers) {
+                    NetworkHandler.sendToPlayer(player, packet);
+                }
+                Oneenoughitem.LOGGER.debug("Synced replacement data to {} players", allPlayers.size());
+            } catch (Exception e) {
+                Oneenoughitem.LOGGER.error("Failed to sync replacement data to all players", e);
+            }
+        } else {
+            Oneenoughitem.LOGGER.warn("Server instance not available, cannot sync to all players");
+        }
     }
 
     public static List<Replacements> getReplacements() {
         return replacements;
-    }//预留以后优化
+    }
 }

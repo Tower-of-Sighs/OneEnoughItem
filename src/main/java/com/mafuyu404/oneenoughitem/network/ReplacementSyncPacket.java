@@ -2,17 +2,22 @@ package com.mafuyu404.oneenoughitem.network;
 
 import com.mafuyu404.oneenoughitem.data.Replacements;
 import com.mafuyu404.oneenoughitem.init.Cache;
+import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.network.NetworkEvent;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 public class ReplacementSyncPacket {
     private final List<Replacements> replacements;
 
     public ReplacementSyncPacket(List<Replacements> replacements) {
         this.replacements = replacements;
+    }
+
+    public FriendlyByteBuf toPacketByteBuf() {
+        FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
+        encode(this, buf);
+        return buf;
     }
 
     public static void encode(ReplacementSyncPacket packet, FriendlyByteBuf buf) {
@@ -41,13 +46,10 @@ public class ReplacementSyncPacket {
         return new ReplacementSyncPacket(replacements);
     }
 
-    public static void handle(ReplacementSyncPacket packet, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            Cache.clearCache();
-            for (Replacements replacement : packet.replacements) {
-                Cache.putReplacement(replacement);
-            }
-        });
-        ctx.get().setPacketHandled(true);
+    public void handleClient() {
+        Cache.clearCache();
+        for (Replacements replacement : this.replacements) {
+            Cache.putReplacement(replacement);
+        }
     }
 }
