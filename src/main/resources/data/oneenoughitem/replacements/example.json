@@ -11,7 +11,8 @@
         "matchItems": [
             "minecraft:stone",
             "minecraft:white_wool",
-            "minecraft:oak_log"
+            "minecraft:oak_log",
+            "minecraft:app"
         ],
         "resultItems": "minecraft:redstone"
     }

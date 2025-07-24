@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.init.Cache;
+import com.mafuyu404.oneenoughitem.init.Utils;
 import com.mafuyu404.oneenoughitem.network.NetworkHandler;
 import com.mafuyu404.oneenoughitem.network.ReplacementSyncPacket;
 import com.mojang.serialization.JsonOps;
@@ -34,7 +35,21 @@ public class ReplacementDataManager extends SimpleJsonResourceReloadListener {
         replacements.clear();
         Cache.clearCache();
 
+        Oneenoughitem.LOGGER.info("Starting to load replacement data from {} files", object.size());
+
+        int validReplacements = 0;
+        int invalidReplacements = 0;
+
+
         for (Map.Entry<ResourceLocation, JsonElement> entry : object.entrySet()) {
+            ResourceLocation fileLocation = entry.getKey();
+
+            if (!Oneenoughitem.MODID.equals(fileLocation.getNamespace())) {
+                continue;
+            }
+
+            Oneenoughitem.LOGGER.debug("Processing replacement file: {}", entry.getKey());
+
             try {
                 if (entry.getValue().isJsonArray()) {
                     var array = entry.getValue().getAsJsonArray();
@@ -42,23 +57,63 @@ public class ReplacementDataManager extends SimpleJsonResourceReloadListener {
                         var result = Replacements.CODEC.parse(JsonOps.INSTANCE, element);
                         if (result.result().isPresent()) {
                             Replacements replacement = result.result().get();
-                            replacements.add(replacement);
-                            Cache.putReplacement(replacement);
+
+                            if (validateReplacement(replacement, entry.getKey())) {
+                                replacements.add(replacement);
+                                Cache.putReplacement(replacement);
+                                validReplacements++;
+                            } else {
+                                invalidReplacements++;
+                                Oneenoughitem.LOGGER.warn("Skipped invalid replacement: {} -> {}",
+                                        replacement.matchItems(), replacement.resultItems());
+                            }
                         } else {
                             Oneenoughitem.LOGGER.error("Failed to parse replacement data from {}: {}",
                                     entry.getKey(), result.error().orElse(null));
+                            invalidReplacements++;
                         }
                     }
+                } else {
+                    Oneenoughitem.LOGGER.warn("Replacement file {} does not contain a JSON array, skipping", entry.getKey());
                 }
             } catch (Exception e) {
                 Oneenoughitem.LOGGER.error("Error loading replacement data from {}", entry.getKey(), e);
+                invalidReplacements++;
             }
         }
 
-        Oneenoughitem.LOGGER.info("Loaded {} replacement rules", replacements.size());
+        Oneenoughitem.LOGGER.info("Loaded {} valid replacement rules, {} invalid rules were skipped",
+                validReplacements, invalidReplacements);
 
-        // 数据重新加载后，同步到所有在线玩家
         syncToAllPlayersIfServerRunning();
+    }
+
+    private boolean  validateReplacement(Replacements replacement, ResourceLocation sourceFile) {
+
+        if (Utils.getItemById(replacement.resultItems()) == null) {
+            Oneenoughitem.LOGGER.error("Invalid replacement in {}: target item '{}' does not exist",
+                    sourceFile, replacement.resultItems());
+            return false;
+        }
+
+        boolean hasValidSource = false;
+
+        for (String matchItem : replacement.matchItems()) {
+            if (Utils.getItemById(matchItem) != null) {
+                hasValidSource = true;
+            } else {
+                Oneenoughitem.LOGGER.warn("Invalid source item in {}: '{}' does not exist",
+                        sourceFile, matchItem);
+            }
+        }
+
+        if (!hasValidSource) {
+            Oneenoughitem.LOGGER.error("Invalid replacement in {}: no valid source items found for target '{}'",
+                    sourceFile, replacement.resultItems());
+            return false;
+        }
+
+        return true;
     }
 
     private static void syncToAllPlayersIfServerRunning() {

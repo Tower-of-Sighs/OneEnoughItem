@@ -1,5 +1,6 @@
 package com.mafuyu404.oneenoughitem.init;
 
+import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.data.Replacements;
 
 import java.util.HashMap;
@@ -13,11 +14,17 @@ public class Cache {
 
     public static void putReplacement(Replacements replacement) {
         for (String target : replacement.matchItems()) {
-            ItemMapCache.put(target, replacement.resultItems());
+            if (Utils.getItemById(target) != null) {
+                ItemMapCache.put(target, replacement.resultItems());
+            }
         }
     }
 
     public static void clearCache() {
+        int previousSize = ItemMapCache.size();
         ItemMapCache.clear();
+        if (previousSize > 0) {
+            Oneenoughitem.LOGGER.info("Cleared {} cached item mappings", previousSize);
+        }
     }
 }

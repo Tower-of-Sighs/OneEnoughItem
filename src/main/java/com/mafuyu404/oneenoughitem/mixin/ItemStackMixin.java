@@ -1,5 +1,6 @@
 package com.mafuyu404.oneenoughitem.mixin;
 
+import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.init.Cache;
 import com.mafuyu404.oneenoughitem.init.Utils;
 import net.minecraft.core.Holder;
@@ -19,18 +20,45 @@ import javax.annotation.Nullable;
 @Mixin(value = ItemStack.class)
 public class ItemStackMixin {
     @Mutable
-    @Shadow @Final @Deprecated @Nullable private Item item;
+    @Shadow
+    @Final
+    @Deprecated
+    @Nullable
+    private Item item;
 
     @Mutable
-    @Shadow @Final @org.jetbrains.annotations.Nullable private Holder.Reference<Item> delegate;
+    @Shadow
+    @Final
+    @org.jetbrains.annotations.Nullable
+    private Holder.Reference<Item> delegate;
 
     @Inject(method = "forgeInit", at = @At("HEAD"), remap = false)
     private void replace(CallbackInfo ci) {
-        String originItemId = Utils.toPathString(item.getDescriptionId());
-        String targetItemId = Cache.matchItem(originItemId);
-        if (targetItemId != null) {
-            item = Utils.getItemById(targetItemId);
-            delegate = ForgeRegistries.ITEMS.getDelegateOrThrow(item);
+        if (item == null) {
+            return;
+        }
+
+        try {
+            String originItemId = Utils.getItemRegistryName(item);
+            if (originItemId == null) {
+                return;
+            }
+
+            String targetItemId = Cache.matchItem(originItemId);
+            if (targetItemId != null) {
+
+                Item replacementItem = Utils.getItemById(targetItemId);
+                if (replacementItem != null) {
+                    item = replacementItem;
+                    delegate = ForgeRegistries.ITEMS.getDelegateOrThrow(replacementItem);
+                } else {
+                    Oneenoughitem.LOGGER.warn("ItemStackMixin: Replacement item is null for targetItemId: {}, original item: {}",
+                            targetItemId, originItemId);
+                }
+            }
+        } catch (Exception e) {
+            String itemInfo = item != null ? Utils.getItemRegistryName(item) : "null";
+            Oneenoughitem.LOGGER.error("ItemStackMixin: Failed to replace item: {}", itemInfo, e);
         }
     }
 }
