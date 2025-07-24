@@ -72,6 +72,8 @@ jar {
     from("LICENSE") {
         rename { "${it}_${project.archivesBaseName}" }
     }
+    
+    exclude 'data/oneenoughitem/replacements/example.json'
 }
 
 // configure the maven publication
