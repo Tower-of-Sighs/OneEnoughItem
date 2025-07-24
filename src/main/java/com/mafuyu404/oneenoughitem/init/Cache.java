@@ -10,17 +10,12 @@ public class Cache {
     private static final HashMap<String, String> ItemMapCache = new HashMap<>();
 
     public static String matchItem(String id) {
-        String result = ItemMapCache.getOrDefault(id, null);
-        if (result != null) {
-            Oneenoughitem.LOGGER.info("Cache hit: {} -> {}", id, result);
-        }
-        return result;
+        return ItemMapCache.getOrDefault(id, null);
     }
 
     public static void putReplacement(Replacements replacement) {
         for (String target : replacement.matchItems()) {
             ItemMapCache.put(target, replacement.resultItems());
-            Oneenoughitem.LOGGER.info("Added to cache: {} -> {}", target, replacement.resultItems());
         }
     }
 

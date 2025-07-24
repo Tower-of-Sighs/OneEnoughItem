@@ -35,13 +35,11 @@ public class ItemStackMixin {
         }
 
         String originItemId = Utils.getItemRegistryName(this.item);
-        Oneenoughitem.LOGGER.debug("Processing item in constructor: {}", originItemId);
 
         String targetItemId = Cache.matchItem(originItemId);
         if (targetItemId != null) {
             Item newItem = Utils.getItemById(targetItemId);
             if (newItem != null) {
-                Oneenoughitem.LOGGER.debug("Replacing item {} with {} in constructor", originItemId, targetItemId);
                 this.item = newItem;
             } else {
                 Oneenoughitem.LOGGER.warn("Target item not found: {}", targetItemId);

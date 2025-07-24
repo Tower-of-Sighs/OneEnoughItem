@@ -13,6 +13,7 @@ import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 
 import java.io.InputStream;
@@ -41,10 +42,15 @@ public class ReplacementDataManager implements SimpleSynchronousResourceReloadLi
         replacements.clear();
         Cache.clearCache();
 
-        Map<ResourceLocation, net.minecraft.server.packs.resources.Resource> resources =
+        Map<ResourceLocation, Resource> resources =
                 resourceManager.listResources("replacements", path -> path.getPath().endsWith(".json"));
 
-        for (Map.Entry<ResourceLocation, net.minecraft.server.packs.resources.Resource> entry : resources.entrySet()) {
+        for (Map.Entry<ResourceLocation, Resource> entry : resources.entrySet()) {
+            ResourceLocation fileLocation = entry.getKey();
+            if (!Oneenoughitem.MODID.equals(fileLocation.getNamespace())) {
+                continue;
+            }
+
             try (InputStream inputStream = entry.getValue().open();
                  InputStreamReader reader = new InputStreamReader(inputStream)) {
 
