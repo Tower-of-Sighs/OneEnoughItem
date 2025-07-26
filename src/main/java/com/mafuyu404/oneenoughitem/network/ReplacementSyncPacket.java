@@ -1,7 +1,7 @@
 package com.mafuyu404.oneenoughitem.network;
 
 import com.mafuyu404.oneenoughitem.data.Replacements;
-import com.mafuyu404.oneenoughitem.init.Cache;
+import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 
@@ -43,9 +43,9 @@ public class ReplacementSyncPacket {
 
     public static void handle(ReplacementSyncPacket packet, Supplier<NetworkEvent.Context> ctx) {
         ctx.get().enqueueWork(() -> {
-            Cache.clearCache();
+            ReplacementCache.clearCache();
             for (Replacements replacement : packet.replacements) {
-                Cache.putReplacement(replacement);
+                ReplacementCache.putReplacement(replacement);
             }
         });
         ctx.get().setPacketHandled(true);

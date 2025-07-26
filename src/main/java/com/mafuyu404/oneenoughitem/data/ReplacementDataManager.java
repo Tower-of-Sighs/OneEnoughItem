@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
-import com.mafuyu404.oneenoughitem.init.Cache;
+import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.Utils;
 import com.mafuyu404.oneenoughitem.network.NetworkHandler;
 import com.mafuyu404.oneenoughitem.network.ReplacementSyncPacket;
@@ -33,7 +33,7 @@ public class ReplacementDataManager extends SimpleJsonResourceReloadListener {
     @Override
     protected void apply(Map<ResourceLocation, JsonElement> object, ResourceManager resourceManager, ProfilerFiller profiler) {
         replacements.clear();
-        Cache.clearCache();
+        ReplacementCache.clearCache();
 
         Oneenoughitem.LOGGER.info("Starting to load replacement data from {} files", object.size());
 
@@ -60,7 +60,7 @@ public class ReplacementDataManager extends SimpleJsonResourceReloadListener {
 
                             if (validateReplacement(replacement, entry.getKey())) {
                                 replacements.add(replacement);
-                                Cache.putReplacement(replacement);
+                                ReplacementCache.putReplacement(replacement);
                                 validReplacements++;
                             } else {
                                 invalidReplacements++;
