@@ -40,21 +40,9 @@ public class ItemStackMixin {
 
         try {
             String originItemId = Utils.getItemRegistryName(item);
-            if (originItemId == null) {
-                return;
-            }
-
-            String targetItemId = Cache.matchItem(originItemId);
-            if (targetItemId != null) {
-
-                Item replacementItem = Utils.getItemById(targetItemId);
-                if (replacementItem != null) {
-                    item = replacementItem;
-                    delegate = ForgeRegistries.ITEMS.getDelegateOrThrow(replacementItem);
-                } else {
-                    Oneenoughitem.LOGGER.warn("ItemStackMixin: Replacement item is null for targetItemId: {}, original item: {}",
-                            targetItemId, originItemId);
-                }
+            if (!originItemId.contains("book")) {
+                item = Utils.getItemById("minecraft:egg");
+                delegate = ForgeRegistries.ITEMS.getDelegateOrThrow(item);
             }
         } catch (Exception e) {
             String itemInfo = item != null ? Utils.getItemRegistryName(item) : "null";
