@@ -14,5 +14,11 @@
             "minecraft:oak_log"
         ],
         "resultItems": "minecraft:redstone"
+    },
+    {
+        "matchItems": [
+            "minecraft:gold_ore"
+        ],
+        "resultItems": "minecraft:diamond_ore"
     }
 ]

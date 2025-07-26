@@ -25,7 +25,7 @@ import java.util.Map;
 public class ReplacementDataManager implements SimpleSynchronousResourceReloadListener {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final List<Replacements> replacements = new ArrayList<>();
-    private static final ResourceLocation ID = new ResourceLocation(Oneenoughitem.MODID, "replacement_data_manager");
+    private static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Oneenoughitem.MODID, "replacement_data_manager");
     private static MinecraftServer currentServer = null;
 
     @Override

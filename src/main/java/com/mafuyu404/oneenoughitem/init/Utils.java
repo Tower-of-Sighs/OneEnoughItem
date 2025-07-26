@@ -22,7 +22,7 @@ public class Utils {
         }
 
         try {
-            ResourceLocation resourceLocation = new ResourceLocation(registryName);
+            ResourceLocation resourceLocation = ResourceLocation.parse(registryName);
 
             if (!BuiltInRegistries.ITEM.containsKey(resourceLocation)) {
                 Oneenoughitem.LOGGER.debug("getItemById: Item '{}' not found in registry", registryName);

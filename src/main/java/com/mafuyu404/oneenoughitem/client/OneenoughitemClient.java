@@ -8,10 +8,9 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 public class OneenoughitemClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
-        ClientPlayNetworking.registerGlobalReceiver(NetworkHandler.REPLACEMENT_SYNC_PACKET,
-                (client, handler, buf, responseSender) -> {
-                    ReplacementSyncPacket packet = ReplacementSyncPacket.decode(buf);
-                    client.execute(packet::handleClient);
+        ClientPlayNetworking.registerGlobalReceiver(ReplacementSyncPacket.TYPE,
+                (packet, context) -> {
+                    context.client().execute(packet::handleClient);
                 });
     }
 }
