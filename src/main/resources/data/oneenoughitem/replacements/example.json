@@ -1,6 +1,8 @@
+
 [
     {
         "matchItems": [
+            "#c:ores",
             "minecraft:apple",
             "minecraft:potato",
             "minecraft:carrot"
@@ -11,8 +13,9 @@
         "matchItems": [
             "minecraft:stone",
             "minecraft:white_wool",
-            "minecraft:oak_log"
+            "minecraft:oak_log",
+            "minecraft:app"
         ],
-        "resultItems": "minecraft:redstone"
+        "resultItems": "minecraft:air"
     }
 ]

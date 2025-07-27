@@ -2,20 +2,26 @@ package com.mafuyu404.oneenoughitem.init;
 
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.data.Replacements;
+import net.minecraft.world.item.Item;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class Cache {
-    private static final HashMap<String, String> ItemMapCache = new HashMap<>();
+public class ReplacementCache {
+    private static final Map<String, String> ItemMapCache = new HashMap<>();
 
     public static String matchItem(String id) {
         return ItemMapCache.getOrDefault(id, null);
     }
 
     public static void putReplacement(Replacements replacement) {
-        for (String target : replacement.matchItems()) {
-            ItemMapCache.put(target, replacement.resultItems());
+        List<Item> resolvedItems = Utils.resolveItemList(replacement.matchItems());
+        for (Item item : resolvedItems) {
+            String id = Utils.getItemRegistryName(item);
+            if (id != null) {
+                ItemMapCache.put(id, replacement.resultItems());
+            }
         }
     }
 
