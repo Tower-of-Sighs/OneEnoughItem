@@ -1,13 +1,11 @@
 package com.mafuyu404.oneenoughitem.mixin;
 
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
-import com.mafuyu404.oneenoughitem.api.EditableItem;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.Utils;
 import net.minecraft.core.Holder;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -18,7 +16,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import javax.annotation.Nullable;
-import java.util.Objects;
 
 @Mixin(value = ItemStack.class)
 public class ItemStackMixin {

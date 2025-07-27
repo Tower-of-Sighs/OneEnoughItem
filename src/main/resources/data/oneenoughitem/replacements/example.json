@@ -1,7 +1,7 @@
 [
     {
         "matchItems": [
-            "forge:ore",
+            "#forge:ores",
             "minecraft:apple",
             "minecraft:potato",
             "minecraft:carrot"

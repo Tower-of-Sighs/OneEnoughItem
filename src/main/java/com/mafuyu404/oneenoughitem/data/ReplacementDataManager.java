@@ -40,7 +40,6 @@ public class ReplacementDataManager extends SimpleJsonResourceReloadListener {
         int validReplacements = 0;
         int invalidReplacements = 0;
 
-
         for (Map.Entry<ResourceLocation, JsonElement> entry : object.entrySet()) {
             ResourceLocation fileLocation = entry.getKey();
 
@@ -88,8 +87,7 @@ public class ReplacementDataManager extends SimpleJsonResourceReloadListener {
         syncToAllPlayersIfServerRunning();
     }
 
-    private boolean  validateReplacement(Replacements replacement, ResourceLocation sourceFile) {
-
+    private boolean validateReplacement(Replacements replacement, ResourceLocation sourceFile) {
         if (Utils.getItemById(replacement.resultItems()) == null) {
             Oneenoughitem.LOGGER.error("Invalid replacement in {}: target item '{}' does not exist",
                     sourceFile, replacement.resultItems());
@@ -97,13 +95,40 @@ public class ReplacementDataManager extends SimpleJsonResourceReloadListener {
         }
 
         boolean hasValidSource = false;
+        int validSourceCount = 0;
 
         for (String matchItem : replacement.matchItems()) {
-            if (Utils.getItemById(matchItem) != null) {
-                hasValidSource = true;
+            if (matchItem.startsWith("#")) {
+                String tagIdString = matchItem.substring(1);
+                try {
+                    ResourceLocation tagId = new ResourceLocation(tagIdString);
+                    if (Utils.isTagExists(tagId)) {
+                        var tagItems = Utils.getItemsOfTag(tagId);
+                        if (!tagItems.isEmpty()) {
+                            hasValidSource = true;
+                            validSourceCount += tagItems.size();
+                            Oneenoughitem.LOGGER.debug("Valid tag in {}: '{}' contains {} items",
+                                    sourceFile, matchItem, tagItems.size());
+                        } else {
+                            Oneenoughitem.LOGGER.warn("Tag in {} is empty: '{}'",
+                                    sourceFile, matchItem);
+                        }
+                    } else {
+                        Oneenoughitem.LOGGER.warn("Invalid tag in {}: '{}' does not exist",
+                                sourceFile, matchItem);
+                    }
+                } catch (Exception e) {
+                    Oneenoughitem.LOGGER.error("Invalid tag format in {}: '{}'",
+                            sourceFile, matchItem, e);
+                }
             } else {
-                Oneenoughitem.LOGGER.warn("Invalid source item in {}: '{}' does not exist",
-                        sourceFile, matchItem);
+                if (Utils.getItemById(matchItem) != null) {
+                    hasValidSource = true;
+                    validSourceCount++;
+                } else {
+                    Oneenoughitem.LOGGER.warn("Invalid source item in {}: '{}' does not exist",
+                            sourceFile, matchItem);
+                }
             }
         }
 
@@ -113,6 +138,8 @@ public class ReplacementDataManager extends SimpleJsonResourceReloadListener {
             return false;
         }
 
+        Oneenoughitem.LOGGER.debug("Replacement in {} validated: {} source items -> {}",
+                sourceFile, validSourceCount, replacement.resultItems());
         return true;
     }
 

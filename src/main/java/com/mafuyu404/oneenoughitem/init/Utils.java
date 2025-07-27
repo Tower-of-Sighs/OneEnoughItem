@@ -4,14 +4,13 @@ import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.tags.ITagManager;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.stream.Collectors;
+import java.util.List;
 
 public class Utils {
     public static String getItemRegistryName(Item item) {
@@ -63,6 +62,45 @@ public class Utils {
         if (tagManager != null && tagManager.isKnownTagName(tagKey)) {
             tagManager.getTag(tagKey).forEach(result::add);
         }
+        return result;
+    }
+
+    public static boolean isTagExists(ResourceLocation tagId) {
+        TagKey<Item> tagKey = ForgeRegistries.ITEMS.tags().createTagKey(tagId);
+        ITagManager<Item> tagManager = ForgeRegistries.ITEMS.tags();
+        return tagManager != null && tagManager.isKnownTagName(tagKey);
+    }
+
+    public static List<Item> resolveItemList(List<String> identifiers) {
+        List<Item> result = new ArrayList<>();
+
+        for (String id : identifiers) {
+            if (id == null || id.isEmpty()) continue;
+
+            if (id.startsWith("#")) {
+                String tagIdString = id.substring(1);
+                try {
+                    ResourceLocation tagId = new ResourceLocation(tagIdString);
+                    Collection<Item> tagItems = getItemsOfTag(tagId);
+                    if (tagItems.isEmpty()) {
+                        Oneenoughitem.LOGGER.warn("Tag {} is empty or not found", tagId);
+                    } else {
+                        result.addAll(tagItems);
+                        Oneenoughitem.LOGGER.debug("Resolved tag {} to {} items", tagId, tagItems.size());
+                    }
+                } catch (Exception e) {
+                    Oneenoughitem.LOGGER.error("Invalid tag ID format: {}", id, e);
+                }
+            } else {
+                Item item = getItemById(id);
+                if (item != null) {
+                    result.add(item);
+                } else {
+                    Oneenoughitem.LOGGER.warn("Item ID not found: {}", id);
+                }
+            }
+        }
+
         return result;
     }
 }

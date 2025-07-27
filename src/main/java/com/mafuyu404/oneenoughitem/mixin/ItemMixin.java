@@ -15,10 +15,14 @@ import javax.annotation.Nullable;
 @Mixin(value = Item.class)
 @Implements(@Interface(iface = EditableItem.class, prefix = "lazy$"))
 public abstract class ItemMixin implements EditableItem {
-    @Shadow public abstract Item asItem();
+    @Shadow
+    public abstract Item asItem();
 
     @Mutable
-    @Shadow @Final @Nullable private FoodProperties foodProperties;
+    @Shadow
+    @Final
+    @Nullable
+    private FoodProperties foodProperties;
 
     //    @ModifyVariable(method = "<init>", at = @At("HEAD"), argsOnly = true)
 //    private static Item.Properties q(Item.Properties origin) {
