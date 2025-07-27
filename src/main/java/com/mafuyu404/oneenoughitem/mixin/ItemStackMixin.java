@@ -1,7 +1,7 @@
 package com.mafuyu404.oneenoughitem.mixin;
 
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
-import com.mafuyu404.oneenoughitem.init.Cache;
+import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.Utils;
 import net.minecraft.core.component.DataComponentPatch;
 import net.minecraft.core.component.PatchedDataComponentMap;
@@ -51,7 +51,7 @@ public class ItemStackMixin {
         }
 
         String originItemId = Utils.getItemRegistryName(this.item);
-        String targetItemId = Cache.matchItem(originItemId);
+        String targetItemId = ReplacementCache.matchItem(originItemId);
 
         if (targetItemId != null) {
             Item newItem = Utils.getItemById(targetItemId);

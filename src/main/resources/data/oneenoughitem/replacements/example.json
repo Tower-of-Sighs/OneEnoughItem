@@ -17,8 +17,8 @@
     },
     {
         "matchItems": [
-            "minecraft:gold_ore"
+            "#c:ores"
         ],
-        "resultItems": "minecraft:diamond_ore"
+        "resultItems": "minecraft:egg"
     }
 ]

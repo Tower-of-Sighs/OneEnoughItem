@@ -1,7 +1,7 @@
 package com.mafuyu404.oneenoughitem.network;
 
 import com.mafuyu404.oneenoughitem.data.Replacements;
-import com.mafuyu404.oneenoughitem.init.Cache;
+import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -45,9 +45,9 @@ public record ReplacementSyncPacket(List<Replacements> replacements) implements 
     }
 
     public void handleClient() {
-        Cache.clearCache();
+        ReplacementCache.clearCache();
         for (Replacements replacement : this.replacements) {
-            Cache.putReplacement(replacement);
+            ReplacementCache.putReplacement(replacement);
         }
     }
 
