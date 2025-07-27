@@ -62,7 +62,7 @@ public class ItemStackMixin {
 
                 this.components = PatchedDataComponentMap.fromPatch(newItem.components(), currentPatch);
 
-                newItem.verifyComponentsAfterLoad((ItemStack)(Object)this);
+                newItem.verifyComponentsAfterLoad((ItemStack) (Object) this);
 
                 Oneenoughitem.LOGGER.debug("Successfully replaced item {} with {}", originItemId, targetItemId);
             } else {

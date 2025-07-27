@@ -11,6 +11,10 @@ import com.mafuyu404.oneenoughitem.network.ReplacementSyncPacket;
 import com.mojang.serialization.JsonOps;
 import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,45 +48,41 @@ public class ReplacementDataManager implements SimpleSynchronousResourceReloadLi
         replacements.clear();
         ReplacementCache.clearCache();
 
-        Map<ResourceLocation, Resource> resources =
-                resourceManager.listResources("replacements", path -> path.getPath().endsWith(".json"));
+        HolderLookup.RegistryLookup<Item> itemRegistryLookup;
+        if (currentServer != null) {
+            itemRegistryLookup = currentServer.registryAccess().lookupOrThrow(Registries.ITEM);
+            Oneenoughitem.LOGGER.debug("Using server registry access for tag resolution");
+        } else {
+            RegistryAccess access = RegistryAccess.fromRegistryOfRegistries(BuiltInRegistries.REGISTRY);
+            itemRegistryLookup = access.lookupOrThrow(Registries.ITEM);
+            Oneenoughitem.LOGGER.warn("Server not available, using built-in registry access. Some tags may not be resolved.");
+        }
+
+        Map<ResourceLocation, Resource> resources = resourceManager.listResources("replacements", path -> path.getPath().endsWith(".json"));
 
         for (Map.Entry<ResourceLocation, Resource> entry : resources.entrySet()) {
-            ResourceLocation fileLocation = entry.getKey();
-            if (!Oneenoughitem.MODID.equals(fileLocation.getNamespace())) {
-                continue;
-            }
+            if (!Oneenoughitem.MODID.equals(entry.getKey().getNamespace())) continue;
 
-            try (InputStream inputStream = entry.getValue().open();
-                 InputStreamReader reader = new InputStreamReader(inputStream)) {
-
+            try (InputStream inputStream = entry.getValue().open(); InputStreamReader reader = new InputStreamReader(inputStream)) {
                 JsonElement jsonElement = GSON.fromJson(reader, JsonElement.class);
 
                 if (jsonElement.isJsonArray()) {
-                    var array = jsonElement.getAsJsonArray();
-                    for (var element : array) {
+                    for (var element : jsonElement.getAsJsonArray()) {
                         var result = Replacements.CODEC.parse(JsonOps.INSTANCE, element);
-                        if (result.result().isPresent()) {
-                            Replacements replacement = result.result().get();
-
-                            List<Item> expandedMatchItems = Utils.resolveItemList(replacement.matchItems());
-                            if (expandedMatchItems.isEmpty()) {
+                        result.result().ifPresentOrElse(replacement -> {
+                            List<Item> expanded = Utils.resolveItemList(replacement.matchItems(), itemRegistryLookup);
+                            if (expanded.isEmpty()) {
                                 Oneenoughitem.LOGGER.warn("No valid items resolved from matchItems in {}", entry.getKey());
-                                continue;
+                                return;
                             }
-
                             replacements.add(replacement);
-                            ReplacementCache.putReplacement(replacement);
-
-                            Oneenoughitem.LOGGER.info("Added replacement rule (expanded): {} -> {}",
-                                    expandedMatchItems.stream().map(Utils::getItemRegistryName).toList(),
+                            ReplacementCache.putReplacement(replacement, itemRegistryLookup);
+                            Oneenoughitem.LOGGER.info("Added replacement rule: {} -> {}",
+                                    expanded.stream().map(Utils::getItemRegistryName).toList(),
                                     replacement.resultItems());
-                        } else {
-                            Oneenoughitem.LOGGER.error("Failed to parse replacement data from {}: {}",
-                                    entry.getKey(), result.error().orElse(null));
-                        }
+                        }, () -> Oneenoughitem.LOGGER.error("Failed to parse replacement data from {}: {}",
+                                entry.getKey(), result.error().orElse(null)));
                     }
-
                 }
             } catch (Exception e) {
                 Oneenoughitem.LOGGER.error("Error loading replacement data from {}", entry.getKey(), e);
@@ -90,29 +90,25 @@ public class ReplacementDataManager implements SimpleSynchronousResourceReloadLi
         }
 
         Oneenoughitem.LOGGER.debug("Loaded {} replacement rules", replacements.size());
-
         Oneenoughitem.LOGGER.debug("Cache contents: {}", ReplacementCache.getCacheContents());
         syncToAllPlayers();
     }
 
     public static void syncToPlayer(ServerPlayer player) {
-        NetworkHandler.sendToPlayer(player, new ReplacementSyncPacket(replacements));
+        Map<String, String> cacheContents = ReplacementCache.getCacheContents();
+        NetworkHandler.sendToPlayer(player, new ReplacementSyncPacket(cacheContents));
         Oneenoughitem.LOGGER.debug("Synced replacement data to player: {}", player.getName().getString());
     }
 
     public static void syncToAllPlayers() {
         if (currentServer != null) {
-            try {
-                // Fuck fabric api
-                var allPlayers = PlayerLookup.all(currentServer);
-                ReplacementSyncPacket packet = new ReplacementSyncPacket(replacements);
-                for (ServerPlayer player : allPlayers) {
-                    NetworkHandler.sendToPlayer(player, packet);
-                }
-                Oneenoughitem.LOGGER.debug("Synced replacement data to {} players", allPlayers.size());
-            } catch (Exception e) {
-                Oneenoughitem.LOGGER.error("Failed to sync replacement data to all players", e);
+            var allPlayers = PlayerLookup.all(currentServer);
+            Map<String, String> cacheContents = ReplacementCache.getCacheContents();
+            ReplacementSyncPacket packet = new ReplacementSyncPacket(cacheContents);
+            for (ServerPlayer player : allPlayers) {
+                NetworkHandler.sendToPlayer(player, packet);
             }
+            Oneenoughitem.LOGGER.debug("Synced replacement data to {} players", allPlayers.size());
         } else {
             Oneenoughitem.LOGGER.warn("Server instance not available, cannot sync to all players");
         }

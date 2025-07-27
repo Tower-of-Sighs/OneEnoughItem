@@ -17,7 +17,7 @@
     },
     {
         "matchItems": [
-            "#c:ores"
+            "#minecraft:coal_ores"
         ],
         "resultItems": "minecraft:egg"
     }

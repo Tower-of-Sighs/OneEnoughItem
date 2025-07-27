@@ -1,15 +1,14 @@
 package com.mafuyu404.oneenoughitem.network;
 
-import com.mafuyu404.oneenoughitem.data.Replacements;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-public record ReplacementSyncPacket(List<Replacements> replacements) implements CustomPacketPayload {
+public record ReplacementSyncPacket(Map<String, String> mappings) implements CustomPacketPayload {
 
     public static final Type<ReplacementSyncPacket> TYPE = new Type<>(NetworkHandler.REPLACEMENT_SYNC_PACKET);
 
@@ -19,36 +18,27 @@ public record ReplacementSyncPacket(List<Replacements> replacements) implements 
     );
 
     public static void encode(RegistryFriendlyByteBuf buf, ReplacementSyncPacket packet) {
-        buf.writeInt(packet.replacements.size());
-        for (Replacements replacement : packet.replacements) {
-            buf.writeInt(replacement.matchItems().size());
-            for (String target : replacement.matchItems()) {
-                buf.writeUtf(target);
-            }
-            buf.writeUtf(replacement.resultItems());
+        buf.writeInt(packet.mappings.size());
+        for (Map.Entry<String, String> entry : packet.mappings.entrySet()) {
+            buf.writeUtf(entry.getKey());
+            buf.writeUtf(entry.getValue());
         }
     }
 
     public static ReplacementSyncPacket decode(RegistryFriendlyByteBuf buf) {
         int size = buf.readInt();
-        List<Replacements> replacements = new ArrayList<>();
+        Map<String, String> mappings = new HashMap<>();
         for (int i = 0; i < size; i++) {
-            int targetSize = buf.readInt();
-            List<String> targets = new ArrayList<>();
-            for (int j = 0; j < targetSize; j++) {
-                targets.add(buf.readUtf());
-            }
-            String replace = buf.readUtf();
-            replacements.add(new Replacements(targets, replace));
+            String sourceId = buf.readUtf();
+            String targetId = buf.readUtf();
+            mappings.put(sourceId, targetId);
         }
-        return new ReplacementSyncPacket(replacements);
+        return new ReplacementSyncPacket(mappings);
     }
 
     public void handleClient() {
         ReplacementCache.clearCache();
-        for (Replacements replacement : this.replacements) {
-            ReplacementCache.putReplacement(replacement);
-        }
+        ReplacementCache.putReplacementsBatch(this.mappings);
     }
 
     @Override
