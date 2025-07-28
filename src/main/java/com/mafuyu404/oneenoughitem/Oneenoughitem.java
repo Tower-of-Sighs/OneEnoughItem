@@ -1,7 +1,8 @@
 package com.mafuyu404.oneenoughitem;
 
+import com.mafuyu404.oelib.core.DataRegistry;
+import com.mafuyu404.oneenoughitem.data.Replacements;
 import com.mafuyu404.oneenoughitem.init.Config;
-import com.mafuyu404.oneenoughitem.network.NetworkHandler;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -21,6 +22,8 @@ public class Oneenoughitem {
     }
 
     private void setup(final FMLCommonSetupEvent event) {
-        NetworkHandler.register();
+        DataRegistry.register(Replacements.class);
+
+        LOGGER.info("OneEnoughItem initialized with OELib data-driven framework");
     }
 }

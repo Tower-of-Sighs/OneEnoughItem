@@ -196,9 +196,10 @@ dependencies {
 
     compileOnly fg.deobf("mezz.jei:jei-1.20.1-forge-api:15.20.0.104")
     implementation fg.deobf("mezz.jei:jei-1.20.1-forge:15.20.0.104")
-
-    implementation fg.deobf("curse.maven:spice-of-life-carrot-edition-277616:4650707")
-
+    implementation(fg.deobf("libs:oelib:0.0.1"))
+    jarJar("libs:oelib:0.0.1"){
+        jarJar.ranged(it, '[0.0.1,1.0.0)')
+    }
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.

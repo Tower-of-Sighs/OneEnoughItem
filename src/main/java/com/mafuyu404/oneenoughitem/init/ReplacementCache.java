@@ -40,4 +40,8 @@ public class ReplacementCache {
             Oneenoughitem.LOGGER.info("Cleared {} cached item mappings", previousSize);
         }
     }
+
+    public static int getCacheSize() {
+        return ItemMapCache.size();
+    }
 }
