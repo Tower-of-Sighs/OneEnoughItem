@@ -7,11 +7,10 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.List;
 
 @DataDriven(
+        modid = "oneenoughitem",
         folder = "replacements",
         syncToClient = true,
         validator = ReplacementValidator.class,
-        enableCache = true,
-        priority = 1000,
         supportArray = true
 )
 public record Replacements(List<String> matchItems, String resultItems) {
