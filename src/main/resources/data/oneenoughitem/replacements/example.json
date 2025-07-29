@@ -1,0 +1,20 @@
+[
+    {
+        "matchItems": [
+            "#forge:ores",
+            "minecraft:apple",
+            "minecraft:potato",
+            "minecraft:carrot"
+        ],
+        "resultItems": "minecraft:egg"
+    },
+    {
+        "matchItems": [
+            "minecraft:stone",
+            "minecraft:white_wool",
+            "minecraft:oak_log",
+            "minecraft:app"
+        ],
+        "resultItems": "minecraft:air"
+    }
+]
