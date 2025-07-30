@@ -14,7 +14,6 @@
   "environment": "*",
   "entrypoints": {
     "client": [
-      "com.mafuyu404.oneenoughitem.client.OneenoughitemClient"
     ],
     "main": [
       "com.mafuyu404.oneenoughitem.Oneenoughitem"

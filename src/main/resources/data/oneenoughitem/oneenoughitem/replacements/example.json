@@ -5,7 +5,8 @@
             "#c:ores",
             "minecraft:apple",
             "minecraft:potato",
-            "minecraft:carrot"
+            "minecraft:carrot",
+            "minecraft:water"
         ],
         "resultItems": "minecraft:egg"
     },
