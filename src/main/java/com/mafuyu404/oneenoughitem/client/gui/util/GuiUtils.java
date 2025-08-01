@@ -59,21 +59,6 @@ public class GuiUtils {
         graphics.drawString(Minecraft.getInstance().font, fileType, x + 3, y + 2, 0xFFFFFF);
     }
 
-    public static void drawDropdownArrow(GuiGraphics graphics, int x, int y, boolean isOpen) {
-        if (isOpen) {
-            // 向上箭头
-            graphics.fill(x + 2, y + 3, x + 3, y + 4, 0xFFFFFFFF);
-            graphics.fill(x + 1, y + 4, x + 4, y + 5, 0xFFFFFFFF);
-            graphics.fill(x, y + 5, x + 5, y + 6, 0xFFFFFFFF);
-        } else {
-            // 向下箭头
-            graphics.fill(x, y + 1, x + 5, y + 2, 0xFFFFFFFF);
-            graphics.fill(x + 1, y + 2, x + 4, y + 3, 0xFFFFFFFF);
-            graphics.fill(x + 2, y + 3, x + 3, y + 4, 0xFFFFFFFF);
-        }
-    }
-
-
     public static void drawArrayDropdownBackground(GuiGraphics graphics, int x, int y, int width, int height) {
         graphics.fill(x, y, x + width, y + height, 0xFF000000);
 
