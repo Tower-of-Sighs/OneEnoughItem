@@ -8,12 +8,12 @@ import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.data.Replacements;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 
-public class ReplacementEventHandler {
+public class ModEventHandler {
 
     public static void register() {
         Events.on(DataReloadEvent.EVENT)
                 .normal()
-                .register(ReplacementEventHandler::onDataReload);
+                .register(ModEventHandler::onDataReload);
     }
 
     public static void onDataReload(Class<?> dataClass, int loadedCount, int invalidCount) {

@@ -14,6 +14,7 @@
   "environment": "*",
   "entrypoints": {
     "client": [
+      "com.mafuyu404.oneenoughitem.OneenoughitemClient"
     ],
     "main": [
       "com.mafuyu404.oneenoughitem.Oneenoughitem"
@@ -26,5 +27,6 @@
     "fabricloader": "*",
     "fabric": "*",
     "minecraft": "*"
-  }
+  },
+  "accessWidener" : "oneenoughitem.accesswidener"
 }

@@ -33,6 +33,10 @@ dependencies {
     modApi files("libs/OELib-fabric-0.0.1.jar")
 }
 
+loom {
+    accessWidenerPath = file("src/main/resources/oneenoughitem.accesswidener")
+}
+
 processResources {
     inputs.property "version", project.version
     inputs.property "minecraft_version", project.minecraft_version
