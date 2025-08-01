@@ -55,10 +55,11 @@ public class Utils {
         return result;
     }
 
-    public static boolean isTagExists(ResourceLocation tagId) {
+    public static boolean isTagExists(ResourceLocation tagId, HolderLookup.RegistryLookup<Item> registryLookup) {
         TagKey<Item> tagKey = TagKey.create(Registries.ITEM, tagId);
-        return BuiltInRegistries.ITEM.getTag(tagKey).isPresent();
+        return registryLookup.get(tagKey).isPresent();
     }
+
 
     public static List<Item> resolveItemList(List<String> identifiers, HolderLookup.RegistryLookup<Item> registryLookup) {
         List<Item> result = new ArrayList<>();

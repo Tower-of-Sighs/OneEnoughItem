@@ -37,13 +37,15 @@ public class ReplacementValidator implements DataValidator.ServerContextAware<Re
                 String tagIdString = matchItem.substring(1);
                 try {
                     ResourceLocation tagId = ResourceLocation.parse(tagIdString);
+                    if (Utils.isTagExists(tagId, registryLookup)) {
                     var tagItems = Utils.getItemsOfTag(tagId, registryLookup);
                     if (!tagItems.isEmpty()) {
                         hasValidSource = true;
                         validSourceCount += tagItems.size();
                         Oneenoughitem.LOGGER.debug("Valid tag in {}: '{}' contains {} items",
                                 source, matchItem, tagItems.size());
-                    } else {
+                    }
+                    }else {
                         Oneenoughitem.LOGGER.warn("Tag in {} is empty: '{}'",
                                 source, matchItem);
                     }
