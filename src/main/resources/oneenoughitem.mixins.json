@@ -3,7 +3,7 @@
   "minVersion": "0.8",
   "package": "com.mafuyu404.oneenoughitem.mixin",
   "compatibilityLevel": "JAVA_8",
-  "refmap": "oneenoughitem.refmap.json",
+  "refmap": "oneenoughitem-refmap.json",
   "mixins": [
     "ItemMixin",
     "ItemStackMixin"
