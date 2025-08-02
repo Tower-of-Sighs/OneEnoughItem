@@ -59,13 +59,13 @@ public class GuiUtils {
         graphics.drawString(Minecraft.getInstance().font, fileType, x + 3, y + 2, 0xFFFFFF);
     }
 
-    public static void drawArrayDropdownBackground(GuiGraphics graphics, int x, int y, int width, int height) {
+    public static void drawObjectDropdownBackground(GuiGraphics graphics, int x, int y, int width, int height) {
         graphics.fill(x, y, x + width, y + height, 0xFF000000);
 
         drawBorder(graphics, x, y, width, height, 0xFF404040);
     }
 
-    public static Button createArrayDropdownButton(Component text, Button.OnPress onPress, int x, int y, int width, int height) {
+    public static Button createObjectDropdownButton(Component text, Button.OnPress onPress, int x, int y, int width, int height) {
         return new Button(x, y, width, height, text, onPress, Button.DEFAULT_NARRATION) {
             @Override
             public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {

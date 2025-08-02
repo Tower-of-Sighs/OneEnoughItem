@@ -8,6 +8,7 @@ import com.mafuyu404.oneenoughitem.client.gui.components.TagDisplayWidget;
 import com.mafuyu404.oneenoughitem.client.gui.manager.ReplacementEditorManager;
 import com.mafuyu404.oneenoughitem.client.gui.util.GuiUtils;
 import com.mafuyu404.oneenoughitem.client.gui.util.PathUtils;
+import com.mafuyu404.oneenoughitem.init.Utils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -44,9 +45,10 @@ public class ReplacementEditorScreen extends Screen {
     private Button reloadButton;
     private Button clearAllButton;
 
-    private Button arrayDropdownButton;
-    private boolean showArrayDropdown = false;
-    private List<Button> arrayIndexButtons = new ArrayList<>();
+
+    private Button objectDropdownButton;
+    private boolean showObjectDropdown = false;
+    private List<Button> objectIndexButtons = new ArrayList<>();
 
     private Button addMatchItemButton;
     private Button addMatchTagButton;
@@ -129,9 +131,9 @@ public class ReplacementEditorScreen extends Screen {
 
         this.manager.setUiUpdateCallback(this::syncManagerDataToWidgets);
 
-        this.arrayDropdownButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.array.select_element"),
-                button -> this.toggleArrayDropdown(), 10, 10, 140, BUTTON_HEIGHT);
-        this.updateArrayDropdownVisibility();
+        this.objectDropdownButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.object.select_element"),
+                button -> this.toggleObjectDropdown(), 10, 10, 140, BUTTON_HEIGHT);
+        this.updateObjectDropdownVisibility();
 
         int fileY = topY + 25;
         this.datapackNameBox = new EditBox(Minecraft.getInstance().font, centerX - 140, fileY, 80, 18,
@@ -202,9 +204,9 @@ public class ReplacementEditorScreen extends Screen {
         this.rebuildPanels();
     }
 
-    private void toggleArrayDropdown() {
-        this.showArrayDropdown = !this.showArrayDropdown;
-        this.updateArrayDropdown();
+    private void toggleObjectDropdown() {
+        this.showObjectDropdown = !this.showObjectDropdown;
+        this.updateObjectDropdown();
     }
 
     private void syncManagerDataToWidgets() {
@@ -214,8 +216,14 @@ public class ReplacementEditorScreen extends Screen {
         this.resultTagWidget = null;
 
         for (Item item : this.manager.getMatchItems()) {
-            ItemDisplayWidget widget = new ItemDisplayWidget(0, 0, new ItemStack(item),
-                    button -> this.removeMatchItem(item));
+            String originalItemId = Utils.getItemRegistryName(item);
+
+            ItemStack displayStack = new ItemStack(item);
+
+            ItemDisplayWidget widget = new ItemDisplayWidget(0, 0, displayStack,
+                    button -> {
+                        this.removeMatchItemById(originalItemId);
+                    }, originalItemId);
             this.matchItemWidgets.add(widget);
         }
 
@@ -236,70 +244,84 @@ public class ReplacementEditorScreen extends Screen {
         this.rebuildPanels();
     }
 
-    private void updateArrayDropdown() {
-        for (Button button : this.arrayIndexButtons) {
+    private void removeMatchItemById(String itemId) {
+        if (itemId != null) {
+            ResourceLocation id = ResourceLocation.parse(itemId);
+            Item item = BuiltInRegistries.ITEM.get(id);
+
+            this.manager.removeMatchItem(item);
+
+            this.matchItemWidgets.removeIf(widget -> itemId.equals(widget.getOriginalItemId()));
+
+            this.rebuildPanels();
+        }
+    }
+
+
+    private void updateObjectDropdown() {
+        for (Button button : this.objectIndexButtons) {
             this.removeWidget(button);
         }
-        this.arrayIndexButtons.clear();
+        this.objectIndexButtons.clear();
 
-        if (this.showArrayDropdown && this.manager.getArraySize() > 0) {
-            int startX = this.arrayDropdownButton.getX();
-            int startY = this.arrayDropdownButton.getY() + this.arrayDropdownButton.getHeight() + 2;
+        if (this.showObjectDropdown && this.manager.getObjectSize() > 0) {
+            int startX = this.objectDropdownButton.getX();
+            int startY = this.objectDropdownButton.getY() + this.objectDropdownButton.getHeight() + 2;
 
-            for (int i = 0; i < this.manager.getArraySize(); i++) {
+            for (int i = 0; i < this.manager.getObjectSize(); i++) {
                 final int index = i;
                 String buttonText = String.valueOf(i + 1);
-                if (this.manager.getCurrentArrayIndex() == i) {
+                if (this.manager.getCurrentObjectIndex() == i) {
                     buttonText += " ✓";
                 }
 
-                Button indexButton = GuiUtils.createArrayDropdownButton(Component.literal(buttonText),
-                        button -> this.selectArrayIndex(index),
+                Button indexButton = GuiUtils.createObjectDropdownButton(Component.literal(buttonText),
+                        button -> this.selectObjectIndex(index),
                         startX, startY + i * 22, 40, 20);
-                this.arrayIndexButtons.add(indexButton);
+                this.objectIndexButtons.add(indexButton);
                 this.addRenderableWidget(indexButton);
             }
 
-            if (this.manager.getCurrentArrayIndex() >= 0) {
-                Button deleteButton = GuiUtils.createArrayDropdownButton(Component.translatable("gui.oneenoughitem.array.delete"),
-                        button -> this.deleteCurrentArrayElement(),
-                        startX + 45, startY + this.manager.getCurrentArrayIndex() * 22, 50, 20);
-                this.arrayIndexButtons.add(deleteButton);
+            if (this.manager.getCurrentObjectIndex() >= 0) {
+                Button deleteButton = GuiUtils.createObjectDropdownButton(Component.translatable("gui.oneenoughitem.object.delete"),
+                        button -> this.deleteCurrentObjectElement(),
+                        startX + 45, startY + this.manager.getCurrentObjectIndex() * 22, 50, 20);
+                this.objectIndexButtons.add(deleteButton);
                 this.addRenderableWidget(deleteButton);
             }
         }
 
-        if (this.arrayDropdownButton != null) {
-            String buttonText = this.showArrayDropdown ?
-                    Component.translatable("gui.oneenoughitem.array.element_up").getString() :
-                    Component.translatable("gui.oneenoughitem.array.element_down").getString();
-            if (this.manager.getCurrentArrayIndex() >= 0) {
-                buttonText += " (" + (this.manager.getCurrentArrayIndex() + 1) + "/" + this.manager.getArraySize() + ")";
+        if (this.objectDropdownButton != null) {
+            String buttonText = this.showObjectDropdown ?
+                    Component.translatable("gui.oneenoughitem.object.element_up").getString() :
+                    Component.translatable("gui.oneenoughitem.object.element_down").getString();
+            if (this.manager.getCurrentObjectIndex() >= 0) {
+                buttonText += " (" + (this.manager.getCurrentObjectIndex() + 1) + "/" + this.manager.getObjectSize() + ")";
             }
-            this.arrayDropdownButton.setMessage(Component.literal(buttonText));
+            this.objectDropdownButton.setMessage(Component.literal(buttonText));
         }
     }
 
-    private void selectArrayIndex(int index) {
-        this.manager.setCurrentArrayIndex(index);
-        this.showArrayDropdown = false;
-        this.updateArrayDropdown();
+    private void selectObjectIndex(int index) {
+        this.manager.setCurrentObjectIndex(index);
+        this.showObjectDropdown = false;
+        this.updateObjectDropdown();
     }
 
-    private void deleteCurrentArrayElement() {
-        if (this.manager.getCurrentArrayIndex() >= 0) {
-            this.manager.deleteArrayElement(this.manager.getCurrentArrayIndex());
-            this.showArrayDropdown = false;
-            this.updateArrayDropdown();
+    private void deleteCurrentObjectElement() {
+        if (this.manager.getCurrentObjectIndex() >= 0) {
+            this.manager.deleteObjectElement(this.manager.getCurrentObjectIndex());
+            this.showObjectDropdown = false;
+            this.updateObjectDropdown();
         }
     }
 
-    private void updateArrayDropdownVisibility() {
-        if (this.arrayDropdownButton != null) {
-            boolean shouldShow = this.manager.getCurrentArrayIndex() >= -1 && this.manager.getArraySize() > 0;
-            this.arrayDropdownButton.visible = shouldShow;
+    private void updateObjectDropdownVisibility() {
+        if (this.objectDropdownButton != null) {
+            boolean shouldShow = this.manager.getCurrentObjectIndex() >= -1 && this.manager.getObjectSize() > 0;
+            this.objectDropdownButton.visible = shouldShow;
             if (shouldShow) {
-                this.addRenderableWidget(this.arrayDropdownButton);
+                this.addRenderableWidget(this.objectDropdownButton);
             }
         }
     }
@@ -333,17 +355,17 @@ public class ReplacementEditorScreen extends Screen {
         Component fileInfo = Component.translatable("gui.oneenoughitem.current_file", fileName);
         graphics.drawCenteredString(Minecraft.getInstance().font, fileInfo, centerX, 8, 0xAAAAAA);
 
-        if (this.showArrayDropdown && this.manager.getArraySize() > 0) {
-            int dropdownX = this.arrayDropdownButton.getX();
-            int dropdownY = this.arrayDropdownButton.getY() + this.arrayDropdownButton.getHeight() + 2;
+        if (this.showObjectDropdown && this.manager.getObjectSize() > 0) {
+            int dropdownX = this.objectDropdownButton.getX();
+            int dropdownY = this.objectDropdownButton.getY() + this.objectDropdownButton.getHeight() + 2;
             int dropdownWidth = 40;
-            int dropdownHeight = this.manager.getArraySize() * 22;
+            int dropdownHeight = this.manager.getObjectSize() * 22;
 
-            GuiUtils.drawArrayDropdownBackground(graphics, dropdownX, dropdownY, dropdownWidth, dropdownHeight);
+            GuiUtils.drawObjectDropdownBackground(graphics, dropdownX, dropdownY, dropdownWidth, dropdownHeight);
 
-            if (this.manager.getCurrentArrayIndex() >= 0) {
-                GuiUtils.drawArrayDropdownBackground(graphics, dropdownX + 45,
-                        dropdownY + this.manager.getCurrentArrayIndex() * 22, 50, 20);
+            if (this.manager.getCurrentObjectIndex() >= 0) {
+                GuiUtils.drawObjectDropdownBackground(graphics, dropdownX + 45,
+                        dropdownY + this.manager.getCurrentObjectIndex() * 22, 50, 20);
             }
         }
 
@@ -391,26 +413,29 @@ public class ReplacementEditorScreen extends Screen {
         this.minecraft.setScreen(new FileSelectionScreen(this));
     }
 
+
     public void onFileSelected(Path filePath, int mode) {
-        this.manager.selectJsonFile(filePath, mode);
-        this.fileNameBox.setValue(this.manager.getCurrentFileName());
-
-        String modeKey = switch (mode) {
-            case 0 -> "Add";
-            case 1 -> "Modify";
-            case 2 -> "Remove";
-            default -> "Unknown";
-        };
-
-        this.showMessage(Component.translatable("message.oneenoughitem.file_selected",
-                filePath.getFileName().toString(),
-                Component.translatable(modeKey)).withStyle(ChatFormatting.GREEN));
-
-        this.updateArrayDropdownVisibility();
-        this.updateArrayDropdown();
-        this.rebuildPanels();
+        switch (mode) {
+            case 0 -> { // 添加模式
+                this.manager.selectJsonFile(filePath, 0);
+                this.syncManagerDataToWidgets();
+            }
+            case 1 -> { // 更改模式
+                this.manager.selectJsonFile(filePath, 1);
+                this.syncManagerDataToWidgets();
+            }
+            case 2 -> { // 删除模式
+                this.manager.deleteFile(filePath);
+            }
+        }
     }
 
+    private void removeMatchItem(Item item) {
+        boolean removed = this.manager.removeMatchItem(item);
+        if (removed) {
+            this.syncManagerDataToWidgets();
+        }
+    }
 
     private void reloadDatapacks() {
         this.manager.reloadDatapacks();
@@ -421,11 +446,12 @@ public class ReplacementEditorScreen extends Screen {
         this.matchItemWidgets.clear();
         this.matchTagWidgets.clear();
         this.resultItemWidget = null;
+
         this.resultTagWidget = null;
         this.fileNameBox.setValue("");
         this.rebuildPanels();
-        this.updateArrayDropdownVisibility();
-        this.updateArrayDropdown();
+        this.updateObjectDropdownVisibility();
+        this.updateObjectDropdown();
         EditorCache.clearCache();
     }
 
@@ -458,8 +484,9 @@ public class ReplacementEditorScreen extends Screen {
         }
 
         this.manager.addMatchItem(item);
+        String itemId = Utils.getItemRegistryName(item);
         ItemDisplayWidget widget = new ItemDisplayWidget(0, 0, new ItemStack(item),
-                button -> this.removeMatchItem(item));
+                button -> this.removeMatchItemById(itemId), itemId);
         this.matchItemWidgets.add(widget);
         this.rebuildPanels();
     }
@@ -488,12 +515,6 @@ public class ReplacementEditorScreen extends Screen {
         this.manager.setResultTag(tagId);
         this.resultTagWidget = new TagDisplayWidget(0, 0, tagId, null);
         this.resultItemWidget = null;
-        this.rebuildPanels();
-    }
-
-    private void removeMatchItem(Item item) {
-        this.manager.removeMatchItem(item);
-        this.matchItemWidgets.removeIf(widget -> widget.getItem().getItem().equals(item));
         this.rebuildPanels();
     }
 

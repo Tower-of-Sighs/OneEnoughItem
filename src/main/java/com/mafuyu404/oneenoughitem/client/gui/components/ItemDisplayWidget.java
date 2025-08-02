@@ -1,5 +1,9 @@
 package com.mafuyu404.oneenoughitem.client.gui.components;
 
+import net.fabricmc.loader.api.FabricLoader;
+import net.fabricmc.loader.api.ModContainer;
+import net.fabricmc.loader.api.metadata.ModMetadata;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -7,18 +11,28 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class ItemDisplayWidget extends AbstractWidget {
     private final ItemStack itemStack;
     private final Button.OnPress removeAction;
     private final Font font = Minecraft.getInstance().font;
+    private final String originalItemId;
 
     public ItemDisplayWidget(int x, int y, ItemStack itemStack, Button.OnPress removeAction) {
+        this(x, y, itemStack, removeAction, null);
+    }
+
+    public ItemDisplayWidget(int x, int y, ItemStack itemStack, Button.OnPress removeAction, String originalItemId) {
         super(x, y, 18, 18, Component.empty());
         this.itemStack = itemStack;
         this.removeAction = removeAction;
+        this.originalItemId = originalItemId;
     }
 
     @Override
@@ -26,13 +40,32 @@ public class ItemDisplayWidget extends AbstractWidget {
         graphics.fill(this.getX(), this.getY(), this.getX() + 18, this.getY() + 18, 0xFF8B8B8B);
         graphics.fill(this.getX() + 1, this.getY() + 1, this.getX() + 17, this.getY() + 17, 0xFF373737);
 
-        graphics.renderItem(this.itemStack, this.getX() + 1, this.getY() + 1);
+        if (!this.itemStack.isEmpty()) {
+            graphics.renderItem(this.itemStack, this.getX() + 1, this.getY() + 1);
+            graphics.renderItemDecorations(Minecraft.getInstance().font, this.itemStack, this.getX() + 1, this.getY() + 1);
+        }
 
         if (this.isHovered() && this.removeAction != null) {
             graphics.fill(this.getX() + 12, this.getY() - 2, this.getX() + 20, this.getY() + 6, 0xFFFF0000);
             graphics.drawString(font, "×", this.getX() + 14, this.getY(), 0xFFFFFFFF, false);
         }
+
+        if (this.isHovered() && !this.itemStack.isEmpty()) {
+            List<Component> lines = new ArrayList<>();
+            lines.add(this.itemStack.getHoverName());
+
+            String modId = BuiltInRegistries.ITEM.getKey(this.itemStack.getItem()).getNamespace();
+            String modName = FabricLoader.getInstance().getModContainer(modId)
+                    .map(ModContainer::getMetadata)
+                    .map(ModMetadata::getName)
+                    .orElse(modId);
+
+            lines.add(Component.literal(modName).withStyle(ChatFormatting.BLUE));
+
+            graphics.renderComponentTooltip(Minecraft.getInstance().font, lines, mouseX, mouseY);
+        }
     }
+
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -45,6 +78,11 @@ public class ItemDisplayWidget extends AbstractWidget {
         }
         return false;
     }
+
+    public String getOriginalItemId() {
+        return this.originalItemId;
+    }
+
 
     public ItemStack getItem() {
         return this.itemStack;

@@ -1,5 +1,6 @@
 package com.mafuyu404.oneenoughitem.client.gui.components;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarratedElementType;
@@ -16,6 +17,7 @@ public class ItemGridWidget extends AbstractWidget {
     private final int gridHeight;
     private final Consumer<ItemStack> onItemClick;
     private List<ItemStack> items = new ArrayList<>();
+    private int hoveredIndex = -1;
 
     public ItemGridWidget(int x, int y, int gridWidth, int gridHeight, Consumer<ItemStack> onItemClick) {
         super(x, y, gridWidth * 18, gridHeight * 18, Component.empty());
@@ -39,10 +41,19 @@ public class ItemGridWidget extends AbstractWidget {
             // Draw item
             ItemStack itemStack = this.items.get(i);
             graphics.renderItem(itemStack, itemX + 1, itemY + 1);
+            graphics.renderItemDecorations(Minecraft.getInstance().font, itemStack, itemX + 1, itemY + 1);
 
-            // Highlight if hovering
+            // Check if hovering and highlight
             if (mouseX >= itemX && mouseX < itemX + 18 && mouseY >= itemY && mouseY < itemY + 18) {
                 graphics.fill(itemX + 1, itemY + 1, itemX + 17, itemY + 17, 0x80FFFFFF);
+                this.hoveredIndex = i;
+            }
+        }
+
+        if (this.hoveredIndex >= 0 && this.hoveredIndex < this.items.size()) {
+            ItemStack hoveredStack = this.items.get(this.hoveredIndex);
+            if (hoveredStack != null && !hoveredStack.isEmpty()) {
+                graphics.renderTooltip(Minecraft.getInstance().font, hoveredStack, mouseX, mouseY);
             }
         }
     }
