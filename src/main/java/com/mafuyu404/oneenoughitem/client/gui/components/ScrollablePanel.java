@@ -43,7 +43,6 @@ public class ScrollablePanel extends AbstractWidget {
         }
         this.contentHeight = maxY;
 
-        // Update scrollbar height
         if (this.contentHeight > this.maxVisibleHeight) {
             this.scrollbarHeight = Math.max(20, (this.maxVisibleHeight * this.maxVisibleHeight) / this.contentHeight);
         } else {

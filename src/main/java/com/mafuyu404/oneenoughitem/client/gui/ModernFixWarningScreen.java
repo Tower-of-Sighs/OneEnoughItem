@@ -1,5 +1,6 @@
 package com.mafuyu404.oneenoughitem.client.gui;
 
+import com.mafuyu404.oneenoughitem.client.util.ModernFixDetector;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -29,14 +30,20 @@ public class ModernFixWarningScreen extends Screen {
         int dialogY = (this.height - DIALOG_HEIGHT) / 2;
 
         Button confirmButton = Button.builder(
-                Component.translatable("gui.oneenoughitem.modernfix_warning.confirm"),
-                button -> {
-                    this.minecraft.setScreen(parentScreen);
-                }
-        ).bounds(dialogX + DIALOG_WIDTH / 2 - BUTTON_WIDTH - 10, 
-                dialogY + DIALOG_HEIGHT - 40, 
-                BUTTON_WIDTH, BUTTON_HEIGHT)
-        .build();
+                        Component.translatable("gui.oneenoughitem.modernfix_warning.confirm"),
+                        button -> {
+                            if (ModernFixDetector.disableFasterIngredients()) {
+                                // 成功禁用配置
+                                this.minecraft.setScreen(parentScreen);
+                            } else {
+                                // 禁用失败，仍然关闭对话框但可以显示错误信息
+                                this.minecraft.setScreen(parentScreen);
+                            }
+                        }
+                ).bounds(dialogX + DIALOG_WIDTH / 2 - BUTTON_WIDTH - 10,
+                        dialogY + DIALOG_HEIGHT - 40,
+                        BUTTON_WIDTH, BUTTON_HEIGHT)
+                .build();
 
         Button ignoreButton = Button.builder(
                 Component.translatable("gui.oneenoughitem.modernfix_warning.ignore"),
