@@ -15,6 +15,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -33,8 +34,8 @@ public class ReplacementEditorManager {
     private Path currentFilePath;
     private String currentFileName = "";
 
-    private int currentArrayIndex = -1; // -1 表示添加模式
-    private JsonArray currentJsonArray;
+    private int currentObjectIndex = -1; // -1 表示添加模式
+    private JsonArray currentJsonObjects;
 
     private Runnable uiUpdateCallback;
 
@@ -43,8 +44,8 @@ public class ReplacementEditorManager {
     public Item getResultItem() { return resultItem; }
     public ResourceLocation getResultTag() { return resultTag; }
     public String getCurrentFileName() { return currentFileName; }
-    public int getCurrentArrayIndex() { return currentArrayIndex; }
-    public int getArraySize() { return currentJsonArray != null ? currentJsonArray.size() : 0; }
+    public int getCurrentObjectIndex() { return currentObjectIndex; }
+    public int getObjectSize() { return currentJsonObjects != null ? currentJsonObjects.size() : 0; }
 
     public void setUiUpdateCallback(Runnable callback) {
         this.uiUpdateCallback = callback;
@@ -64,9 +65,19 @@ public class ReplacementEditorManager {
         this.matchTags.add(tagId);
     }
 
-    public void removeMatchItem(Item item) {
-        this.matchItems.remove(item);
-    }
+    public boolean removeMatchItem(Item item) {
+        String targetItemId = Utils.getItemRegistryName(item);
+
+        if (targetItemId == null) {
+            Oneenoughitem.LOGGER.warn("removeMatchItem: Target item ID is null for item: {}", item);
+            return false;
+        }
+
+        return this.matchItems.removeIf(existingItem -> {
+            String existingItemId = Utils.getItemRegistryName(existingItem);
+            return targetItemId.equals(existingItemId);
+        });
+        }
 
     public void removeMatchTag(ResourceLocation tagId) {
         this.matchTags.remove(tagId);
@@ -97,14 +108,14 @@ public class ReplacementEditorManager {
         clearResultItem();
         this.currentFileName = "";
         this.currentFilePath = null;
-        this.currentArrayIndex = -1;
-        this.currentJsonArray = null;
+        this.currentObjectIndex = -1;
+        this.currentJsonObjects = null;
     }
 
-    public void setCurrentArrayIndex(int index) {
-        this.currentArrayIndex = index;
-        if (index >= 0 && this.currentJsonArray != null && index < this.currentJsonArray.size()) {
-            loadReplacementFromArray(index);
+    public void setCurrentObjectIndex(int index) {
+        this.currentObjectIndex = index;
+        if (index >= 0 && this.currentJsonObjects != null && index < this.currentJsonObjects.size()) {
+            loadReplacementFromObject(index);
         } else {
             clearMatchItems();
             clearResultItem();
@@ -112,9 +123,9 @@ public class ReplacementEditorManager {
         }
     }
 
-    private void loadReplacementFromArray(int index) {
+    private void loadReplacementFromObject(int index) {
         try {
-            JsonElement element = this.currentJsonArray.get(index);
+            JsonElement element = this.currentJsonObjects.get(index);
             var result = Replacements.CODEC.parse(JsonOps.INSTANCE, element);
 
             if (result.result().isPresent()) {
@@ -124,59 +135,61 @@ public class ReplacementEditorManager {
                 clearResultItem();
 
                 for (String matchItem : replacement.matchItems()) {
+
                     if (matchItem.startsWith("#")) {
                         ResourceLocation tagId = new ResourceLocation(matchItem.substring(1));
                         this.matchTags.add(tagId);
                     } else {
                         ResourceLocation itemId = new ResourceLocation(matchItem);
                         Item item = BuiltInRegistries.ITEM.get(itemId);
-                        this.matchItems.add(item);
+                        if (item != Items.AIR) {
+                            this.matchItems.add(item);
+                        }
                     }
                 }
 
                 String resultString = replacement.resultItems();
                 if (resultString.startsWith("#")) {
-                    ResourceLocation tagId = new ResourceLocation(resultString.substring(1));
-                    this.resultTag = tagId;
+                    this.resultTag = new ResourceLocation(resultString.substring(1));
                 } else {
                     ResourceLocation itemId = new ResourceLocation(resultString);
-                    Item item = BuiltInRegistries.ITEM.get(itemId);
-                    this.resultItem = item;
+                    this.resultItem = BuiltInRegistries.ITEM.get(itemId);
                 }
 
                 notifyUiUpdate();
-                this.showMessage(Component.translatable("message.oneenoughitem.array_loaded", index + 1).withStyle(ChatFormatting.GREEN));
+                this.showMessage(Component.translatable("message.oneenoughitem.object_loaded", index + 1).withStyle(ChatFormatting.GREEN));
             } else {
-                this.showError(Component.translatable("error.oneenoughitem.array_parse_failed", index + 1).withStyle(ChatFormatting.RED));
+                this.showError(Component.translatable("error.oneenoughitem.object_parse_failed", index + 1).withStyle(ChatFormatting.RED));
             }
         } catch (Exception e) {
-            this.showError(Component.translatable("error.oneenoughitem.array_load_error", e.getMessage()).withStyle(ChatFormatting.RED));
-            Oneenoughitem.LOGGER.error("Failed to load replacement from array", e);
+            this.showError(Component.translatable("error.oneenoughitem.object_load_error", e.getMessage()).withStyle(ChatFormatting.RED));
+            Oneenoughitem.LOGGER.error("Failed to load replacement from object", e);
         }
     }
 
-    public void deleteArrayElement(int index) {
-        if (this.currentJsonArray == null || index < 0 || index >= this.currentJsonArray.size()) {
-            this.showError(Component.translatable("error.oneenoughitem.array_index_invalid").withStyle(ChatFormatting.RED));
+
+    public void deleteObjectElement(int index) {
+        if (this.currentJsonObjects == null || index < 0 || index >= this.currentJsonObjects.size()) {
+            this.showError(Component.translatable("error.oneenoughitem.object_index_invalid").withStyle(ChatFormatting.RED));
             return;
         }
 
         try {
-            this.currentJsonArray.remove(index);
-            this.saveJsonArrayToFile(this.currentJsonArray);
+            this.currentJsonObjects.remove(index);
+            this.saveJsonObjectsToFile(this.currentJsonObjects);
 
             // 如果删除的是当前编辑的元素，切换到添加模式
-            if (this.currentArrayIndex == index) {
-                setCurrentArrayIndex(-1);
-            } else if (this.currentArrayIndex > index) {
+            if (this.currentObjectIndex == index) {
+                setCurrentObjectIndex(-1);
+            } else if (this.currentObjectIndex > index) {
                 // 如果当前索引在删除索引之后，需要调整
-                this.currentArrayIndex--;
+                this.currentObjectIndex--;
             }
 
-            this.showMessage(Component.translatable("message.oneenoughitem.array_element_deleted", index + 1).withStyle(ChatFormatting.GREEN));
+            this.showMessage(Component.translatable("message.oneenoughitem.object_element_deleted", index + 1).withStyle(ChatFormatting.GREEN));
         } catch (IOException e) {
-            this.showError(Component.translatable("error.oneenoughitem.array_delete_failed", e.getMessage()).withStyle(ChatFormatting.RED));
-            Oneenoughitem.LOGGER.error("Failed to delete array element", e);
+            this.showError(Component.translatable("error.oneenoughitem.object_delete_failed", e.getMessage()).withStyle(ChatFormatting.RED));
+            Oneenoughitem.LOGGER.error("Failed to delete object element", e);
         }
     }
 
@@ -204,16 +217,16 @@ public class ReplacementEditorManager {
             }
 
             Path filePath = replacementsPath.resolve(fileName + ".json");
-            JsonArray emptyArray = new JsonArray();
+            JsonArray emptyObjects = new JsonArray();
 
             try (FileWriter writer = new FileWriter(filePath.toFile())) {
-                GSON.toJson(emptyArray, writer);
+                GSON.toJson(emptyObjects, writer);
             }
 
             this.currentFilePath = filePath;
             this.currentFileName = fileName;
-            this.currentJsonArray = emptyArray;
-            this.currentArrayIndex = -1;
+            this.currentJsonObjects = emptyObjects;
+            this.currentObjectIndex = -1;
 
             this.showMessage(Component.translatable("message.oneenoughitem.file_created", filePath.toString()).withStyle(ChatFormatting.GREEN));
             Oneenoughitem.LOGGER.info("Created replacement file: {}", filePath);
@@ -237,32 +250,32 @@ public class ReplacementEditorManager {
             if (!Files.exists(this.currentFilePath)) {
                 try {
                     Files.createDirectories(this.currentFilePath.getParent());
-                    JsonArray emptyArray = new JsonArray();
+                    JsonArray emptyObjects = new JsonArray();
                     try (FileWriter writer = new FileWriter(this.currentFilePath.toFile())) {
-                        GSON.toJson(emptyArray, writer);
+                        GSON.toJson(emptyObjects, writer);
                     }
-                    this.currentJsonArray = emptyArray;
+                    this.currentJsonObjects = emptyObjects;
                 } catch (IOException e) {
                     this.showError(Component.translatable("error.oneenoughitem.file_create_failed", e.getMessage()).withStyle(ChatFormatting.RED));
                     return;
                 }
             } else {
-                this.currentJsonArray = this.readExistingJsonArray();
+                this.currentJsonObjects = this.readExistingJsonObjects();
             }
 
             clearMatchItems();
             clearResultItem();
 
             if (mode == 1) {
-                this.currentArrayIndex = 0; // 默认选择第一个元素
-                if (!this.currentJsonArray.isEmpty()) {
-                    loadReplacementFromArray(0);
+                this.currentObjectIndex = 0; // 默认选择第一个元素
+                if (!this.currentJsonObjects.isEmpty()) {
+                    loadReplacementFromObject(0);
                 } else {
                     // 如果数组为空，保持添加模式
-                    this.currentArrayIndex = -1;
+                    this.currentObjectIndex = -1;
                 }
             } else {
-                this.currentArrayIndex = -1;
+                this.currentObjectIndex = -1;
             }
 
             notifyUiUpdate();
@@ -283,13 +296,13 @@ public class ReplacementEditorManager {
     }
 
 
-    public String getArrayElementDescription(int index) {
-        if (this.currentJsonArray == null || index < 0 || index >= this.currentJsonArray.size()) {
+    public String getObjectElementDescription(int index) {
+        if (this.currentJsonObjects == null || index < 0 || index >= this.currentJsonObjects.size()) {
             return Component.translatable("description.oneenoughitem.invalid").getString();
         }
 
         try {
-            JsonElement element = this.currentJsonArray.get(index);
+            JsonElement element = this.currentJsonObjects.get(index);
             var result = Replacements.CODEC.parse(JsonOps.INSTANCE, element);
 
             if (result.result().isPresent()) {
@@ -314,9 +327,20 @@ public class ReplacementEditorManager {
     }
 
     public void saveReplacement() {
-        if ((this.matchItems.isEmpty() && this.matchTags.isEmpty()) ||
-                (this.resultItem == null && this.resultTag == null)) {
-            this.showError(Component.translatable("error.oneenoughitem.replacement_incomplete").withStyle(ChatFormatting.RED));
+        // 检查匹配项是否为空
+        boolean hasMatchItems = !this.matchItems.isEmpty() || !this.matchTags.isEmpty();
+        // 检查结果项是否为空
+        boolean hasResultItem = this.resultItem != null || this.resultTag != null;
+
+        // 只有两个都有时才可以保存，其他情况都不可以保存
+        if (!hasMatchItems || !hasResultItem) {
+            if (!hasMatchItems && !hasResultItem) {
+                this.showError(Component.translatable("error.oneenoughitem.both_empty").withStyle(ChatFormatting.RED));
+            } else if (!hasMatchItems) {
+                this.showError(Component.translatable("error.oneenoughitem.missing_match_items").withStyle(ChatFormatting.RED));
+            } else {
+                this.showError(Component.translatable("error.oneenoughitem.missing_result_item").withStyle(ChatFormatting.RED));
+            }
             return;
         }
 
@@ -326,6 +350,7 @@ public class ReplacementEditorManager {
         }
 
         try {
+            // 创建正常的替换规则
             List<String> matchItemsList = new ArrayList<>();
 
             for (Item item : this.matchItems) {
@@ -356,20 +381,20 @@ public class ReplacementEditorManager {
 
             JsonElement replacementElement = result.result().get();
 
-            if (this.currentArrayIndex >= 0) {
-                if (this.currentArrayIndex < this.currentJsonArray.size()) {
-                    this.currentJsonArray.set(this.currentArrayIndex, replacementElement);
-                    this.showMessage(Component.translatable("message.oneenoughitem.array_updated", this.currentArrayIndex + 1).withStyle(ChatFormatting.GREEN));
+            if (this.currentObjectIndex >= 0) {
+                if (this.currentObjectIndex < this.currentJsonObjects.size()) {
+                    this.currentJsonObjects.set(this.currentObjectIndex, replacementElement);
+                    this.showMessage(Component.translatable("message.oneenoughitem.object_updated", this.currentObjectIndex + 1).withStyle(ChatFormatting.GREEN));
                 } else {
-                    this.showError(Component.translatable("error.oneenoughitem.array_index_out_of_bounds").withStyle(ChatFormatting.RED));
+                    this.showError(Component.translatable("error.oneenoughitem.object_index_out_of_bounds").withStyle(ChatFormatting.RED));
                     return;
                 }
             } else {
-                this.currentJsonArray.add(replacementElement);
+                this.currentJsonObjects.add(replacementElement);
                 this.showMessage(Component.translatable("message.oneenoughitem.replacement_added", this.currentFilePath.getFileName().toString()).withStyle(ChatFormatting.GREEN));
             }
 
-            this.saveJsonArrayToFile(this.currentJsonArray);
+            this.saveJsonObjectsToFile(this.currentJsonObjects);
             Oneenoughitem.LOGGER.info("Saved replacement to file: {}", this.currentFilePath);
 
         } catch (IOException e) {
@@ -378,6 +403,30 @@ public class ReplacementEditorManager {
         } catch (Exception e) {
             this.showError(Component.translatable("error.oneenoughitem.unexpected_error", e.getMessage()).withStyle(ChatFormatting.RED));
             Oneenoughitem.LOGGER.error("Unexpected error while saving replacement", e);
+        }
+    }
+
+    public void deleteFile(Path filePath) {
+        try {
+            if (Files.exists(filePath)) {
+                Files.delete(filePath);
+                this.showMessage(Component.translatable("message.oneenoughitem.file_deleted", filePath.getFileName().toString()).withStyle(ChatFormatting.GREEN));
+
+                if (filePath.equals(this.currentFilePath)) {
+                    this.currentFilePath = null;
+                    this.currentFileName = "";
+                    this.currentJsonObjects = null;
+                    this.currentObjectIndex = -1;
+                    clearMatchItems();
+                    clearResultItem();
+                    notifyUiUpdate();
+                }
+            } else {
+                this.showError(Component.translatable("error.oneenoughitem.file_not_exists", filePath.toString()).withStyle(ChatFormatting.RED));
+            }
+        } catch (IOException e) {
+            this.showError(Component.translatable("error.oneenoughitem.file_delete_failed", e.getMessage()).withStyle(ChatFormatting.RED));
+            Oneenoughitem.LOGGER.error("Failed to delete file", e);
         }
     }
 
@@ -397,63 +446,37 @@ public class ReplacementEditorManager {
         }
     }
 
-    private JsonArray readExistingJsonArray() {
-        JsonArray existingArray;
+    private JsonArray readExistingJsonObjects() {
+        JsonArray existingObjects;
         if (Files.exists(this.currentFilePath)) {
             try {
                 String content = Files.readString(this.currentFilePath);
                 if (content.trim().isEmpty()) {
-                    existingArray = new JsonArray();
+                    existingObjects = new JsonArray();
                 } else {
                     JsonElement parsed = GSON.fromJson(content, JsonElement.class);
                     if (parsed != null && parsed.isJsonArray()) {
-                        existingArray = parsed.getAsJsonArray();
+                        existingObjects = parsed.getAsJsonArray();
                     } else {
                         this.showError(Component.translatable("error.oneenoughitem.file_format_error").withStyle(ChatFormatting.RED));
-                        existingArray = new JsonArray();
+                        existingObjects = new JsonArray();
                     }
                 }
             } catch (Exception e) {
                 this.showError(Component.translatable("error.oneenoughitem.file_parse_failed", e.getMessage()).withStyle(ChatFormatting.RED));
-                Oneenoughitem.LOGGER.warn("Failed to parse existing file, creating new array", e);
-                existingArray = new JsonArray();
+                Oneenoughitem.LOGGER.warn("Failed to parse existing file, creating new objects", e);
+                existingObjects = new JsonArray();
             }
         } else {
-            existingArray = new JsonArray();
+            existingObjects = new JsonArray();
         }
-        return existingArray;
+        return existingObjects;
     }
 
-    private void saveJsonArrayToFile(JsonArray jsonArray) throws IOException {
+    private void saveJsonObjectsToFile(JsonArray jsonArray) throws IOException {
         try (FileWriter writer = new FileWriter(this.currentFilePath.toFile())) {
             GSON.toJson(jsonArray, writer);
             writer.flush();
-        }
-    }
-
-    public void loadFromFile(Path filePath) {
-        try {
-            if (!Files.exists(filePath)) {
-                this.showError(Component.translatable("error.oneenoughitem.file_not_exists", filePath.toString()).withStyle(ChatFormatting.RED));
-                return;
-            }
-
-            this.currentFilePath = filePath;
-            String fileName = filePath.getFileName().toString();
-            if (fileName.endsWith(".json")) {
-                this.currentFileName = fileName.substring(0, fileName.length() - 5);
-            } else {
-                this.currentFileName = fileName;
-            }
-
-            this.currentJsonArray = this.readExistingJsonArray();
-            this.currentArrayIndex = -1;
-
-            this.showMessage(Component.translatable("message.oneenoughitem.file_loaded", fileName).withStyle(ChatFormatting.GREEN));
-
-        } catch (Exception e) {
-            this.showError(Component.translatable("error.oneenoughitem.file_load_failed", e.getMessage()).withStyle(ChatFormatting.RED));
-            Oneenoughitem.LOGGER.error("Failed to load file", e);
         }
     }
 
