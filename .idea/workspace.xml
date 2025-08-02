@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9516c189-d458-467d-a9ab-dc31d8e0c235" name="更改" comment="tiny up">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="9516c189-d458-467d-a9ab-dc31d8e0c235" name="更改" comment="1.0.3" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -61,7 +59,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="fabric" />
+        <entry key="$PROJECT_DIR$" value="fabric-1.21.1" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -133,7 +131,7 @@
       <recent name="F:\code\mcmod\project\OneEnoughItem\src\main\resources\data\oneenoughitem\oneenoughitem" />
     </key>
   </component>
-  <component name="RunManager" selected="Gradle.OneEnoughItem [runClient]">
+  <component name="RunManager" selected="Gradle.OneEnoughItem [build]">
     <configuration name="OneEnoughItem [build]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -239,10 +237,10 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Gradle.OneEnoughItem [build]" />
         <item itemvalue="Gradle.OneEnoughItem [runClient]" />
         <item itemvalue="Gradle.OneEnoughItem [runServer]" />
         <item itemvalue="Gradle.OneEnoughItem [clean]" />
-        <item itemvalue="Gradle.OneEnoughItem [build]" />
         <item itemvalue="Gradle.OneEnoughItem [runClient]" />
       </list>
     </recent_temporary>
@@ -300,7 +298,15 @@
       <option name="project" value="LOCAL" />
       <updated>1754014436485</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="1.0.3">
+      <option name="closed" value="true" />
+      <created>1754068996471</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1754068996471</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -324,7 +330,8 @@
     <MESSAGE value="使用前置重构数据驱动" />
     <MESSAGE value="gitignore" />
     <MESSAGE value="tiny up" />
-    <option name="LAST_COMMIT_MESSAGE" value="tiny up" />
+    <MESSAGE value="1.0.3" />
+    <option name="LAST_COMMIT_MESSAGE" value="1.0.3" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="VgoProject">

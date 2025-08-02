@@ -4,10 +4,14 @@ import com.mafuyu404.oelib.core.DataManager;
 import com.mafuyu404.oelib.event.DataReloadEvent;
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.client.ModKeyMappings;
+import com.mafuyu404.oneenoughitem.client.gui.ModernFixWarningScreen;
 import com.mafuyu404.oneenoughitem.client.gui.ReplacementEditorScreen;
+import com.mafuyu404.oneenoughitem.client.util.ModernFixDetector;
 import com.mafuyu404.oneenoughitem.data.Replacements;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -25,6 +29,18 @@ public class ModEventHandler {
         }
     }
 
+    @SubscribeEvent
+    public static void onScreenOpen(ScreenEvent.Opening event) {
+        if (event.getNewScreen() instanceof TitleScreen) {
+            if (ModernFixDetector.shouldShowWarning()) {
+                ModernFixDetector.markWarningShown();
+                Minecraft.getInstance().tell(() -> {
+                    Minecraft.getInstance().setScreen(new ModernFixWarningScreen(event.getNewScreen()));
+                });
+                event.setCanceled(true);
+            }
+        }
+    }
 
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
