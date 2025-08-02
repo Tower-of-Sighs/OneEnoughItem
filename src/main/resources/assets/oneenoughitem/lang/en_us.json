@@ -119,5 +119,8 @@
   "oneenoughitem.modernfix.warning.line2": " To ensure replaced items work correctly with recipes,",
   "oneenoughitem.modernfix.warning.link": "please set it to false",
   "oneenoughitem.modernfix.warning.suffix": "and restart the game",
-  "oneenoughitem.modernfix.warning.hover": "Click to open config file: %s"
+  "oneenoughitem.modernfix.warning.hover": "Click to open config file: %s",
+
+  "key.categories.oneenoughitem": "OneEnoughItem",
+  "key.oneenoughitem.open_editor": "Open Replacement Screen"
 }
