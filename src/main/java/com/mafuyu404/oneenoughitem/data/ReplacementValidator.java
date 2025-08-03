@@ -6,18 +6,19 @@ import com.mafuyu404.oneenoughitem.init.Utils;
 import net.minecraft.resources.ResourceLocation;
 
 public class ReplacementValidator implements DataValidator<Replacements> {
-    
+
     @Override
     public ValidationResult validate(Replacements replacement, ResourceLocation source) {
         // 验证目标物品是否存在
         if (Utils.getItemById(replacement.resultItems()) == null) {
             return ValidationResult.failure("Target item '" + replacement.resultItems() + "' does not exist");
         }
-        
+
         // 验证是否至少有一个有效的源物品
         boolean hasValidSource = false;
+        boolean hasUnresolvedTags = false;
         int validSourceCount = 0;
-        
+
         for (String matchItem : replacement.matchItems()) {
             if (matchItem.startsWith("#")) {
                 // 处理标签
@@ -36,12 +37,15 @@ public class ReplacementValidator implements DataValidator<Replacements> {
                                     source, matchItem);
                         }
                     } else {
-                        Oneenoughitem.LOGGER.warn("Invalid tag in {}: '{}' does not exist",
+                        // tag不存在，可能是tag系统未初始化
+                        hasUnresolvedTags = true;
+                        Oneenoughitem.LOGGER.debug("Tag in {} not found (may be uninitialized): '{}'",
                                 source, matchItem);
                     }
                 } catch (Exception e) {
                     Oneenoughitem.LOGGER.error("Invalid tag format in {}: '{}'",
                             source, matchItem, e);
+                    return ValidationResult.failure("Invalid tag format: " + matchItem);
                 }
             } else {
                 // 处理普通物品
@@ -54,14 +58,19 @@ public class ReplacementValidator implements DataValidator<Replacements> {
                 }
             }
         }
-        
+
+        if (!hasValidSource && hasUnresolvedTags) {
+            // 如果没有有效源物品但有未解析的tag，则延迟验证
+            return ValidationResult.deferred("Contains unresolved tags, validation deferred until tag system is ready");
+        }
+
         if (!hasValidSource) {
             return ValidationResult.failure("No valid source items found for target '" + replacement.resultItems() + "'");
         }
-        
+
         Oneenoughitem.LOGGER.debug("Replacement in {} validated: {} source items -> {}",
                 source, validSourceCount, replacement.resultItems());
-        
+
         return ValidationResult.success();
     }
 }

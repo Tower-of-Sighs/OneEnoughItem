@@ -196,9 +196,9 @@ dependencies {
 
     compileOnly fg.deobf("mezz.jei:jei-1.20.1-forge-api:15.20.0.104")
     implementation fg.deobf("mezz.jei:jei-1.20.1-forge:15.20.0.104")
-    compileOnly fg.deobf("libs:OELib:forge-1.20.1-0.0.1")
-    runtimeOnly fg.deobf("libs:OELib:forge-1.20.1-0.0.1")
-    implementation fg.deobf("libs:OELib:forge-1.20.1-0.0.1")
+    compileOnly fg.deobf("libs:oelib:0.0.2")
+    runtimeOnly fg.deobf("libs:oelib:0.0.2")
+    implementation fg.deobf("libs:oelib:0.0.2")
 }
 
 

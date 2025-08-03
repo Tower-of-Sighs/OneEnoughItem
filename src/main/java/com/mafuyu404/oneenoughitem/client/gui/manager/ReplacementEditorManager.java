@@ -195,7 +195,7 @@ public class ReplacementEditorManager {
     public void createReplacementFile(String datapackName, String fileName) {
         try {
             Path datapackPath = PathUtils.getDatapackPath(datapackName);
-            Path replacementsPath = datapackPath.resolve("data/oneenoughitem/oneenoughitem/replacements");
+            Path replacementsPath = datapackPath.resolve("data/oneenoughitem/replacements");
 
             Files.createDirectories(replacementsPath);
 
