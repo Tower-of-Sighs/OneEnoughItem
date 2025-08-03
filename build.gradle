@@ -203,6 +203,9 @@ dependencies {
         jarJar.ranged(it, '[0.0.2,1.0.0)')
     }
 //    implementation fg.deobf("curse.maven:farmers-delight-398521:6597298")
+    implementation fg.deobf("curse.maven:kubejs-238086:5853326")
+    implementation fg.deobf("curse.maven:rhino-416294:6186971")
+    implementation fg.deobf("curse.maven:architectury-api-419699:5137938")
 }
 
 

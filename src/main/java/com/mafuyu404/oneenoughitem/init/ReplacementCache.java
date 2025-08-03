@@ -5,7 +5,9 @@ import com.mafuyu404.oneenoughitem.data.Replacements;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 public class ReplacementCache {
@@ -83,5 +85,13 @@ public class ReplacementCache {
 
     public static int getTagCacheSize() {
         return TagMapCache.size();
+    }
+
+    public static Collection<String> trackSourceOf(String id) {
+        Collection<String> result = new HashSet<>();
+        ItemMapCache.forEach((matchItem, resultItem) -> {
+            if (resultItem.equals(id)) result.add(matchItem);
+        });
+        return result;
     }
 }

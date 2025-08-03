@@ -7,7 +7,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.List;
 
 @DataDriven(
-        modid = "oneenoughitem",
+        modid = "oei",
         folder = "replacements",
         syncToClient = true,
         validator = ReplacementValidator.class,

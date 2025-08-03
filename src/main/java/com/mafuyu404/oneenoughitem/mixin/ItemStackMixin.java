@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import javax.annotation.Nullable;
 
@@ -67,6 +68,26 @@ public class ItemStackMixin {
             Oneenoughitem.LOGGER.error("ItemStackMixin: Failed to replace item: {}", itemInfo, e);
         }
     }
+
+    @Inject(method = "is(Lnet/minecraft/world/item/Item;)Z", at = @At("HEAD"), cancellable = true)
+    private void extend(Item inputItem, CallbackInfoReturnable<Boolean> cir) {
+        boolean matched = item == inputItem;
+        // 直接一致了就没必要往下了
+        if (matched) return;
+
+        String inputItemId = Utils.getItemRegistryName(inputItem);
+        String ItemId = Utils.getItemRegistryName(item);
+
+        for (String matchId : ReplacementCache.trackSourceOf(ItemId)) {
+            if (matchId.equals(inputItemId)) {
+                matched = true;
+                break;
+            }
+        }
+
+        cir.setReturnValue(matched);
+    }
+
     private boolean isInCreativeModeTabBuilding() {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         for (StackTraceElement element : stackTrace) {
