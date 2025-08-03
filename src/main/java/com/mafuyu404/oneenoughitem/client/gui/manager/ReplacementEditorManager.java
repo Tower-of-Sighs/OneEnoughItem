@@ -580,7 +580,6 @@ public class ReplacementEditorManager {
             if (Minecraft.getInstance().player != null) {
                 Minecraft.getInstance().player.connection.sendCommand("reload");
 
-                // 重载后重建全局缓存
                 GlobalReplacementCache.rebuild();
 
                 this.showMessage(Component.translatable("message.oneenoughitem.datapack_reload_triggered").withStyle(ChatFormatting.GREEN));

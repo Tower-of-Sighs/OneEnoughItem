@@ -28,10 +28,12 @@ public class ModEventHandler {
     @SubscribeEvent
     public static void onDataReload(DataReloadEvent event) {
         if (event.isDataType(Replacements.class)) {
-            rebuildReplacementCache();
-            GlobalReplacementCache.rebuild();
-            Oneenoughitem.LOGGER.info("Replacement cache rebuilt due to data reload: {} entries loaded, {} invalid",
-                    event.getLoadedCount(), event.getInvalidCount());
+            Minecraft.getInstance().execute(() -> {
+                rebuildReplacementCache();
+                GlobalReplacementCache.rebuild();
+                Oneenoughitem.LOGGER.info("Replacement cache rebuilt due to data reload: {} entries loaded, {} invalid",
+                        event.getLoadedCount(), event.getInvalidCount());
+            });
         }
     }
 
