@@ -1,6 +1,7 @@
 package com.mafuyu404.oneenoughitem.mixin;
 
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
+import com.mafuyu404.oneenoughitem.init.Config;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.ReplacementControl;
 import com.mafuyu404.oneenoughitem.init.Utils;
@@ -71,6 +72,8 @@ public class ItemStackMixin {
 
     @Inject(method = "is(Lnet/minecraft/world/item/Item;)Z", at = @At("HEAD"), cancellable = true)
     private void extend(Item inputItem, CallbackInfoReturnable<Boolean> cir) {
+        if (!Config.DEEPER_REPLACE.get()) return;
+
         boolean matched = item == inputItem;
         // 直接一致了就没必要往下了
         if (matched) return;

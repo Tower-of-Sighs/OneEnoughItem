@@ -5,8 +5,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="9516c189-d458-467d-a9ab-dc31d8e0c235" name="更改" comment="跟进forge更新">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/build.gradle" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/mafuyu404/oneenoughitem/mixin/ForgeRegistryTagMixin.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mafuyu404/oneenoughitem/client/ModKeyMappings.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mafuyu404/oneenoughitem/client/ModKeyMappings.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mafuyu404/oneenoughitem/event/ClientEventHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mafuyu404/oneenoughitem/event/ClientEventHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mafuyu404/oneenoughitem/event/ModEventHandler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mafuyu404/oneenoughitem/event/ModEventHandler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mafuyu404/oneenoughitem/init/Config.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mafuyu404/oneenoughitem/init/Config.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mafuyu404/oneenoughitem/init/Utils.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mafuyu404/oneenoughitem/init/Utils.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mafuyu404/oneenoughitem/mixin/ItemMixin.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mafuyu404/oneenoughitem/mixin/ItemMixin.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mafuyu404/oneenoughitem/mixin/ItemStackMixin.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mafuyu404/oneenoughitem/mixin/ItemStackMixin.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,6 +50,12 @@
                 <item name="oneenoughitem" type="f1a62948:ProjectNode" />
                 <item name="Tasks" type="e4a08cd1:TasksNode" />
                 <item name="build" type="c8890929:TasksNode$1" />
+              </path>
+              <path>
+                <item name="" type="6a2764b6:ExternalProjectsStructure$RootNode" />
+                <item name="oneenoughitem" type="f1a62948:ProjectNode" />
+                <item name="Tasks" type="e4a08cd1:TasksNode" />
+                <item name="build setup" type="c8890929:TasksNode$1" />
               </path>
             </expand>
             <select />

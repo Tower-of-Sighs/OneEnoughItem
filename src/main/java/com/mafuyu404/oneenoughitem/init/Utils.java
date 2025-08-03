@@ -1,10 +1,13 @@
 package com.mafuyu404.oneenoughitem.init;
 
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.tags.ITag;
 import net.minecraftforge.registries.tags.ITagManager;
 
 import java.util.ArrayList;

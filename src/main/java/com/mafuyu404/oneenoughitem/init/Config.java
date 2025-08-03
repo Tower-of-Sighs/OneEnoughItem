@@ -15,20 +15,27 @@ import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(modid = Oneenoughitem.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Config {
+    public static final ForgeConfigSpec SPEC;
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
 
-    private static final ForgeConfigSpec.ConfigValue<List<? extends String>> ITEM_STRINGS = BUILDER.comment("A list of items to log on common setup.").defineListAllowEmpty("items", List.of("minecraft:iron_ingot"), Config::validateItemName);
+//    public static final ForgeConfigSpec.ConfigValue<Boolean> BREAK_INVALID_TAGS;
+    public static final ForgeConfigSpec.ConfigValue<Boolean> DEEPER_REPLACE;
+    public static final ForgeConfigSpec.ConfigValue<Boolean> CLEAR_FOOD_PROPERTIES;
 
-    public static final ForgeConfigSpec SPEC = BUILDER.build();
+    static {
+        BUILDER.push("OEI Setting");
 
-    public static Set<Item> items;
+//        BREAK_INVALID_TAGS = BUILDER
+//                .comment("There won't any items in tags if items were replaced.")
+//                .define("BreakInvalidTags", false);
+        DEEPER_REPLACE = BUILDER
+                .comment("For example, now you can heal iron golem with eggs that replaced iron ingot.")
+                .define("DeeperReplace", false);
+        CLEAR_FOOD_PROPERTIES = BUILDER
+                .comment("There won't any items in food list if items were replaced.")
+                .define("ClearFoodProperties", true);
+        BUILDER.pop();
 
-    private static boolean validateItemName(final Object obj) {
-        return obj instanceof final String itemName && ForgeRegistries.ITEMS.containsKey(new ResourceLocation(itemName));
-    }
-
-    @SubscribeEvent
-    static void onLoad(final ModConfigEvent event) {
-        items = ITEM_STRINGS.get().stream().map(itemName -> ForgeRegistries.ITEMS.getValue(new ResourceLocation(itemName))).collect(Collectors.toSet());
+        SPEC = BUILDER.build();
     }
 }

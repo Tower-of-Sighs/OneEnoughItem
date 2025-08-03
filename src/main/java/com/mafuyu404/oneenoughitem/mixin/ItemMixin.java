@@ -1,6 +1,7 @@
 package com.mafuyu404.oneenoughitem.mixin;
 
 import com.mafuyu404.oneenoughitem.api.EditableItem;
+import com.mafuyu404.oneenoughitem.init.Config;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.Utils;
 import net.minecraft.world.food.FoodProperties;
@@ -47,6 +48,8 @@ public abstract class ItemMixin implements EditableItem {
 
     @Inject(method = "getFoodProperties", at = @At("HEAD"), cancellable = true)
     private void qq(CallbackInfoReturnable<FoodProperties> cir) {
+        if (!Config.CLEAR_FOOD_PROPERTIES.get()) return;
+
         String itemId = Utils.getItemRegistryName(asItem());
         if (itemId != null) {
             String matched = ReplacementCache.matchItem(itemId);
