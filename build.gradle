@@ -199,7 +199,10 @@ dependencies {
     compileOnly fg.deobf("curse.maven:oelib-1319210:6841973")
     runtimeOnly fg.deobf("curse.maven:oelib-1319210:6841973")
     implementation fg.deobf("curse.maven:oelib-1319210:6841973")
-    implementation fg.deobf("curse.maven:farmers-delight-398521:6597298")
+    jarJar("curse.maven:oelib-1319210:6841973"){
+        jarJar.ranged(it, '[0.0.2,1.0.0)')
+    }
+//    implementation fg.deobf("curse.maven:farmers-delight-398521:6597298")
 }
 
 
