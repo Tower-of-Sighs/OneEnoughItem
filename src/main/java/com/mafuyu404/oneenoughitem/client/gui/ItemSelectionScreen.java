@@ -1,6 +1,11 @@
 package com.mafuyu404.oneenoughitem.client.gui;
 
+import com.mafuyu404.oneenoughitem.client.gui.cache.GlobalReplacementCache;
 import com.mafuyu404.oneenoughitem.client.gui.components.ItemGridWidget;
+import com.mafuyu404.oneenoughitem.init.ReplacementCache;
+import com.mafuyu404.oneenoughitem.init.ReplacementControl;
+import com.mafuyu404.oneenoughitem.init.Utils;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -178,7 +183,10 @@ public class ItemSelectionScreen extends Screen {
         int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, this.filteredItems.size());
 
         for (int i = startIndex; i < endIndex; i++) {
-            pageItems.add(new ItemStack(this.filteredItems.get(i)));
+            int finalI = i;
+            ItemStack itemStack = ReplacementControl.withSkipReplacement(() ->
+                    new ItemStack(this.filteredItems.get(finalI)));
+            pageItems.add(itemStack);
         }
 
         this.itemGrid.setItems(pageItems);
@@ -208,6 +216,48 @@ public class ItemSelectionScreen extends Screen {
     }
 
     private void selectItem(ItemStack itemStack) {
+        String itemId = Utils.getItemRegistryName(itemStack.getItem());
+        if (itemId != null) {
+            // 检查物品是否已被替换（优先检查运行时缓存）
+            String runtimeReplacement = ReplacementCache.matchItem(itemId);
+            String globalReplacement = GlobalReplacementCache.getItemReplacement(itemId);
+
+            if (runtimeReplacement != null || globalReplacement != null) {
+                // 显示错误消息
+                if (this.minecraft.player != null) {
+                    this.minecraft.player.displayClientMessage(
+                            Component.translatable("error.oneenoughitem.item_already_replaced").withStyle(ChatFormatting.RED),
+                            false
+                    );
+                }
+                return;
+            }
+
+            if (this.isForMatch) {
+                // 对于匹配项，检查是否已经是其他规则的结果物品
+                if (GlobalReplacementCache.isItemUsedAsResult(itemId)) {
+                    if (this.minecraft.player != null) {
+                        this.minecraft.player.displayClientMessage(
+                                Component.translatable("error.oneenoughitem.item_used_as_result").withStyle(ChatFormatting.RED),
+                                false
+                        );
+                    }
+                    return;
+                }
+            } else {
+                // 对于结果项，检查是否已经是其他规则的匹配项
+                if (GlobalReplacementCache.isItemReplaced(itemId)) {
+                    if (this.minecraft.player != null) {
+                        this.minecraft.player.displayClientMessage(
+                                Component.translatable("error.oneenoughitem.result_item_used_as_match").withStyle(ChatFormatting.RED),
+                                false
+                        );
+                    }
+                    return;
+                }
+            }
+        }
+
         if (this.isForMatch) {
             this.parent.addMatchItem(itemStack.getItem());
         } else {
@@ -215,7 +265,6 @@ public class ItemSelectionScreen extends Screen {
         }
         this.onClose();
     }
-
     @Override
     public void onClose() {
         this.minecraft.setScreen(this.parent);

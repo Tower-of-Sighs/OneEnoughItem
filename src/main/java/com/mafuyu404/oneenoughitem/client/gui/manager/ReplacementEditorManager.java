@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
+import com.mafuyu404.oneenoughitem.client.gui.cache.GlobalReplacementCache;
 import com.mafuyu404.oneenoughitem.client.gui.util.PathUtils;
 import com.mafuyu404.oneenoughitem.data.Replacements;
 import com.mafuyu404.oneenoughitem.init.Utils;
@@ -22,6 +23,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Consumer;
 
 public class ReplacementEditorManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -39,6 +41,7 @@ public class ReplacementEditorManager {
 
     private Runnable uiUpdateCallback;
 
+    // Getters
     public Set<Item> getMatchItems() { return new HashSet<>(matchItems); }
     public Set<ResourceLocation> getMatchTags() { return new HashSet<>(matchTags); }
     public Item getResultItem() { return resultItem; }
@@ -57,17 +60,12 @@ public class ReplacementEditorManager {
         }
     }
 
-    public void addMatchItem(Item item) {
-        this.matchItems.add(item);
-    }
-
-    public void addMatchTag(ResourceLocation tagId) {
-        this.matchTags.add(tagId);
-    }
+    public void addMatchItem(Item item) { this.matchItems.add(item); }
+    public void addMatchTag(ResourceLocation tagId) { this.matchTags.add(tagId); }
+    public void removeMatchTag(ResourceLocation tagId) { this.matchTags.remove(tagId); }
 
     public boolean removeMatchItem(Item item) {
         String targetItemId = Utils.getItemRegistryName(item);
-
         if (targetItemId == null) {
             Oneenoughitem.LOGGER.warn("removeMatchItem: Target item ID is null for item: {}", item);
             return false;
@@ -77,10 +75,6 @@ public class ReplacementEditorManager {
             String existingItemId = Utils.getItemRegistryName(existingItem);
             return targetItemId.equals(existingItemId);
         });
-        }
-
-    public void removeMatchTag(ResourceLocation tagId) {
-        this.matchTags.remove(tagId);
     }
 
     public void setResultItem(Item item) {
@@ -124,7 +118,7 @@ public class ReplacementEditorManager {
     }
 
     private void loadReplacementFromObject(int index) {
-        try {
+        executeWithErrorHandling(() -> {
             JsonElement element = this.currentJsonObjects.get(index);
             var result = Replacements.CODEC.parse(JsonOps.INSTANCE, element);
 
@@ -134,87 +128,94 @@ public class ReplacementEditorManager {
                 clearMatchItems();
                 clearResultItem();
 
+                // 处理匹配项
                 for (String matchItem : replacement.matchItems()) {
-
                     if (matchItem.startsWith("#")) {
-                        ResourceLocation tagId = new ResourceLocation(matchItem.substring(1));
-                        this.matchTags.add(tagId);
+                        this.matchTags.add(new ResourceLocation(matchItem.substring(1)));
                     } else {
-                        ResourceLocation itemId = new ResourceLocation(matchItem);
-                        Item item = BuiltInRegistries.ITEM.get(itemId);
-                        if (item != Items.AIR) {
+                        Item item = BuiltInRegistries.ITEM.get(new ResourceLocation(matchItem));
+                        if (item != null && item != Items.AIR) {
                             this.matchItems.add(item);
                         }
                     }
                 }
 
+                // 处理结果项
                 String resultString = replacement.resultItems();
                 if (resultString.startsWith("#")) {
                     this.resultTag = new ResourceLocation(resultString.substring(1));
                 } else {
-                    ResourceLocation itemId = new ResourceLocation(resultString);
-                    this.resultItem = BuiltInRegistries.ITEM.get(itemId);
+                    this.resultItem = BuiltInRegistries.ITEM.get(new ResourceLocation(resultString));
                 }
 
                 notifyUiUpdate();
-                this.showMessage(Component.translatable("message.oneenoughitem.object_loaded", index + 1).withStyle(ChatFormatting.GREEN));
+                showMessage(Component.translatable("message.oneenoughitem.object_loaded", index + 1)
+                        .withStyle(ChatFormatting.GREEN));
             } else {
-                this.showError(Component.translatable("error.oneenoughitem.object_parse_failed", index + 1).withStyle(ChatFormatting.RED));
+                showError(Component.translatable("error.oneenoughitem.object_parse_failed", index + 1)
+                        .withStyle(ChatFormatting.RED));
             }
-        } catch (Exception e) {
-            this.showError(Component.translatable("error.oneenoughitem.object_load_error", e.getMessage()).withStyle(ChatFormatting.RED));
-            Oneenoughitem.LOGGER.error("Failed to load replacement from object", e);
-        }
+        }, e -> showError(Component.translatable("error.oneenoughitem.object_load_error", e.getMessage())
+                .withStyle(ChatFormatting.RED)));
     }
-
 
     public void deleteObjectElement(int index) {
         if (this.currentJsonObjects == null || index < 0 || index >= this.currentJsonObjects.size()) {
-            this.showError(Component.translatable("error.oneenoughitem.object_index_invalid").withStyle(ChatFormatting.RED));
+            showError(Component.translatable("error.oneenoughitem.object_index_invalid")
+                    .withStyle(ChatFormatting.RED));
             return;
         }
 
-        try {
+        executeWithErrorHandling(() -> {
+            // 从全局缓存中移除对应的替换规则
+            JsonElement element = this.currentJsonObjects.get(index);
+            removeReplacementFromCache(element);
+
+            // 删除JSON元素
             this.currentJsonObjects.remove(index);
             this.saveJsonObjectsToFile(this.currentJsonObjects);
 
-            // 如果删除的是当前编辑的元素，切换到添加模式
-            if (this.currentObjectIndex == index) {
-                setCurrentObjectIndex(-1);
-            } else if (this.currentObjectIndex > index) {
-                // 如果当前索引在删除索引之后，需要调整
-                this.currentObjectIndex--;
+            showMessage(Component.translatable("message.oneenoughitem.object_element_deleted", index + 1)
+                    .withStyle(ChatFormatting.GREEN));
+
+            // 如果删除后数组为空，重建全局缓存以确保一致性
+            if (this.currentJsonObjects.isEmpty()) {
+                Oneenoughitem.LOGGER.debug("JSON array is now empty, rebuilding global cache to ensure consistency");
+                GlobalReplacementCache.rebuild();
+            }
+        }, e -> showError(Component.translatable("error.oneenoughitem.object_delete_failed", e.getMessage())
+                .withStyle(ChatFormatting.RED)));
+    }
+
+    private void removeReplacementFromCache(JsonElement element) {
+        var result = Replacements.CODEC.parse(JsonOps.INSTANCE, element);
+        if (result.result().isPresent()) {
+            Replacements replacement = result.result().get();
+
+            List<String> matchItemsList = new ArrayList<>();
+            List<String> matchTagsList = new ArrayList<>();
+
+            for (String matchItem : replacement.matchItems()) {
+                if (matchItem.startsWith("#")) {
+                    matchTagsList.add(matchItem.substring(1));
+                } else {
+                    matchItemsList.add(matchItem);
+                }
             }
 
-            this.showMessage(Component.translatable("message.oneenoughitem.object_element_deleted", index + 1).withStyle(ChatFormatting.GREEN));
-        } catch (IOException e) {
-            this.showError(Component.translatable("error.oneenoughitem.object_delete_failed", e.getMessage()).withStyle(ChatFormatting.RED));
-            Oneenoughitem.LOGGER.error("Failed to delete object element", e);
+            GlobalReplacementCache.removeReplacement(matchItemsList, matchTagsList);
+            Oneenoughitem.LOGGER.debug("Removed replacement from global cache: items={}, tags={}",
+                    matchItemsList, matchTagsList);
         }
     }
 
     public void createReplacementFile(String datapackName, String fileName) {
-        try {
+        executeWithErrorHandling(() -> {
             Path datapackPath = PathUtils.getDatapackPath(datapackName);
-            Path replacementsPath = datapackPath.resolve("data/oneenoughitem/oneenoughitem/replacements");
+            Path replacementsPath = datapackPath.resolve("data/oneenoughitem/replacements");
 
             Files.createDirectories(replacementsPath);
-
-            Path packMcmetaPath = datapackPath.resolve("pack.mcmeta");
-            if (!Files.exists(packMcmetaPath)) {
-                String packMcmetaContent = """
-                        {
-                           "pack": {
-                             "description": "The automatically generated OEI data pack",
-                             "pack_format": 15
-                           }
-                        }""";
-
-                try (FileWriter writer = new FileWriter(packMcmetaPath.toFile())) {
-                    writer.write(packMcmetaContent);
-                }
-                Oneenoughitem.LOGGER.info("Created pack.mcmeta file: {}", packMcmetaPath);
-            }
+            createPackMcmetaIfNeeded(datapackPath);
 
             Path filePath = replacementsPath.resolve(fileName + ".json");
             JsonArray emptyObjects = new JsonArray();
@@ -228,73 +229,86 @@ public class ReplacementEditorManager {
             this.currentJsonObjects = emptyObjects;
             this.currentObjectIndex = -1;
 
-            this.showMessage(Component.translatable("message.oneenoughitem.file_created", filePath.toString()).withStyle(ChatFormatting.GREEN));
+            showMessage(Component.translatable("message.oneenoughitem.file_created", filePath.toString())
+                    .withStyle(ChatFormatting.GREEN));
             Oneenoughitem.LOGGER.info("Created replacement file: {}", filePath);
+        }, e -> showError(Component.translatable("error.oneenoughitem.file_create_failed", e.getMessage())
+                .withStyle(ChatFormatting.RED)));
+    }
 
-        } catch (IOException e) {
-            this.showError(Component.translatable("error.oneenoughitem.file_create_failed", e.getMessage()).withStyle(ChatFormatting.RED));
-            Oneenoughitem.LOGGER.error("Failed to create replacement file", e);
+    private void createPackMcmetaIfNeeded(Path datapackPath) throws IOException {
+        Path packMcmetaPath = datapackPath.resolve("pack.mcmeta");
+        if (!Files.exists(packMcmetaPath)) {
+            String packMcmetaContent = """
+                    {
+                       "pack": {
+                         "description": "The automatically generated OEI data pack",
+                         "pack_format": 15
+                       }
+                    }""";
+
+            try (FileWriter writer = new FileWriter(packMcmetaPath.toFile())) {
+                writer.write(packMcmetaContent);
+            }
+            Oneenoughitem.LOGGER.info("Created pack.mcmeta file: {}", packMcmetaPath);
         }
     }
 
     public void selectJsonFile(Path selectedPath, int mode) {
-        try {
+        executeWithErrorHandling(() -> {
             this.currentFilePath = selectedPath;
             String fileName = selectedPath.getFileName().toString();
-            if (fileName.endsWith(".json")) {
-                this.currentFileName = fileName.substring(0, fileName.length() - 5);
-            } else {
-                this.currentFileName = fileName;
-            }
+            this.currentFileName = fileName.endsWith(".json") ?
+                    fileName.substring(0, fileName.length() - 5) : fileName;
 
             if (!Files.exists(this.currentFilePath)) {
-                try {
-                    Files.createDirectories(this.currentFilePath.getParent());
-                    JsonArray emptyObjects = new JsonArray();
-                    try (FileWriter writer = new FileWriter(this.currentFilePath.toFile())) {
-                        GSON.toJson(emptyObjects, writer);
-                    }
-                    this.currentJsonObjects = emptyObjects;
-                } catch (IOException e) {
-                    this.showError(Component.translatable("error.oneenoughitem.file_create_failed", e.getMessage()).withStyle(ChatFormatting.RED));
-                    return;
-                }
+                createEmptyJsonFile();
             } else {
                 this.currentJsonObjects = this.readExistingJsonObjects();
             }
 
             clearMatchItems();
             clearResultItem();
-
-            if (mode == 1) {
-                this.currentObjectIndex = 0; // 默认选择第一个元素
-                if (!this.currentJsonObjects.isEmpty()) {
-                    loadReplacementFromObject(0);
-                } else {
-                    // 如果数组为空，保持添加模式
-                    this.currentObjectIndex = -1;
-                }
-            } else {
-                this.currentObjectIndex = -1;
-            }
-
+            setupModeAndIndex(mode);
             notifyUiUpdate();
 
-            String modeKey = switch (mode) {
-                case 0 -> "mode.oneenoughitem.add";
-                case 1 -> "mode.oneenoughitem.modify";
-                case 2 -> "mode.oneenoughitem.remove";
-                default -> "mode.oneenoughitem.unknown";
-            };
-
-            this.showMessage(Component.translatable("message.oneenoughitem.file_selected",
+            String modeKey = getModeTranslationKey(mode);
+            showMessage(Component.translatable("message.oneenoughitem.file_selected",
                     fileName, Component.translatable(modeKey)).withStyle(ChatFormatting.GREEN));
-        } catch (Exception e) {
-            this.showError(Component.translatable("error.oneenoughitem.file_select_failed", e.getMessage()).withStyle(ChatFormatting.RED));
-            Oneenoughitem.LOGGER.error("Failed to select file", e);
+        }, e -> showError(Component.translatable("error.oneenoughitem.file_select_failed", e.getMessage())
+                .withStyle(ChatFormatting.RED)));
+    }
+
+    private void createEmptyJsonFile() throws IOException {
+        Files.createDirectories(this.currentFilePath.getParent());
+        JsonArray emptyObjects = new JsonArray();
+        try (FileWriter writer = new FileWriter(this.currentFilePath.toFile())) {
+            GSON.toJson(emptyObjects, writer);
+        }
+        this.currentJsonObjects = emptyObjects;
+    }
+
+    private void setupModeAndIndex(int mode) {
+        if (mode == 1) {
+            this.currentObjectIndex = 0; // 默认选择第一个元素
+            if (!this.currentJsonObjects.isEmpty()) {
+                loadReplacementFromObject(0);
+            } else {
+                this.currentObjectIndex = -1; // 如果数组为空，保持添加模式
+            }
+        } else {
+            this.currentObjectIndex = -1;
         }
     }
 
+    private String getModeTranslationKey(int mode) {
+        return switch (mode) {
+            case 0 -> "mode.oneenoughitem.add";
+            case 1 -> "mode.oneenoughitem.modify";
+            case 2 -> "mode.oneenoughitem.remove";
+            default -> "mode.oneenoughitem.unknown";
+        };
+    }
 
     public String getObjectElementDescription(int index) {
         if (this.currentJsonObjects == null || index < 0 || index >= this.currentJsonObjects.size()) {
@@ -307,7 +321,6 @@ public class ReplacementEditorManager {
 
             if (result.result().isPresent()) {
                 Replacements replacement = result.result().get();
-
                 int matchCount = replacement.matchItems().size();
                 String resultType = replacement.resultItems().startsWith("#") ?
                         Component.translatable("description.oneenoughitem.tag").getString() :
@@ -327,122 +340,204 @@ public class ReplacementEditorManager {
     }
 
     public void saveReplacement() {
-        // 检查匹配项是否为空
-        boolean hasMatchItems = !this.matchItems.isEmpty() || !this.matchTags.isEmpty();
-        // 检查结果项是否为空
-        boolean hasResultItem = this.resultItem != null || this.resultTag != null;
-
-        // 只有两个都有时才可以保存，其他情况都不可以保存
-        if (!hasMatchItems || !hasResultItem) {
-            if (!hasMatchItems && !hasResultItem) {
-                this.showError(Component.translatable("error.oneenoughitem.both_empty").withStyle(ChatFormatting.RED));
-            } else if (!hasMatchItems) {
-                this.showError(Component.translatable("error.oneenoughitem.missing_match_items").withStyle(ChatFormatting.RED));
-            } else {
-                this.showError(Component.translatable("error.oneenoughitem.missing_result_item").withStyle(ChatFormatting.RED));
-            }
+        // 验证输入
+        ValidationResult validation = validateReplacementInput();
+        if (!validation.isValid()) {
+            showError(validation.errorMessage());
             return;
         }
 
         if (this.currentFilePath == null) {
-            this.showError(Component.translatable("error.oneenoughitem.no_file_selected").withStyle(ChatFormatting.RED));
+            showError(Component.translatable("error.oneenoughitem.no_file_selected")
+                    .withStyle(ChatFormatting.RED));
             return;
         }
 
-        try {
-            // 创建正常的替换规则
-            List<String> matchItemsList = new ArrayList<>();
+        executeWithErrorHandling(() -> {
+            // 准备数据
+            ReplacementData data = prepareReplacementData();
 
-            for (Item item : this.matchItems) {
-                String itemId = Utils.getItemRegistryName(item);
-                if (itemId != null) {
-                    matchItemsList.add(itemId);
-                } else {
-                    Oneenoughitem.LOGGER.warn("Could not get registry name for item: {}", item);
-                }
+            // 添加到全局缓存
+            GlobalReplacementCache.addReplacement(
+                    data.matchItemsList(),
+                    data.matchTagsList(),
+                    data.resultItemString().startsWith("#") ? null : data.resultItemString(),
+                    data.resultItemString().startsWith("#") ? data.resultItemString() : null,
+                    this.currentFileName
+            );
+
+            // 合并匹配项和标签到一个列表中
+            List<String> allMatchItems = new ArrayList<>(data.matchItemsList());
+            // 为标签添加 # 前缀
+            for (String tag : data.matchTagsList()) {
+                allMatchItems.add("#" + tag);
             }
 
-            for (ResourceLocation tagId : this.matchTags) {
-                matchItemsList.add("#" + tagId.toString());
-            }
-
-            String resultItemString = this.getResultItemString();
-            if (resultItemString == null) {
-                return;
-            }
-
-            Replacements replacement = new Replacements(matchItemsList, resultItemString);
-
+            // 创建替换对象并编码
+            Replacements replacement = new Replacements(allMatchItems, data.resultItemString());
             var result = Replacements.CODEC.encodeStart(JsonOps.INSTANCE, replacement);
+
             if (result.result().isEmpty()) {
-                this.showError(Component.translatable("error.oneenoughitem.encode_failed").withStyle(ChatFormatting.RED));
+                showError(Component.translatable("error.oneenoughitem.encode_failed")
+                        .withStyle(ChatFormatting.RED));
                 return;
             }
 
             JsonElement replacementElement = result.result().get();
 
+            // 保存到JSON
             if (this.currentObjectIndex >= 0) {
-                if (this.currentObjectIndex < this.currentJsonObjects.size()) {
-                    this.currentJsonObjects.set(this.currentObjectIndex, replacementElement);
-                    this.showMessage(Component.translatable("message.oneenoughitem.object_updated", this.currentObjectIndex + 1).withStyle(ChatFormatting.GREEN));
-                } else {
-                    this.showError(Component.translatable("error.oneenoughitem.object_index_out_of_bounds").withStyle(ChatFormatting.RED));
-                    return;
-                }
+                updateExistingObject(replacementElement);
             } else {
-                this.currentJsonObjects.add(replacementElement);
-                this.showMessage(Component.translatable("message.oneenoughitem.replacement_added", this.currentFilePath.getFileName().toString()).withStyle(ChatFormatting.GREEN));
+                addNewObject(replacementElement);
             }
 
             this.saveJsonObjectsToFile(this.currentJsonObjects);
             Oneenoughitem.LOGGER.info("Saved replacement to file: {}", this.currentFilePath);
 
-        } catch (IOException e) {
-            this.showError(Component.translatable("error.oneenoughitem.save_failed", e.getMessage()).withStyle(ChatFormatting.RED));
-            Oneenoughitem.LOGGER.error("Failed to save replacement", e);
-        } catch (Exception e) {
-            this.showError(Component.translatable("error.oneenoughitem.unexpected_error", e.getMessage()).withStyle(ChatFormatting.RED));
-            Oneenoughitem.LOGGER.error("Unexpected error while saving replacement", e);
+        }, e -> {
+            if (e instanceof IOException) {
+                showError(Component.translatable("error.oneenoughitem.save_failed", e.getMessage())
+                        .withStyle(ChatFormatting.RED));
+            } else {
+                showError(Component.translatable("error.oneenoughitem.unexpected_error", e.getMessage())
+                        .withStyle(ChatFormatting.RED));
+            }
+        });
+    }
+
+    private record ValidationResult(boolean isValid, Component errorMessage) {}
+
+    private ValidationResult validateReplacementInput() {
+        boolean hasMatchItems = !this.matchItems.isEmpty() || !this.matchTags.isEmpty();
+        boolean hasResultItem = this.resultItem != null || this.resultTag != null;
+
+        if (!hasMatchItems && !hasResultItem) {
+            return new ValidationResult(false,
+                    Component.translatable("error.oneenoughitem.both_empty").withStyle(ChatFormatting.RED));
+        } else if (!hasMatchItems) {
+            return new ValidationResult(false,
+                    Component.translatable("error.oneenoughitem.missing_match_items").withStyle(ChatFormatting.RED));
+        } else if (!hasResultItem) {
+            return new ValidationResult(false,
+                    Component.translatable("error.oneenoughitem.missing_result_item").withStyle(ChatFormatting.RED));
+        }
+
+        return new ValidationResult(true, null);
+    }
+
+    private record ReplacementData(List<String> matchItemsList, List<String> matchTagsList, String resultItemString) {}
+
+    private ReplacementData prepareReplacementData() {
+        List<String> matchItemsList = new ArrayList<>();
+        List<String> matchTagsList = new ArrayList<>();
+
+        for (Item item : this.matchItems) {
+            String itemId = Utils.getItemRegistryName(item);
+            if (itemId != null) {
+                matchItemsList.add(itemId);
+            }
+        }
+
+        for (ResourceLocation tagId : this.matchTags) {
+            matchTagsList.add(tagId.toString());
+        }
+
+        String resultItemString = getResultItemString();
+        if (resultItemString == null) {
+            throw new RuntimeException("Failed to get result item string");
+        }
+
+        return new ReplacementData(matchItemsList, matchTagsList, resultItemString);
+    }
+
+    private void updateExistingObject(JsonElement replacementElement) {
+        if (this.currentObjectIndex < this.currentJsonObjects.size()) {
+            this.currentJsonObjects.set(this.currentObjectIndex, replacementElement);
+            showMessage(Component.translatable("message.oneenoughitem.object_updated", this.currentObjectIndex + 1)
+                    .withStyle(ChatFormatting.GREEN));
+        } else {
+            showError(Component.translatable("error.oneenoughitem.object_index_out_of_bounds")
+                    .withStyle(ChatFormatting.RED));
+            throw new RuntimeException("Object index out of bounds");
         }
     }
 
+    private void addNewObject(JsonElement replacementElement) {
+        this.currentJsonObjects.add(replacementElement);
+        showMessage(Component.translatable("message.oneenoughitem.replacement_added",
+                this.currentFilePath.getFileName().toString()).withStyle(ChatFormatting.GREEN));
+    }
+
     public void deleteFile(Path filePath) {
-        try {
+        executeWithErrorHandling(() -> {
             if (Files.exists(filePath)) {
                 Files.delete(filePath);
-                this.showMessage(Component.translatable("message.oneenoughitem.file_deleted", filePath.getFileName().toString()).withStyle(ChatFormatting.GREEN));
+                showMessage(Component.translatable("message.oneenoughitem.file_deleted",
+                        filePath.getFileName().toString()).withStyle(ChatFormatting.GREEN));
 
                 if (filePath.equals(this.currentFilePath)) {
-                    this.currentFilePath = null;
-                    this.currentFileName = "";
-                    this.currentJsonObjects = null;
-                    this.currentObjectIndex = -1;
-                    clearMatchItems();
-                    clearResultItem();
-                    notifyUiUpdate();
+                    resetCurrentFile();
                 }
             } else {
-                this.showError(Component.translatable("error.oneenoughitem.file_not_exists", filePath.toString()).withStyle(ChatFormatting.RED));
+                showError(Component.translatable("error.oneenoughitem.file_not_exists", filePath.toString())
+                        .withStyle(ChatFormatting.RED));
             }
-        } catch (IOException e) {
-            this.showError(Component.translatable("error.oneenoughitem.file_delete_failed", e.getMessage()).withStyle(ChatFormatting.RED));
-            Oneenoughitem.LOGGER.error("Failed to delete file", e);
-        }
+        }, e -> showError(Component.translatable("error.oneenoughitem.file_delete_failed", e.getMessage())
+                .withStyle(ChatFormatting.RED)));
+    }
+
+    private void resetCurrentFile() {
+        this.currentFilePath = null;
+        this.currentFileName = "";
+        this.currentJsonObjects = null;
+        this.currentObjectIndex = -1;
+        clearMatchItems();
+        clearResultItem();
+        notifyUiUpdate();
     }
 
     private String getResultItemString() {
         if (this.resultItem != null) {
             String resultItemString = Utils.getItemRegistryName(this.resultItem);
             if (resultItemString == null) {
-                this.showError(Component.translatable("error.oneenoughitem.result_item_name_failed").withStyle(ChatFormatting.RED));
+                showError(Component.translatable("error.oneenoughitem.result_item_name_failed")
+                        .withStyle(ChatFormatting.RED));
                 return null;
             }
             return resultItemString;
         } else if (this.resultTag != null) {
             return "#" + this.resultTag;
         } else {
-            this.showError(Component.translatable("error.oneenoughitem.no_result_item").withStyle(ChatFormatting.RED));
+            showError(Component.translatable("error.oneenoughitem.no_result_item")
+                    .withStyle(ChatFormatting.RED));
             return null;
+        }
+    }
+
+    private void executeWithErrorHandling(RunnableWithException operation, Consumer<Exception> errorHandler) {
+        try {
+            operation.run();
+        } catch (Exception e) {
+            Oneenoughitem.LOGGER.error("Operation failed", e);
+            errorHandler.accept(e);
+        }
+    }
+
+    @FunctionalInterface
+    private interface RunnableWithException {
+        void run() throws Exception;
+    }
+
+    private void showMessage(Component message) {
+        if (Minecraft.getInstance().player != null) {
+            Minecraft.getInstance().player.sendSystemMessage(message);
+        }
+    }
+
+    private void showError(Component message) {
+        if (Minecraft.getInstance().player != null) {
+            Minecraft.getInstance().player.sendSystemMessage(message);
         }
     }
 
@@ -473,32 +568,27 @@ public class ReplacementEditorManager {
         return existingObjects;
     }
 
-    private void saveJsonObjectsToFile(JsonArray jsonArray) throws IOException {
+    private void saveJsonObjectsToFile(JsonArray jsonObjects) throws IOException {
         try (FileWriter writer = new FileWriter(this.currentFilePath.toFile())) {
-            GSON.toJson(jsonArray, writer);
+            GSON.toJson(jsonObjects, writer);
             writer.flush();
         }
     }
 
     public void reloadDatapacks() {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player != null) {
-            minecraft.player.connection.sendCommand("reload");
-            this.showMessage(Component.translatable("message.oneenoughitem.datapack_reload_triggered").withStyle(ChatFormatting.GREEN));
-        }
-    }
+        try {
+            if (Minecraft.getInstance().player != null) {
+                Minecraft.getInstance().player.connection.sendCommand("reload");
 
-    private void showMessage(Component message) {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player != null) {
-            minecraft.player.displayClientMessage(message, false);
-        }
-    }
+                // 重载后重建全局缓存
+                GlobalReplacementCache.rebuild();
 
-    private void showError(Component message) {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.player != null) {
-            minecraft.player.displayClientMessage(message, false);
+                this.showMessage(Component.translatable("message.oneenoughitem.datapack_reload_triggered").withStyle(ChatFormatting.GREEN));
+                Oneenoughitem.LOGGER.info("Datapacks reloaded and global cache rebuilt");
+            }
+        } catch (Exception e) {
+            this.showError(Component.translatable("error.oneenoughitem.reload_failed", e.getMessage()).withStyle(ChatFormatting.RED));
+            Oneenoughitem.LOGGER.error("Failed to reload datapacks", e);
         }
     }
 }

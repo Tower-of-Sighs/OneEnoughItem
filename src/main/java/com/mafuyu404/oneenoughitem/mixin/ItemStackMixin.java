@@ -2,6 +2,7 @@ package com.mafuyu404.oneenoughitem.mixin;
 
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
+import com.mafuyu404.oneenoughitem.init.ReplacementControl;
 import com.mafuyu404.oneenoughitem.init.Utils;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -34,10 +35,16 @@ public class ItemStackMixin {
             return;
         }
 
+        if (ReplacementControl.shouldSkipReplacement()) {
+            return;
+        }
+
+
         String originItemId = Utils.getItemRegistryName(this.item);
 
         String targetItemId = ReplacementCache.matchItem(originItemId);
         if (targetItemId != null) {
+            if (targetItemId.equals("minecraft:air")) return;
             Item newItem = Utils.getItemById(targetItemId);
             if (newItem != null) {
                 this.item = newItem;

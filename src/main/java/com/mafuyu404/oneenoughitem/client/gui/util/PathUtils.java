@@ -60,13 +60,13 @@ public class PathUtils {
 
         if (minecraft.getSingleplayerServer() != null) {
             Path worldPath = minecraft.getSingleplayerServer().getWorldPath(LevelResource.ROOT);
-            return worldPath.resolve("datapacks").resolve("OEI").resolve("data/oneenoughitem/oneenoughitem/replacements");
+            return worldPath.resolve("datapacks").resolve("OEI").resolve("data/oneenoughitem/replacements");
         } else if (minecraft.level != null) {
             try {
                 Path savesPath = minecraft.gameDirectory.toPath().resolve("saves");
                 Path worldPath = findCurrentWorldPath(savesPath);
                 if (worldPath != null) {
-                    return worldPath.resolve("datapacks").resolve("OEI").resolve("data/oneenoughitem/oneenoughitem/replacements");
+                    return worldPath.resolve("datapacks").resolve("OEI").resolve("data/oneenoughitem/replacements");
                 }
             } catch (Exception e) {
                 Oneenoughitem.LOGGER.warn("Failed to determine world path", e);
@@ -74,7 +74,7 @@ public class PathUtils {
         }
 
         Path savesPath = minecraft.gameDirectory.toPath().resolve("saves");
-        return savesPath.resolve("datapacks/OEI/data/oneenoughitem/oneenoughitem/replacements");
+        return savesPath.resolve("datapacks/OEI/data/oneenoughitem/replacements");
     }
 
     /**
@@ -120,7 +120,7 @@ public class PathUtils {
             try (Stream<Path> datapackDirs = Files.list(datapacksPath)) {
                 datapackDirs.filter(Files::isDirectory)
                         .forEach(datapackDir -> {
-                            Path replacementsPath = datapackDir.resolve("data/oneenoughitem/oneenoughitem/replacements");
+                            Path replacementsPath = datapackDir.resolve("data/oneenoughitem/replacements");
                             if (Files.exists(replacementsPath)) {
                                 scanJsonFilesInDirectory(replacementsPath, datapackDir, jsonFiles);
                             }
@@ -145,7 +145,7 @@ public class PathUtils {
                         Path relativePath = replacementsPath.relativize(path.getParent());
                         String relativePathStr = relativePath.toString().equals(".") ? "" : relativePath.toString();
 
-                        String fullPath = "datapacks/" + datapackName + "/data/oneenoughitem/oneenoughitem/replacements" +
+                        String fullPath = "datapacks/" + datapackName + "/data/oneenoughitem/replacements" +
                                 (relativePathStr.isEmpty() ? "" : "/" + relativePathStr);
 
                         jsonFiles.add(new FileInfo(displayName, path, fullPath, datapackName));

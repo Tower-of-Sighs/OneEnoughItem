@@ -1,6 +1,7 @@
 package com.mafuyu404.oneenoughitem.client.gui;
 
 import com.mafuyu404.oneenoughitem.client.gui.components.TagListWidget;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -90,6 +91,12 @@ public class TagSelectionScreen extends Screen {
 
         String tagCount = this.filteredTags.size() + " tags";
         graphics.drawString(this.font, tagCount, 10, this.height - 30, 0xFFFFFF);
+
+        TagListWidget.TagEntry hoveredEntry = this.tagList.getEntryAtMouse(mouseX, mouseY);
+        if (hoveredEntry != null) {
+            List<Component> tooltip = hoveredEntry.getTooltip();
+            graphics.renderComponentTooltip(Minecraft.getInstance().font, tooltip, mouseX, mouseY);
+        }
     }
 
     private void filterTags() {

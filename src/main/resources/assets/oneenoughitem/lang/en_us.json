@@ -78,6 +78,13 @@
   "description.oneenoughitem.tag": "Tag",
   "description.oneenoughitem.items_to_type": "%d items→%s",
 
+  "tooltip.oneenoughitem.item_replaced": "Replaced",
+  "tooltip.oneenoughitem.replaced_with_tag": "Replaced with tag: %s",
+  "tooltip.oneenoughitem.replaced_with_item": "Replaced with: %s",
+  "tooltip.oneenoughitem.source_runtime": "(from runtime rules)",
+  "tooltip.oneenoughitem.source_saved": "(from saved rules)",
+  "tooltip.oneenoughitem.item_used_as_result": "This item is used as replacement result",
+
   "message.oneenoughitem.object_loaded": "Loaded replacement rule from object index %d",
   "message.oneenoughitem.object_element_deleted": "Deleted element from object index %d",
   "message.oneenoughitem.file_selected": "Selected file: %s (mode: %s)",
@@ -111,6 +118,11 @@
   "error.oneenoughitem.file_not_exists": "File does not exist: %s",
   "error.oneenoughitem.file_load_failed": "Failed to load file: %s",
   "error.oneenoughitem.file_delete_failed": "Failed to delete file: %s",
+  "error.oneenoughitem.item_already_replaced": "This item has been replaced and cannot be added again",
+  "error.oneenoughitem.item_used_as_result": "This item is already used as result in other rules",
+  "error.oneenoughitem.result_item_already_replaced": "Result item cannot be a replaced item",
+  "error.oneenoughitem.result_item_used_as_match": "Result item cannot be used as match in other rules",
+  "error.oneenoughitem.tag_already_replaced": "This tag is already used as result in other rules",
 
   "warning.oneenoughitem.item_exists": "Duplicate item",
   "warning.oneenoughitem.tag_exists": "Duplicate tag",
@@ -122,5 +134,6 @@
   "oneenoughitem.modernfix.warning.hover": "Click to open config file: %s",
 
   "key.categories.oneenoughitem": "OneEnoughItem",
-  "key.oneenoughitem.open_editor": "Open Replacement Screen"
+  "key.oneenoughitem.open_editor": "Open Replacement Screen",
+  "error.oneenoughitem.reload_failed": "Reload Failed"
 }

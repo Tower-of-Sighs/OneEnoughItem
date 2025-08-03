@@ -2,12 +2,16 @@ package com.mafuyu404.oneenoughitem.client.gui;
 
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.client.gui.cache.EditorCache;
+import com.mafuyu404.oneenoughitem.client.gui.cache.GlobalReplacementCache;
 import com.mafuyu404.oneenoughitem.client.gui.components.ItemDisplayWidget;
 import com.mafuyu404.oneenoughitem.client.gui.components.ScrollablePanel;
 import com.mafuyu404.oneenoughitem.client.gui.components.TagDisplayWidget;
 import com.mafuyu404.oneenoughitem.client.gui.manager.ReplacementEditorManager;
 import com.mafuyu404.oneenoughitem.client.gui.util.GuiUtils;
 import com.mafuyu404.oneenoughitem.client.gui.util.PathUtils;
+import com.mafuyu404.oneenoughitem.client.gui.util.ReplacementUtils;
+import com.mafuyu404.oneenoughitem.init.ReplacementCache;
+import com.mafuyu404.oneenoughitem.init.ReplacementControl;
 import com.mafuyu404.oneenoughitem.init.Utils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -57,7 +61,6 @@ public class ReplacementEditorScreen extends Screen {
     private List<TagDisplayWidget> matchTagWidgets;
 
     private Button selectResultItemButton;
-    private Button selectResultTagButton;
     private Button clearResultButton;
     private ScrollablePanel resultPanel;
     private ItemDisplayWidget resultItemWidget;
@@ -77,12 +80,14 @@ public class ReplacementEditorScreen extends Screen {
             for (String itemId : cache.matchItems()) {
                 ResourceLocation id = new ResourceLocation(itemId);
                 Item item = BuiltInRegistries.ITEM.get(id);
-                if (item != null) {
-                    this.manager.addMatchItem(item);
-                    ItemDisplayWidget widget = new ItemDisplayWidget(0, 0, new ItemStack(item),
-                            button -> this.removeMatchItem(item));
-                    this.matchItemWidgets.add(widget);
-                }
+                this.manager.addMatchItem(item);
+
+                // 在跳过替换的情况下创建ItemStack
+                ItemStack displayStack = ReplacementControl.withSkipReplacement(() -> new ItemStack(item));
+
+                ItemDisplayWidget widget = new ItemDisplayWidget(0, 0, displayStack,
+                        button -> this.removeMatchItem(item), itemId, true);
+                this.matchItemWidgets.add(widget);
             }
 
             for (String tagId : cache.matchTags()) {
@@ -186,16 +191,16 @@ public class ReplacementEditorScreen extends Screen {
                 button -> this.clearMatchItems(), leftPanelX + BUTTON_WIDTH * 2 + 11, panelY, 50, BUTTON_HEIGHT);
         this.addRenderableWidget(this.clearMatchButton);
 
+        int resultButtonSpacing = 10; // 按钮间距
+        int totalResultButtonWidth = BUTTON_WIDTH + resultButtonSpacing + 50; // 选择物品按钮宽度 + 间距 + 清空按钮宽度
+        int resultButtonStartX = rightPanelX + (PANEL_WIDTH - totalResultButtonWidth) / 2; // 居中计算起始位置
+
         this.selectResultItemButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.select_item"),
-                button -> this.openItemSelection(false), rightPanelX + 5, panelY, BUTTON_WIDTH, BUTTON_HEIGHT);
+                button -> this.openItemSelection(false), resultButtonStartX, panelY, BUTTON_WIDTH, BUTTON_HEIGHT);
         this.addRenderableWidget(this.selectResultItemButton);
 
-        this.selectResultTagButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.select_tag"),
-                button -> this.openTagSelection(false), rightPanelX + BUTTON_WIDTH + 8, panelY, BUTTON_WIDTH, BUTTON_HEIGHT);
-        this.addRenderableWidget(this.selectResultTagButton);
-
         this.clearResultButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.clear"),
-                button -> this.clearResultItem(), rightPanelX + BUTTON_WIDTH * 2 + 11, panelY, 50, BUTTON_HEIGHT);
+                button -> this.clearResultItem(), resultButtonStartX + BUTTON_WIDTH + resultButtonSpacing, panelY, 50, BUTTON_HEIGHT);
         this.addRenderableWidget(this.clearResultButton);
 
         this.matchPanel = new ScrollablePanel(leftPanelX + 5, panelY + 25, PANEL_WIDTH - 10, PANEL_HEIGHT - 30);
@@ -221,15 +226,16 @@ public class ReplacementEditorScreen extends Screen {
         for (Item item : this.manager.getMatchItems()) {
             String originalItemId = Utils.getItemRegistryName(item);
 
-            ItemStack displayStack = new ItemStack(item);
+            // 在跳过替换的情况下创建ItemStack，确保显示原始物品
+            ItemStack displayStack = ReplacementControl.withSkipReplacement(() -> new ItemStack(item));
 
+            // 匹配区域的物品显示跳过替换逻辑，显示原始物品
             ItemDisplayWidget widget = new ItemDisplayWidget(0, 0, displayStack,
                     button -> {
                         this.removeMatchItemById(originalItemId);
-                    }, originalItemId);
+                    }, originalItemId, true); // 设置skipReplacement为true
             this.matchItemWidgets.add(widget);
         }
-
         for (ResourceLocation tagId : this.manager.getMatchTags()) {
             TagDisplayWidget widget = new TagDisplayWidget(0, 0, tagId,
                     button -> this.removeMatchTag(tagId));
@@ -237,6 +243,7 @@ public class ReplacementEditorScreen extends Screen {
         }
 
         if (this.manager.getResultItem() != null) {
+            // 结果区域正常显示（会应用替换）
             this.resultItemWidget = new ItemDisplayWidget(0, 0, new ItemStack(this.manager.getResultItem()), null);
         }
 
@@ -246,17 +253,18 @@ public class ReplacementEditorScreen extends Screen {
 
         this.rebuildPanels();
     }
-
     private void removeMatchItemById(String itemId) {
         if (itemId != null) {
             ResourceLocation id = new ResourceLocation(itemId);
             Item item = BuiltInRegistries.ITEM.get(id);
 
-            this.manager.removeMatchItem(item);
+            if (item != null) {
+                this.manager.removeMatchItem(item);
 
-            this.matchItemWidgets.removeIf(widget -> itemId.equals(widget.getOriginalItemId()));
+                this.matchItemWidgets.removeIf(widget -> itemId.equals(widget.getOriginalItemId()));
 
-            this.rebuildPanels();
+                this.rebuildPanels();
+            }
         }
     }
 
@@ -445,6 +453,7 @@ public class ReplacementEditorScreen extends Screen {
         this.manager.reloadDatapacks();
     }
 
+
     private void clearAll() {
         this.manager.clearAll();
         this.matchItemWidgets.clear();
@@ -458,12 +467,15 @@ public class ReplacementEditorScreen extends Screen {
         EditorCache.clearCache();
     }
 
+
     private void openItemSelection(boolean isForMatch) {
         this.minecraft.setScreen(new ItemSelectionScreen(this, isForMatch));
     }
 
     private void openTagSelection(boolean isForMatch) {
-        this.minecraft.setScreen(new TagSelectionScreen(this, isForMatch));
+        if (isForMatch) {
+            this.minecraft.setScreen(new TagSelectionScreen(this, true));
+        }
     }
 
     private void clearMatchItems() {
@@ -481,22 +493,37 @@ public class ReplacementEditorScreen extends Screen {
     }
 
     public void addMatchItem(Item item) {
-        if (this.manager.getMatchItems().contains(item)) {
-            this.showWarn(Component.translatable("warning.oneenoughitem.item_exists").withStyle(ChatFormatting.YELLOW));
-            return;
+        String itemId = Utils.getItemRegistryName(item);
+        if (itemId != null) {
+            // 检查物品是否已被替换（优先检查运行时缓存）
+            String runtimeReplacement = ReplacementCache.matchItem(itemId);
+            String globalReplacement = GlobalReplacementCache.getItemReplacement(itemId);
+
+            if (runtimeReplacement != null || globalReplacement != null) {
+                this.showError(Component.translatable("error.oneenoughitem.item_already_replaced").withStyle(ChatFormatting.RED));
+                return;
+            }
+
+            // 检查物品是否已经是其他规则的结果物品
+            if (GlobalReplacementCache.isItemUsedAsResult(itemId)) {
+                this.showError(Component.translatable("error.oneenoughitem.item_used_as_result").withStyle(ChatFormatting.RED));
+                return;
+            }
         }
 
         this.manager.addMatchItem(item);
-        String itemId = Utils.getItemRegistryName(item);
-        ItemDisplayWidget widget = new ItemDisplayWidget(0, 0, new ItemStack(item),
-                button -> this.removeMatchItemById(itemId), itemId);
-        this.matchItemWidgets.add(widget);
-        this.rebuildPanels();
+        this.syncManagerDataToWidgets();
     }
 
     public void addMatchTag(ResourceLocation tagId) {
         if (this.manager.getMatchTags().contains(tagId)) {
             this.showWarn(Component.translatable("warning.oneenoughitem.tag_exists").withStyle(ChatFormatting.YELLOW));
+            return;
+        }
+
+        ReplacementUtils.ReplacementInfo replacementInfo = ReplacementUtils.getTagReplacementInfo(tagId);
+        if (replacementInfo.isReplaced()) {
+            this.showError(Component.translatable("error.oneenoughitem.tag_already_replaced").withStyle(ChatFormatting.RED));
             return;
         }
 
@@ -507,12 +534,30 @@ public class ReplacementEditorScreen extends Screen {
         this.rebuildPanels();
     }
 
+
     public void setResultItem(Item item) {
+        String itemId = Utils.getItemRegistryName(item);
+        if (itemId != null) {
+            // 检查结果物品是否已被替换
+            String runtimeReplacement = ReplacementCache.matchItem(itemId);
+            String globalReplacement = GlobalReplacementCache.getItemReplacement(itemId);
+
+            if (runtimeReplacement != null || globalReplacement != null) {
+                this.showError(Component.translatable("error.oneenoughitem.result_item_already_replaced").withStyle(ChatFormatting.RED));
+                return;
+            }
+
+            // 检查结果物品是否已经是其他规则的匹配项
+            if (GlobalReplacementCache.isItemReplaced(itemId)) {
+                this.showError(Component.translatable("error.oneenoughitem.result_item_used_as_match").withStyle(ChatFormatting.RED));
+                return;
+            }
+        }
+
         this.manager.setResultItem(item);
-        this.resultItemWidget = new ItemDisplayWidget(0, 0, new ItemStack(item), null);
-        this.resultTagWidget = null;
-        this.rebuildPanels();
+        this.syncManagerDataToWidgets();
     }
+
 
     public void setResultTag(ResourceLocation tagId) {
         this.manager.setResultTag(tagId);

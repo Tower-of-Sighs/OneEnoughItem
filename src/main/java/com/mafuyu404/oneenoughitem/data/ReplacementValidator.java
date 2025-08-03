@@ -16,6 +16,7 @@ public class ReplacementValidator implements DataValidator<Replacements> {
 
         // 验证是否至少有一个有效的源物品
         boolean hasValidSource = false;
+        boolean hasUnresolvedTags = false;
         int validSourceCount = 0;
 
         for (String matchItem : replacement.matchItems()) {
@@ -36,12 +37,15 @@ public class ReplacementValidator implements DataValidator<Replacements> {
                                     source, matchItem);
                         }
                     } else {
-                        Oneenoughitem.LOGGER.warn("Invalid tag in {}: '{}' does not exist",
+                        // tag不存在，可能是tag系统未初始化
+                        hasUnresolvedTags = true;
+                        Oneenoughitem.LOGGER.debug("Tag in {} not found (may be uninitialized): '{}'",
                                 source, matchItem);
                     }
                 } catch (Exception e) {
                     Oneenoughitem.LOGGER.error("Invalid tag format in {}: '{}'",
                             source, matchItem, e);
+                    return ValidationResult.failure("Invalid tag format: " + matchItem);
                 }
             } else {
                 // 处理普通物品
@@ -53,6 +57,11 @@ public class ReplacementValidator implements DataValidator<Replacements> {
                             source, matchItem);
                 }
             }
+        }
+
+        if (!hasValidSource && hasUnresolvedTags) {
+            // 如果没有有效源物品但有未解析的tag，则延迟验证
+            return ValidationResult.deferred("Contains unresolved tags, validation deferred until tag system is ready");
         }
 
         if (!hasValidSource) {
