@@ -5,6 +5,7 @@ import com.mafuyu404.oelib.event.DataReloadEvent;
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.client.ModKeyMappings;
 import com.mafuyu404.oneenoughitem.client.gui.ReplacementEditorScreen;
+import com.mafuyu404.oneenoughitem.client.gui.cache.GlobalReplacementCache;
 import com.mafuyu404.oneenoughitem.client.util.ModernFixDetector;
 import com.mafuyu404.oneenoughitem.data.Replacements;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
@@ -28,6 +29,7 @@ public class ModEventHandler {
     public static void onDataReload(DataReloadEvent event) {
         if (event.isDataType(Replacements.class)) {
             rebuildReplacementCache();
+            GlobalReplacementCache.rebuild();
             Oneenoughitem.LOGGER.info("Replacement cache rebuilt due to data reload: {} entries loaded, {} invalid",
                     event.getLoadedCount(), event.getInvalidCount());
         }

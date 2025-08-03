@@ -78,6 +78,14 @@
   "description.oneenoughitem.tag": "标签",
   "description.oneenoughitem.items_to_type": "%d项→%s",
 
+  "tooltip.oneenoughitem.item_replaced": "已被替换",
+  "tooltip.oneenoughitem.replaced_with_tag": "替换为标签: %s",
+  "tooltip.oneenoughitem.replaced_with_item": "替换为: %s",
+  "tooltip.oneenoughitem.source_runtime": "(来自运行时规则)",
+  "tooltip.oneenoughitem.source_saved": "(来自已保存规则)",
+  "tooltip.oneenoughitem.item_used_as_result": "此物品被用作替换结果",
+
+
   "message.oneenoughitem.object_loaded": "已加载对象索引 %d 的替换规则",
   "message.oneenoughitem.object_element_deleted": "已删除对象索引 %d 的元素",
   "message.oneenoughitem.file_selected": "已选择文件: %s (模式: %s)",
@@ -111,6 +119,11 @@
   "error.oneenoughitem.file_not_exists": "文件不存在: %s",
   "error.oneenoughitem.file_load_failed": "加载文件失败: %s",
   "error.oneenoughitem.file_delete_failed": "删除文件失败: %s",
+  "error.oneenoughitem.item_already_replaced": "该物品已被替换，无法再次添加",
+  "error.oneenoughitem.item_used_as_result": "该物品已被用作其他规则的结果物品",
+  "error.oneenoughitem.result_item_already_replaced": "结果物品不能是已被替换的物品",
+  "error.oneenoughitem.result_item_used_as_match": "结果物品不能是其他规则的匹配项",
+  "error.oneenoughitem.tag_already_replaced": "该标签已被替换，无法再次添加",
 
   "warning.oneenoughitem.item_exists": "重复添加的物品",
   "warning.oneenoughitem.tag_exists": "重复添加的标签",

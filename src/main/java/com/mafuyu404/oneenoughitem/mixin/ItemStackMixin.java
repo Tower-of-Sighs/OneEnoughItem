@@ -2,6 +2,7 @@ package com.mafuyu404.oneenoughitem.mixin;
 
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
+import com.mafuyu404.oneenoughitem.init.ReplacementControl;
 import com.mafuyu404.oneenoughitem.init.Utils;
 import net.minecraft.core.Holder;
 import net.minecraft.world.item.Item;
@@ -38,6 +39,11 @@ public class ItemStackMixin {
             return;
         }
 
+        // 检查是否应该跳过替换
+        if (ReplacementControl.shouldSkipReplacement()) {
+            return;
+        }
+
         try {
             String originItemId = Utils.getItemRegistryName(item);
             if (originItemId == null) {
@@ -61,7 +67,6 @@ public class ItemStackMixin {
             Oneenoughitem.LOGGER.error("ItemStackMixin: Failed to replace item: {}", itemInfo, e);
         }
     }
-
     private boolean isInCreativeModeTabBuilding() {
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         for (StackTraceElement element : stackTrace) {

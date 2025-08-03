@@ -1,5 +1,6 @@
 package com.mafuyu404.oneenoughitem.client.gui.components;
 
+import com.mafuyu404.oneenoughitem.init.ReplacementControl;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -20,32 +21,42 @@ public class ItemDisplayWidget extends AbstractWidget {
     private final ItemStack itemStack;
     private final Button.OnPress removeAction;
     private final Font font = Minecraft.getInstance().font;
-    private final String originalItemId; // 存储原始物品ID
+    private final String originalItemId;
+    private final boolean skipReplacement;
 
     public ItemDisplayWidget(int x, int y, ItemStack itemStack, Button.OnPress removeAction) {
-        this(x, y, itemStack, removeAction, null);
+        this(x, y, itemStack, removeAction, null, false);
     }
 
     public ItemDisplayWidget(int x, int y, ItemStack itemStack, Button.OnPress removeAction, String originalItemId) {
+        this(x, y, itemStack, removeAction, originalItemId, false);
+    }
+
+    public ItemDisplayWidget(int x, int y, ItemStack itemStack, Button.OnPress removeAction, String originalItemId, boolean skipReplacement) {
         super(x, y, 18, 18, Component.empty());
         this.itemStack = itemStack;
         this.removeAction = removeAction;
         this.originalItemId = originalItemId;
+        this.skipReplacement = skipReplacement;
     }
 
     @Override
     protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        // 绘制槽位背景
         graphics.fill(this.getX(), this.getY(), this.getX() + 18, this.getY() + 18, 0xFF8B8B8B);
         graphics.fill(this.getX() + 1, this.getY() + 1, this.getX() + 17, this.getY() + 17, 0xFF373737);
 
-        // 绘制物品
         if (!this.itemStack.isEmpty()) {
-            graphics.renderItem(this.itemStack, this.getX() + 1, this.getY() + 1);
-            graphics.renderItemDecorations(Minecraft.getInstance().font, this.itemStack, this.getX() + 1, this.getY() + 1);
+            if (skipReplacement) {
+                ReplacementControl.withSkipReplacement(() -> {
+                    graphics.renderItem(this.itemStack, this.getX() + 1, this.getY() + 1);
+                    graphics.renderItemDecorations(Minecraft.getInstance().font, this.itemStack, this.getX() + 1, this.getY() + 1);
+                });
+            } else {
+                graphics.renderItem(this.itemStack, this.getX() + 1, this.getY() + 1);
+                graphics.renderItemDecorations(Minecraft.getInstance().font, this.itemStack, this.getX() + 1, this.getY() + 1);
+            }
         }
 
-        // 绘制移除按钮（当悬停时）
         if (this.isHovered() && this.removeAction != null) {
             graphics.fill(this.getX() + 12, this.getY() - 2, this.getX() + 20, this.getY() + 6, 0xFFFF0000);
             graphics.drawString(font, "×", this.getX() + 14, this.getY(), 0xFFFFFFFF, false);
@@ -59,7 +70,13 @@ public class ItemDisplayWidget extends AbstractWidget {
         if (this.isHovered() && !this.itemStack.isEmpty()) {
             List<Component> lines = new ArrayList<>();
 
-            lines.add(this.itemStack.getHoverName());
+            if (skipReplacement) {
+                ReplacementControl.withSkipReplacement(() -> {
+                    lines.add(this.itemStack.getHoverName());
+                });
+            } else {
+                lines.add(this.itemStack.getHoverName());
+            }
 
             String modId = ForgeRegistries.ITEMS.getKey(this.itemStack.getItem()).getNamespace();
             String modName = ModList.get().getModContainerById(modId)
