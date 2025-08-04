@@ -22,7 +22,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class ReplacementEditorManager {
@@ -42,14 +45,37 @@ public class ReplacementEditorManager {
     private Runnable uiUpdateCallback;
 
     // Getters
-    public Set<Item> getMatchItems() { return new HashSet<>(matchItems); }
-    public Set<ResourceLocation> getMatchTags() { return new HashSet<>(matchTags); }
-    public Item getResultItem() { return resultItem; }
-    public ResourceLocation getResultTag() { return resultTag; }
-    public String getCurrentFileName() { return currentFileName; }
-    public Path getCurrentFilePath() { return currentFilePath; }
-    public int getCurrentObjectIndex() { return currentObjectIndex; }
-    public int getObjectSize() { return currentJsonObjects != null ? currentJsonObjects.size() : 0; }
+    public Set<Item> getMatchItems() {
+        return new HashSet<>(matchItems);
+    }
+
+    public Set<ResourceLocation> getMatchTags() {
+        return new HashSet<>(matchTags);
+    }
+
+    public Item getResultItem() {
+        return resultItem;
+    }
+
+    public ResourceLocation getResultTag() {
+        return resultTag;
+    }
+
+    public String getCurrentFileName() {
+        return currentFileName;
+    }
+
+    public Path getCurrentFilePath() {
+        return currentFilePath;
+    }
+
+    public int getCurrentObjectIndex() {
+        return currentObjectIndex;
+    }
+
+    public int getObjectSize() {
+        return currentJsonObjects != null ? currentJsonObjects.size() : 0;
+    }
 
     public void setUiUpdateCallback(Runnable callback) {
         this.uiUpdateCallback = callback;
@@ -61,9 +87,17 @@ public class ReplacementEditorManager {
         }
     }
 
-    public void addMatchItem(Item item) { this.matchItems.add(item); }
-    public void addMatchTag(ResourceLocation tagId) { this.matchTags.add(tagId); }
-    public void removeMatchTag(ResourceLocation tagId) { this.matchTags.remove(tagId); }
+    public void addMatchItem(Item item) {
+        this.matchItems.add(item);
+    }
+
+    public void addMatchTag(ResourceLocation tagId) {
+        this.matchTags.add(tagId);
+    }
+
+    public void removeMatchTag(ResourceLocation tagId) {
+        this.matchTags.remove(tagId);
+    }
 
     public boolean removeMatchItem(Item item) {
         String targetItemId = Utils.getItemRegistryName(item);
@@ -407,7 +441,8 @@ public class ReplacementEditorManager {
         });
     }
 
-    private record ValidationResult(boolean isValid, Component errorMessage) {}
+    private record ValidationResult(boolean isValid, Component errorMessage) {
+    }
 
     private ValidationResult validateReplacementInput() {
         boolean hasMatchItems = !this.matchItems.isEmpty() || !this.matchTags.isEmpty();
@@ -427,7 +462,8 @@ public class ReplacementEditorManager {
         return new ValidationResult(true, null);
     }
 
-    private record ReplacementData(List<String> matchItemsList, List<String> matchTagsList, String resultItemString) {}
+    private record ReplacementData(List<String> matchItemsList, List<String> matchTagsList, String resultItemString) {
+    }
 
     private ReplacementData prepareReplacementData() {
         List<String> matchItemsList = new ArrayList<>();

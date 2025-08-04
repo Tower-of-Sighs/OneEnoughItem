@@ -1,8 +1,5 @@
 package com.mafuyu404.oneenoughitem.client.gui;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.client.gui.cache.EditorCache;
 import com.mafuyu404.oneenoughitem.client.gui.cache.GlobalReplacementCache;
@@ -11,42 +8,27 @@ import com.mafuyu404.oneenoughitem.client.gui.components.ScrollablePanel;
 import com.mafuyu404.oneenoughitem.client.gui.components.TagDisplayWidget;
 import com.mafuyu404.oneenoughitem.client.gui.manager.ReplacementEditorManager;
 import com.mafuyu404.oneenoughitem.client.gui.util.*;
-import com.mafuyu404.oneenoughitem.data.Replacements;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.ReplacementControl;
 import com.mafuyu404.oneenoughitem.init.Utils;
-import com.mojang.serialization.JsonOps;
-import dev.latvian.mods.kubejs.recipe.ItemMatch;
-import dev.latvian.mods.kubejs.recipe.RecipesEventJS;
-import dev.latvian.mods.kubejs.recipe.ReplacementMatch;
-import dev.latvian.mods.kubejs.recipe.filter.InputFilter;
-import dev.latvian.mods.kubejs.recipe.filter.OutputFilter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.item.crafting.RecipeManager;
-import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Stream;
 
 public class ReplacementEditorScreen extends Screen {
@@ -69,14 +51,14 @@ public class ReplacementEditorScreen extends Screen {
 
     private Button objectDropdownButton;
     private boolean showObjectDropdown = false;
-    private List<Button> objectIndexButtons = new ArrayList<>();
+    private final List<Button> objectIndexButtons = new ArrayList<>();
 
     private Button addMatchItemButton;
     private Button addMatchTagButton;
     private Button clearMatchButton;
     private ScrollablePanel matchPanel;
-    private List<ItemDisplayWidget> matchItemWidgets;
-    private List<TagDisplayWidget> matchTagWidgets;
+    private final List<ItemDisplayWidget> matchItemWidgets;
+    private final List<TagDisplayWidget> matchTagWidgets;
 
     private Button selectResultItemButton;
     private Button clearResultButton;
@@ -279,6 +261,7 @@ public class ReplacementEditorScreen extends Screen {
 
         this.rebuildPanels();
     }
+
     private void removeMatchItemById(String itemId) {
         if (itemId != null) {
             ResourceLocation id = new ResourceLocation(itemId);
@@ -443,6 +426,7 @@ public class ReplacementEditorScreen extends Screen {
         this.manager.createReplacementFile(datapackName, fileName);
         this.fileNameBox.setValue(this.manager.getCurrentFileName());
     }
+
     private void saveToJson() {
         this.manager.saveReplacement();
     }

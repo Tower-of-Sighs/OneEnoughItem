@@ -24,7 +24,7 @@ public class FileSelectionScreen extends Screen {
     private Button backButton;
     private Button refreshButton;
     private FileListWidget fileList;
-    private List<PathUtils.FileInfo> allFiles;
+    private final List<PathUtils.FileInfo> allFiles;
     private List<PathUtils.FileInfo> filteredFiles;
     private String lastSearchText = "";
 

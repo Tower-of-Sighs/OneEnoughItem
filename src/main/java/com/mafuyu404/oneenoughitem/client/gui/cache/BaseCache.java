@@ -12,7 +12,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public abstract class BaseCache {
     protected static final Path OEI_DIR = Paths.get("oei");
-    
+
     protected final Path cacheFile;
     protected final int cacheVersion;
     protected final ReadWriteLock lock = new ReentrantReadWriteLock();
@@ -54,7 +54,7 @@ public abstract class BaseCache {
 
             int version = dis.readInt();
             if (version != cacheVersion) {
-                Oneenoughitem.LOGGER.warn("Cache version mismatch for {}, expected {}, got {}", 
+                Oneenoughitem.LOGGER.warn("Cache version mismatch for {}, expected {}, got {}",
                         cacheFile, cacheVersion, version);
                 onVersionMismatch(version);
                 return;

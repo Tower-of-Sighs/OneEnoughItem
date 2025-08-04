@@ -16,7 +16,7 @@ import java.util.function.BiConsumer;
 public class FileListWidget extends ObjectSelectionList<FileListWidget.FileEntry> {
     private final BiConsumer<Path, Integer> onFileSelect;
     private FileEntry selectedEntry = null;
-    private List<Button> actionButtons = new ArrayList<>();
+    private final List<Button> actionButtons = new ArrayList<>();
 
     public FileListWidget(Minecraft minecraft, int width, int height, int y, int itemHeight, BiConsumer<Path, Integer> onFileSelect) {
         super(minecraft, width, height, y, y + height, itemHeight);

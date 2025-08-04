@@ -265,6 +265,7 @@ public class ItemSelectionScreen extends Screen {
         }
         this.onClose();
     }
+
     @Override
     public void onClose() {
         this.minecraft.setScreen(this.parent);

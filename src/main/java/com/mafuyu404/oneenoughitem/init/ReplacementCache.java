@@ -2,9 +2,6 @@ package com.mafuyu404.oneenoughitem.init;
 
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.data.Replacements;
-import dev.latvian.mods.kubejs.recipe.RecipeJS;
-import dev.latvian.mods.kubejs.recipe.filter.IDFilter;
-import dev.latvian.mods.kubejs.recipe.filter.RecipeFilter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 
