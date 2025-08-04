@@ -148,7 +148,7 @@
       <recent name="F:\code\mcmod\project\OneEnoughItem\src\main\resources\data\oneenoughitem\oneenoughitem" />
     </key>
   </component>
-  <component name="RunManager" selected="Gradle.OneEnoughItem [runClient]">
+  <component name="RunManager" selected="Gradle.OneEnoughItem [build]">
     <configuration name="OneEnoughItem [build]" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
       <ExternalSystemSettings>
         <option name="executionName" />
@@ -254,8 +254,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Gradle.OneEnoughItem [runClient]" />
         <item itemvalue="Gradle.OneEnoughItem [build]" />
+        <item itemvalue="Gradle.OneEnoughItem [runClient]" />
         <item itemvalue="Gradle.OneEnoughItem [runServer]" />
         <item itemvalue="Gradle.OneEnoughItem [clean]" />
         <item itemvalue="Gradle.OneEnoughItem [build]" />
