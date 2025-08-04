@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9516c189-d458-467d-a9ab-dc31d8e0c235" name="更改" comment="修复检测x2">
-      <change afterPath="$PROJECT_DIR$/pic/img_1.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pic/img_2.png" afterDir="false" />
+    <list default="true" id="9516c189-d458-467d-a9ab-dc31d8e0c235" name="更改" comment="HELP.md">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/HELP.md" beforeDir="false" afterPath="$PROJECT_DIR$/HELP.md" afterDir="false" />
     </list>
@@ -281,7 +279,7 @@
       <workItem from="1753752457114" duration="9214000" />
       <workItem from="1754011501371" duration="594000" />
       <workItem from="1754012116050" duration="7719000" />
-      <workItem from="1754235816772" duration="20090000" />
+      <workItem from="1754235816772" duration="22129000" />
     </task>
     <task id="LOCAL-00001" summary="1.0.2">
       <option name="closed" value="true" />
@@ -387,7 +385,15 @@
       <option name="project" value="LOCAL" />
       <updated>1754289783357</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="HELP.md">
+      <option name="closed" value="true" />
+      <created>1754293284555</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1754293284555</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -419,7 +425,8 @@
     <MESSAGE value="整理代码" />
     <MESSAGE value="修复检测" />
     <MESSAGE value="修复检测x2" />
-    <option name="LAST_COMMIT_MESSAGE" value="修复检测x2" />
+    <MESSAGE value="HELP.md" />
+    <option name="LAST_COMMIT_MESSAGE" value="HELP.md" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="VgoProject">
