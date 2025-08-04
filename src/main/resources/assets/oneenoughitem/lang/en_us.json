@@ -142,9 +142,9 @@
   "warning.oneenoughitem.tag_exists": "Duplicate tag",
   "warning.oneenoughitem.no_recipes_found": "No recipes to remove were found.",
 
-  "oneenoughitem.modernfix.warning.line1": "OneEnoughItem: Detected that the ModernFix option mixin.perf.faster_ingredients is set to true",
+  "oneenoughitem.modernfix.warning.line1": "OneEnoughItem: Detected the ModernFix mod ",
   "oneenoughitem.modernfix.warning.line2": " To ensure replaced items work correctly with recipes,",
-  "oneenoughitem.modernfix.warning.link": "please set it to false",
+  "oneenoughitem.modernfix.warning.link": "please set option mixin.perf.faster_ingredients to false",
   "oneenoughitem.modernfix.warning.suffix": "and restart the game",
   "oneenoughitem.modernfix.warning.hover": "Click to open config file: %s",
 
