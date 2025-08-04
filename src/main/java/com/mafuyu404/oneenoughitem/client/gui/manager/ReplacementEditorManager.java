@@ -212,7 +212,7 @@ public class ReplacementEditorManager {
     public void createReplacementFile(String datapackName, String fileName) {
         executeWithErrorHandling(() -> {
             Path datapackPath = PathUtils.getDatapackPath(datapackName);
-            Path replacementsPath = datapackPath.resolve("data/oneenoughitem/replacements");
+            Path replacementsPath = datapackPath.resolve("data/oei/replacements");
 
             Files.createDirectories(replacementsPath);
             createPackMcmetaIfNeeded(datapackPath);

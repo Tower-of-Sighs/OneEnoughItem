@@ -12,101 +12,50 @@ import java.util.List;
 import java.util.stream.Stream;
 
 public class PathUtils {
+    private static final String FOLDER_DATAPACKS = "datapacks";
+    private static final String DEFAULT_DATA_PACK_NAME = "OEI";
 
-    /**
-     * 获取数据包路径
-     * @param datapackName 数据包名称，如果为空则使用默认的"OEI"
-     * @return 数据包路径
-     */
+    private static final String REPLACEMENTS_SUB_PATH = "data/oei/replacements";
+    private static final String SAVES_FOLDER = "saves";
+
     public static Path getDatapackPath(String datapackName) {
         Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.getSingleplayerServer() != null) {
-            Path worldPath = minecraft.getSingleplayerServer().getWorldPath(LevelResource.ROOT);
-            Path datapacksPath = worldPath.resolve("datapacks");
+        Path datapacksPath = getDatapacksPath();
 
-            if (datapackName == null || datapackName.trim().isEmpty()) {
-                return datapacksPath.resolve("OEI");
-            } else {
-                return datapacksPath.resolve(datapackName.trim());
-            }
-        } else if (minecraft.level != null) {
-            try {
-                Path savesPath = minecraft.gameDirectory.toPath().resolve("saves");
-                Path worldPath = findCurrentWorldPath(savesPath);
-                if (worldPath != null) {
-                    Path datapacksPath = worldPath.resolve("datapacks");
-
-                    if (datapackName == null || datapackName.trim().isEmpty()) {
-                        return datapacksPath.resolve("OEI");
-                    } else {
-                        return datapacksPath.resolve(datapackName.trim());
-                    }
-                }
-            } catch (Exception e) {
-                Oneenoughitem.LOGGER.warn("Failed to determine world path", e);
-            }
+        String finalDatapackName = DEFAULT_DATA_PACK_NAME;
+        if (datapackName != null && !datapackName.trim().isEmpty()) {
+            finalDatapackName = datapackName.trim();
         }
 
-        Path savesPath = minecraft.gameDirectory.toPath().resolve("saves");
-        return savesPath.resolve("datapacks/OEI");
+        return datapacksPath.resolve(finalDatapackName);
     }
 
-    /**
-     * 获取替换文件目录路径
-     * @return 替换文件目录路径
-     */
     public static Path getReplacementsPath() {
-        Minecraft minecraft = Minecraft.getInstance();
-
-        if (minecraft.getSingleplayerServer() != null) {
-            Path worldPath = minecraft.getSingleplayerServer().getWorldPath(LevelResource.ROOT);
-            return worldPath.resolve("datapacks").resolve("OEI").resolve("data/oneenoughitem/replacements");
-        } else if (minecraft.level != null) {
-            try {
-                Path savesPath = minecraft.gameDirectory.toPath().resolve("saves");
-                Path worldPath = findCurrentWorldPath(savesPath);
-                if (worldPath != null) {
-                    return worldPath.resolve("datapacks").resolve("OEI").resolve("data/oneenoughitem/replacements");
-                }
-            } catch (Exception e) {
-                Oneenoughitem.LOGGER.warn("Failed to determine world path", e);
-            }
-        }
-
-        Path savesPath = minecraft.gameDirectory.toPath().resolve("saves");
-        return savesPath.resolve("datapacks/OEI/data/oneenoughitem/replacements");
+        return getDatapackPath(null).resolve(REPLACEMENTS_SUB_PATH);
     }
 
-    /**
-     * 获取datapacks根目录路径
-     * @return datapacks目录路径
-     */
     public static Path getDatapacksPath() {
         Minecraft minecraft = Minecraft.getInstance();
 
         if (minecraft.getSingleplayerServer() != null) {
             Path worldPath = minecraft.getSingleplayerServer().getWorldPath(LevelResource.ROOT);
-            return worldPath.resolve("datapacks");
+            return worldPath.resolve(FOLDER_DATAPACKS);
         } else if (minecraft.level != null) {
             try {
-                Path savesPath = minecraft.gameDirectory.toPath().resolve("saves");
+                Path savesPath = minecraft.gameDirectory.toPath().resolve(SAVES_FOLDER);
                 Path worldPath = findCurrentWorldPath(savesPath);
                 if (worldPath != null) {
-                    return worldPath.resolve("datapacks");
+                    return worldPath.resolve(FOLDER_DATAPACKS);
                 }
             } catch (Exception e) {
                 Oneenoughitem.LOGGER.warn("Failed to determine world path", e);
             }
         }
 
-        Path savesPath = minecraft.gameDirectory.toPath().resolve("saves");
-        return savesPath.resolve("datapacks");
+        Path savesPath = minecraft.gameDirectory.toPath().resolve(SAVES_FOLDER);
+        return savesPath.resolve(FOLDER_DATAPACKS);
     }
 
-    /**
-     * 扫描所有datapacks子文件夹中的JSON文件
-     * @return 包含文件信息的列表
-     */
     public static List<FileInfo> scanAllReplacementFiles() {
         List<FileInfo> jsonFiles = new ArrayList<>();
         try {
@@ -116,11 +65,11 @@ public class PathUtils {
                 return jsonFiles;
             }
 
-            // 遍历datapacks目录下的所有子文件夹
             try (Stream<Path> datapackDirs = Files.list(datapacksPath)) {
-                datapackDirs.filter(Files::isDirectory)
+                datapackDirs
+                        .filter(Files::isDirectory)
                         .forEach(datapackDir -> {
-                            Path replacementsPath = datapackDir.resolve("data/oneenoughitem/replacements");
+                            Path replacementsPath = datapackDir.resolve(REPLACEMENTS_SUB_PATH);
                             if (Files.exists(replacementsPath)) {
                                 scanJsonFilesInDirectory(replacementsPath, datapackDir, jsonFiles);
                             }
@@ -142,11 +91,15 @@ public class PathUtils {
                                 fileName.substring(0, fileName.length() - 5) : fileName;
 
                         String datapackName = datapackRoot.getFileName().toString();
-                        Path relativePath = replacementsPath.relativize(path.getParent());
-                        String relativePathStr = relativePath.toString().equals(".") ? "" : relativePath.toString();
+                        Path relativeToReplacements = replacementsPath.relativize(path.getParent());
+                        String relativePathStr = relativeToReplacements.toString().equals(".") ? "" : relativeToReplacements.toString();
 
-                        String fullPath = "datapacks/" + datapackName + "/data/oneenoughitem/replacements" +
-                                (relativePathStr.isEmpty() ? "" : "/" + relativePathStr);
+                        String fullPath = String.join("/",
+                                FOLDER_DATAPACKS,
+                                datapackName,
+                                REPLACEMENTS_SUB_PATH,
+                                relativePathStr
+                        ).replaceAll("\\\\", "/");
 
                         jsonFiles.add(new FileInfo(displayName, path, fullPath, datapackName));
                     });
@@ -155,6 +108,9 @@ public class PathUtils {
         }
     }
 
+    /**
+     * 查找当前世界路径（基于最后修改时间）
+     */
     public static Path findCurrentWorldPath(Path savesPath) {
         try {
             if (!Files.exists(savesPath)) {
@@ -180,6 +136,6 @@ public class PathUtils {
         }
     }
 
-        public record FileInfo(String displayName, Path filePath, String fullPath, String datapackName) {
+    public record FileInfo(String displayName, Path filePath, String fullPath, String datapackName) {
     }
 }
