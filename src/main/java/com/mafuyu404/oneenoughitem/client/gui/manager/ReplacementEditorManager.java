@@ -253,6 +253,14 @@ public class ReplacementEditorManager {
             createPackMcmetaIfNeeded(datapackPath);
 
             Path filePath = replacementsPath.resolve(fileName + ".json");
+
+            // 检查文件是否已存在
+            if (Files.exists(filePath)) {
+                showError(Component.translatable("error.oneenoughitem.file_already_exists", fileName + ".json")
+                        .withStyle(ChatFormatting.RED));
+                return;
+            }
+
             JsonArray emptyObjects = new JsonArray();
 
             try (FileWriter writer = new FileWriter(filePath.toFile())) {
@@ -270,7 +278,7 @@ public class ReplacementEditorManager {
         }, e -> showError(Component.translatable("error.oneenoughitem.file_create_failed", e.getMessage())
                 .withStyle(ChatFormatting.RED)));
     }
-
+    
     private void createPackMcmetaIfNeeded(Path datapackPath) throws IOException {
         Path packMcmetaPath = datapackPath.resolve("pack.mcmeta");
         if (!Files.exists(packMcmetaPath)) {

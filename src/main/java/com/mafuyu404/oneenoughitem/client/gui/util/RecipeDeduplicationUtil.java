@@ -24,9 +24,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class RecipeDeduplicationUtil {
+
+    private static volatile boolean isDeduplicationInProgress = false;
+    private static Consumer<Component> currentMessageCallback = null;
 
     public static class DeduplicationResult {
         private final boolean success;
@@ -76,59 +81,248 @@ public class RecipeDeduplicationUtil {
         }
     }
 
+    /**
+     * 配方去重方法 - 根据脚本文件存在情况决定执行流程
+     * @param targetFilePath 目标文件路径（可以为null，会扫描所有文件）
+     * @param messageCallback 消息回调
+     * @return 去重结果
+     */
     public static DeduplicationResult deduplicateRecipes(Path targetFilePath, Consumer<Component> messageCallback) {
         if (!CompatUtil.isKubeJSLoaded()) {
             return DeduplicationResult.error("error.oneenoughitem.kubejs_not_loaded");
         }
 
-        if (targetFilePath == null) {
-            return DeduplicationResult.error("error.oneenoughitem.no_file_selected");
+        if (isDeduplicationInProgress) {
+            return DeduplicationResult.warning("message.oneenoughitem.deduplication_in_progress");
         }
 
+        try {
+            isDeduplicationInProgress = true;
+            currentMessageCallback = messageCallback;
+
+            Path scriptFile = createScriptDirectory();
+            if (scriptFile == null) {
+                isDeduplicationInProgress = false;
+                return DeduplicationResult.error("error.oneenoughitem.script_directory_creation_failed");
+            }
+
+            // 检查脚本文件是否存在，决定执行流程
+            if (!Files.exists(scriptFile)) {
+                // 没有脚本文件：直接基于当前数据生成脚本
+                Oneenoughitem.LOGGER.info("No existing script found, generating script directly from current data");
+                return generateScriptDirectly(scriptFile, messageCallback);
+            } else {
+                // 有脚本文件：执行三步流程（删除 → reload → 重新生成）
+                Oneenoughitem.LOGGER.info("Existing script found, executing three-step process");
+                return executeThreeStepProcess(scriptFile, messageCallback);
+            }
+
+        } catch (Exception e) {
+            isDeduplicationInProgress = false;
+            currentMessageCallback = null;
+            Oneenoughitem.LOGGER.error("Failed to start recipe deduplication process", e);
+            return DeduplicationResult.error("error.oneenoughitem.script_generation_failed");
+        }
+    }
+
+    /**
+     * 直接生成脚本（没有现有脚本时）
+     */
+    private static DeduplicationResult generateScriptDirectly(Path scriptFile, Consumer<Component> messageCallback) {
+        try {
+            if (messageCallback != null) {
+                messageCallback.accept(Component.translatable("message.oneenoughitem.generating_script_directly")
+                        .withStyle(ChatFormatting.YELLOW));
+            }
+
+            Set<String> allMatchItems = new HashSet<>();
+            Set<String> allMatchTags = new HashSet<>();
+
+            // 扫描所有数据包中的替换规则文件
+            collectMatchItemsFromAllFiles(allMatchItems, allMatchTags);
+
+            if (allMatchItems.isEmpty() && allMatchTags.isEmpty()) {
+                isDeduplicationInProgress = false;
+                return DeduplicationResult.warning("warning.oneenoughitem.no_match_items");
+            }
+
+            // 基于当前配方数据收集需要移除的配方ID
+            List<String> recipeIds = collectRecipeIds(new ArrayList<>(allMatchItems), new ArrayList<>(allMatchTags));
+
+            if (recipeIds.isEmpty()) {
+                isDeduplicationInProgress = false;
+                return DeduplicationResult.warning("warning.oneenoughitem.no_recipes_found");
+            }
+
+            // 生成脚本
+            String scriptContent = generateCompleteScript(recipeIds, allMatchItems.size(), allMatchTags.size());
+            Files.writeString(scriptFile, scriptContent);
+
+            if (messageCallback != null) {
+                messageCallback.accept(Component.translatable("message.oneenoughitem.script_generated_with_count", recipeIds.size())
+                        .withStyle(ChatFormatting.GREEN));
+                messageCallback.accept(Component.translatable("message.oneenoughitem.reload_required")
+                        .withStyle(ChatFormatting.YELLOW));
+            }
+
+            Oneenoughitem.LOGGER.info("Generated KubeJS script directly with {} recipe removals at: {}",
+                    recipeIds.size(), scriptFile);
+
+            isDeduplicationInProgress = false;
+            return DeduplicationResult.success("message.oneenoughitem.script_generated", recipeIds.size(), scriptFile);
+
+        } catch (Exception e) {
+            isDeduplicationInProgress = false;
+            Oneenoughitem.LOGGER.error("Failed to generate script directly", e);
+            return DeduplicationResult.error("error.oneenoughitem.script_generation_failed");
+        }
+    }
+
+    /**
+     * 执行三步流程（有现有脚本时）
+     */
+    private static DeduplicationResult executeThreeStepProcess(Path scriptFile, Consumer<Component> messageCallback) {
+        try {
+            // 步骤1: 删除现有脚本
+            if (messageCallback != null) {
+                messageCallback.accept(Component.translatable("message.oneenoughitem.deduplication_step1")
+                        .withStyle(ChatFormatting.YELLOW));
+            }
+
+            Files.delete(scriptFile);
+            Oneenoughitem.LOGGER.info("Deleted existing script file: {}", scriptFile);
+            if (messageCallback != null) {
+                messageCallback.accept(Component.translatable("message.oneenoughitem.script_deleted")
+                        .withStyle(ChatFormatting.GREEN));
+            }
+
+            // 步骤2: 执行reload命令
+            if (messageCallback != null) {
+                messageCallback.accept(Component.translatable("message.oneenoughitem.deduplication_step2")
+                        .withStyle(ChatFormatting.YELLOW));
+            }
+
+            executeReloadCommand();
+
+            // 步骤3: 延迟执行脚本生成（等待reload完成）
+            CompletableFuture.delayedExecutor(3, TimeUnit.SECONDS).execute(() -> {
+                try {
+                    if (messageCallback != null) {
+                        messageCallback.accept(Component.translatable("message.oneenoughitem.deduplication_step3")
+                                .withStyle(ChatFormatting.YELLOW));
+                    }
+
+                    generateScriptAfterReload(scriptFile, messageCallback);
+                } finally {
+                    isDeduplicationInProgress = false;
+                    currentMessageCallback = null;
+                }
+            });
+
+            return DeduplicationResult.success("message.oneenoughitem.deduplication_in_progress", 0, scriptFile);
+
+        } catch (Exception e) {
+            isDeduplicationInProgress = false;
+            currentMessageCallback = null;
+            Oneenoughitem.LOGGER.error("Failed to execute three-step process", e);
+            return DeduplicationResult.error("error.oneenoughitem.script_generation_failed");
+        }
+    }
+
+    /**
+     * 执行reload命令
+     */
+    private static void executeReloadCommand() {
+        try {
+            if (Minecraft.getInstance().player != null) {
+                Minecraft.getInstance().player.connection.sendCommand("reload");
+                Oneenoughitem.LOGGER.info("Executed reload command for recipe deduplication");
+            }
+        } catch (Exception e) {
+            Oneenoughitem.LOGGER.error("Failed to execute reload command", e);
+            throw new RuntimeException("Failed to execute reload command", e);
+        }
+    }
+
+    /**
+     * 在reload完成后生成脚本
+     */
+    private static void generateScriptAfterReload(Path scriptFile, Consumer<Component> messageCallback) {
         try {
             Set<String> allMatchItems = new HashSet<>();
             Set<String> allMatchTags = new HashSet<>();
 
-            collectMatchItemsFromFile(targetFilePath, allMatchItems, allMatchTags);
+            // 扫描所有数据包中的替换规则文件
+            collectMatchItemsFromAllFiles(allMatchItems, allMatchTags);
 
             if (allMatchItems.isEmpty() && allMatchTags.isEmpty()) {
-                return DeduplicationResult.warning("warning.oneenoughitem.no_match_items");
+                if (messageCallback != null) {
+                    messageCallback.accept(Component.translatable("warning.oneenoughitem.no_match_items")
+                            .withStyle(ChatFormatting.YELLOW));
+                }
+                return;
             }
 
-            Path scriptFile = createScriptDirectory();
-            if (scriptFile == null) {
-                return DeduplicationResult.error("error.oneenoughitem.script_directory_creation_failed");
-            }
-
+            // 现在配方数据已经恢复，可以正确读取所有配方
             List<String> recipeIds = collectRecipeIds(new ArrayList<>(allMatchItems), new ArrayList<>(allMatchTags));
 
             if (recipeIds.isEmpty()) {
-                return DeduplicationResult.warning("warning.oneenoughitem.no_recipes_found");
-            }
-
-            String scriptContent = generateOptimizedScript(recipeIds, allMatchItems.size(), allMatchTags.size(), targetFilePath.getFileName().toString());
-
-            try {
-                Files.writeString(scriptFile, scriptContent);
                 if (messageCallback != null) {
-                    messageCallback.accept(Component.translatable("message.oneenoughitem.reload_required")
+                    messageCallback.accept(Component.translatable("warning.oneenoughitem.no_recipes_found")
                             .withStyle(ChatFormatting.YELLOW));
                 }
-
-                Oneenoughitem.LOGGER.info("Generated KubeJS script with {} recipe removals for file {} at: {}",
-                        recipeIds.size(), targetFilePath.getFileName(), scriptFile);
-
-                return DeduplicationResult.success("message.oneenoughitem.script_generated", recipeIds.size(), scriptFile);
-
-            } catch (IOException e) {
-                Oneenoughitem.LOGGER.error("Failed to write KubeJS script file", e);
-                return DeduplicationResult.error("error.oneenoughitem.script_write_failed");
+                return;
             }
 
+            // 生成新的脚本
+            String scriptContent = generateCompleteScript(recipeIds, allMatchItems.size(), allMatchTags.size());
+
+            Files.writeString(scriptFile, scriptContent);
+
+            if (messageCallback != null) {
+                messageCallback.accept(Component.translatable("message.oneenoughitem.deduplication_complete", recipeIds.size())
+                        .withStyle(ChatFormatting.GREEN));
+                messageCallback.accept(Component.translatable("message.oneenoughitem.reload_required_again")
+                        .withStyle(ChatFormatting.YELLOW));
+            }
+
+            Oneenoughitem.LOGGER.info("Successfully generated KubeJS script with {} recipe removals after reload at: {}",
+                    recipeIds.size(), scriptFile);
+
         } catch (Exception e) {
-            Oneenoughitem.LOGGER.error("Failed to generate recipe removal script", e);
-            return DeduplicationResult.error("error.oneenoughitem.script_generation_failed");
+            Oneenoughitem.LOGGER.error("Failed to generate script after reload", e);
+            if (messageCallback != null) {
+                messageCallback.accept(Component.translatable("error.oneenoughitem.script_generation_failed")
+                        .withStyle(ChatFormatting.RED));
+            }
         }
+    }
+
+    /**
+     * 从所有数据包文件中收集匹配项
+     */
+    private static void collectMatchItemsFromAllFiles(Set<String> allMatchItems, Set<String> allMatchTags) {
+        List<PathUtils.FileInfo> allFiles = PathUtils.scanAllReplacementFiles();
+
+        Oneenoughitem.LOGGER.info("Found {} replacement files to scan", allFiles.size());
+
+        for (PathUtils.FileInfo fileInfo : allFiles) {
+            int itemsBefore = allMatchItems.size();
+            int tagsBefore = allMatchTags.size();
+
+            collectMatchItemsFromFile(fileInfo.filePath(), allMatchItems, allMatchTags);
+
+            int itemsAdded = allMatchItems.size() - itemsBefore;
+            int tagsAdded = allMatchTags.size() - tagsBefore;
+
+            if (itemsAdded > 0 || tagsAdded > 0) {
+                Oneenoughitem.LOGGER.info("File '{}' contributed {} items and {} tags",
+                        fileInfo.displayName(), itemsAdded, tagsAdded);
+            }
+        }
+
+        Oneenoughitem.LOGGER.info("Total collected from all files: {} unique items and {} unique tags",
+                allMatchItems.size(), allMatchTags.size());
     }
 
     private static void collectMatchItemsFromFile(Path filePath, Set<String> allMatchItems, Set<String> allMatchTags) {
@@ -153,11 +347,7 @@ public class RecipeDeduplicationUtil {
         } catch (Exception e) {
             Oneenoughitem.LOGGER.warn("Failed to read replacement file: {}", filePath, e);
         }
-
-        Oneenoughitem.LOGGER.info("Collected {} items and {} tags from file: {}",
-                allMatchItems.size(), allMatchTags.size(), filePath.getFileName());
     }
-
 
     private static void processMatchItemsFromElement(JsonElement element, Set<String> allMatchItems, Set<String> allMatchTags) {
         try {
@@ -185,7 +375,7 @@ public class RecipeDeduplicationUtil {
                                     }
                                 }
                                 allMatchTags.add(matchItem); // 保留原标签用于统计
-                                Oneenoughitem.LOGGER.info("Expanded tag {} to {} items", tagId, tagItems.size());
+                                Oneenoughitem.LOGGER.debug("Expanded tag {} to {} items", tagId, tagItems.size());
                             }
                         } catch (Exception e) {
                             Oneenoughitem.LOGGER.error("Invalid tag ID format: {}", matchItem, e);
@@ -218,13 +408,13 @@ public class RecipeDeduplicationUtil {
         RecipeManager recipeManager = Minecraft.getInstance().level.getRecipeManager();
 
         int totalRecipes = 0;
-        int checkedRecipes = 0;
 
         for (Recipe<?> recipe : recipeManager.getRecipes()) {
             totalRecipes++;
             ResourceLocation recipeId = recipe.getId();
             boolean shouldRemove = false;
 
+            // 检查配方输入材料
             for (Ingredient ingredient : recipe.getIngredients()) {
                 for (ItemStack stack : ingredient.getItems()) {
                     String itemId = Utils.getItemRegistryName(stack.getItem());
@@ -236,6 +426,7 @@ public class RecipeDeduplicationUtil {
                 if (shouldRemove) break;
             }
 
+            // 检查配方输出物品
             if (!shouldRemove) {
                 Level level = Minecraft.getInstance().level;
                 if (level != null) {
@@ -244,7 +435,7 @@ public class RecipeDeduplicationUtil {
                     if (!result.isEmpty()) {
                         String resultItemId = Utils.getItemRegistryName(result.getItem());
                         if (resultItemId != null && matchItems.contains(resultItemId)) {
-                            Oneenoughitem.LOGGER.info("Found matching output item '{}' in recipe '{}'", resultItemId, recipeId);
+                            Oneenoughitem.LOGGER.debug("Found matching output item '{}' in recipe '{}'", resultItemId, recipeId);
                             shouldRemove = true;
                         }
                     }
@@ -254,45 +445,32 @@ public class RecipeDeduplicationUtil {
             if (shouldRemove) {
                 recipeIds.add(recipeId.toString());
             }
-
-            checkedRecipes++;
         }
 
+        Oneenoughitem.LOGGER.info("Checked {} recipes, found {} recipes to remove", totalRecipes, recipeIds.size());
         return recipeIds;
     }
 
-    private static String generateOptimizedScript(List<String> newRecipeIds, int itemCount, int tagCount, String fileName) {
+    /**
+     * 生成完全覆盖的脚本
+     */
+    private static String generateCompleteScript(List<String> recipeIds, int itemCount, int tagCount) {
         StringBuilder scriptContent = new StringBuilder();
-        Set<String> allRecipeIds = new HashSet<>(newRecipeIds);
 
-        Path gameDirectory = Minecraft.getInstance().gameDirectory.toPath();
-        Path existingScriptFile = gameDirectory.resolve("kubejs").resolve("server_scripts").resolve("oei_remove_recipe.js");
-
-        if (Files.exists(existingScriptFile)) {
-            try {
-                String existingContent = Files.readString(existingScriptFile);
-                Set<String> existingRecipeIds = extractRecipeIdsFromScript(existingContent);
-                allRecipeIds.addAll(existingRecipeIds);
-                Oneenoughitem.LOGGER.info("Merged {} existing recipe IDs with {} new recipe IDs", existingRecipeIds.size(), newRecipeIds.size());
-            } catch (Exception e) {
-                Oneenoughitem.LOGGER.warn("Failed to read existing script file, will create new one: {}", e.getMessage());
-            }
-        }
-
-        List<String> sortedRecipeIds = new ArrayList<>(allRecipeIds);
+        List<String> sortedRecipeIds = new ArrayList<>(recipeIds);
         sortedRecipeIds.sort(String::compareTo);
 
         scriptContent.append("// OEI自动生成的配方移除脚本\n");
         scriptContent.append("// 此脚本移除与被替换物品相关的配方\n");
-        scriptContent.append("// 最后更新时间: ").append(LocalDateTime.now()).append("\n");
-        scriptContent.append("// 最后更新源文件: ").append(fileName).append("\n");
-        scriptContent.append("// 当前批次替换物品数量: ").append(itemCount).append("\n");
-        scriptContent.append("// 当前批次替换标签数量: ").append(tagCount).append("\n");
-        scriptContent.append("// 当前批次新增配方数量: ").append(newRecipeIds.size()).append("\n");
-        scriptContent.append("// 总移除配方数量: ").append(sortedRecipeIds.size()).append("\n\n");
+        scriptContent.append("// 生成时间: ").append(LocalDateTime.now()).append("\n");
+        scriptContent.append("// 扫描来源: 所有数据包中的替换规则文件\n");
+        scriptContent.append("// 替换物品数量: ").append(itemCount).append("\n");
+        scriptContent.append("// 替换标签数量: ").append(tagCount).append("\n");
+        scriptContent.append("// 移除配方数量: ").append(sortedRecipeIds.size()).append("\n");
+        scriptContent.append("// 注意: 此脚本通过三步流程生成（删除->reload->重新生成）\n\n");
 
         scriptContent.append("ServerEvents.recipes(event => {\n");
-        scriptContent.append("    // 需要移除的配方ID列表（已合并所有批次）\n");
+        scriptContent.append("    // 需要移除的配方ID列表（基于reload后的完整配方数据）\n");
         scriptContent.append("    const recipeIds = [\n");
 
         for (int i = 0; i < sortedRecipeIds.size(); i++) {
@@ -308,41 +486,9 @@ public class RecipeDeduplicationUtil {
         scriptContent.append("    recipeIds.forEach(id => {\n");
         scriptContent.append("        event.remove({ id: id });\n");
         scriptContent.append("    });\n\n");
-        scriptContent.append("    console.info(`OEI: 已移除 ${recipeIds.length} 个配方 (最后更新来源: ").append(fileName).append(")`);\n");
+        scriptContent.append("    console.debug(`OEI: 已移除 ${recipeIds.length} 个配方 (基于reload后的完整数据)`);\n");
         scriptContent.append("});\n");
 
         return scriptContent.toString();
-    }
-
-    private static Set<String> extractRecipeIdsFromScript(String scriptContent) {
-        Set<String> recipeIds = new HashSet<>();
-        try {
-            String[] lines = scriptContent.split("\n");
-            boolean inRecipeArray = false;
-
-            for (String line : lines) {
-                line = line.trim();
-                if (line.contains("const recipeIds = [")) {
-                    inRecipeArray = true;
-                    continue;
-                }
-                if (inRecipeArray) {
-                    if (line.equals("];")) {
-                        break;
-                    }
-                    if (line.startsWith("\"") && line.contains("\"")) {
-                        String recipeId = line.substring(1);
-                        int endIndex = recipeId.indexOf("\"");
-                        if (endIndex > 0) {
-                            recipeId = recipeId.substring(0, endIndex);
-                            recipeIds.add(recipeId);
-                        }
-                    }
-                }
-            }
-        } catch (Exception e) {
-            Oneenoughitem.LOGGER.warn("Failed to extract recipe IDs from existing script: {}", e.getMessage());
-        }
-        return recipeIds;
     }
 }

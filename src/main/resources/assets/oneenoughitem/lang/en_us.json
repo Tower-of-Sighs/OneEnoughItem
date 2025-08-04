@@ -137,6 +137,7 @@
   "error.oneenoughitem.no_items_for_deduplication": "Please add items or tags to deduplicate first.",
   "error.oneenoughitem.recipe_search_failed": "An error occurred while searching for recipes.",
   "error.oneenoughitem.recipe_removal_failed": "An error occurred while removing recipes.",
+  "error.oneenoughitem.file_already_exists": "File already exists",
 
   "warning.oneenoughitem.item_exists": "Duplicate item",
   "warning.oneenoughitem.tag_exists": "Duplicate tag",
