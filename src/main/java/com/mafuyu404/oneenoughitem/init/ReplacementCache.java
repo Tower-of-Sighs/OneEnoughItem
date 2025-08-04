@@ -126,10 +126,17 @@ public class ReplacementCache {
 
 
 
-    public static Collection<String> trackSourceOf(String id) {
+    public static Collection<String> trackSourceIdOf(String id) {
         Collection<String> result = new HashSet<>();
         ItemMapCache.forEach((matchItem, resultItem) -> {
             if (resultItem.equals(id)) result.add(matchItem);
+        });
+        return result;
+    }
+    public static Collection<Item> trackSourceOf(String id) {
+        Collection<Item> result = new HashSet<>();
+        ItemMapCache.forEach((matchItem, resultItem) -> {
+            if (resultItem.equals(id)) result.add(Utils.getItemById(matchItem));
         });
         return result;
     }
