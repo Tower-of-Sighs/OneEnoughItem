@@ -73,18 +73,57 @@ public class ReplacementCache {
     }
 
     /**
-     * 获取所有已替换的物品ID
+     * 从缓存中移除指定的物品替换
      */
-    public static Set<String> getAllReplacedItems() {
-        return new HashSet<>(ItemMapCache.keySet());
+    public static boolean removeItemReplacement(String itemId) {
+        if (itemId != null && ItemMapCache.containsKey(itemId)) {
+            String removed = ItemMapCache.remove(itemId);
+            Oneenoughitem.LOGGER.debug("Removed item replacement from runtime cache: {} -> {}", itemId, removed);
+            return true;
+        }
+        return false;
     }
 
     /**
-     * 获取所有已替换的标签ID
+     * 从缓存中移除指定的标签替换
      */
-    public static Set<String> getAllReplacedTags() {
-        return new HashSet<>(TagMapCache.keySet());
+    public static boolean removeTagReplacement(String tagId) {
+        if (tagId != null && TagMapCache.containsKey(tagId)) {
+            String removed = TagMapCache.remove(tagId);
+            Oneenoughitem.LOGGER.debug("Removed tag replacement from runtime cache: {} -> {}", tagId, removed);
+            return true;
+        }
+        return false;
     }
+
+    /**
+     * 批量移除物品和标签替换
+     */
+    public static void removeReplacements(Collection<String> itemIds, Collection<String> tagIds) {
+        boolean changed = false;
+
+        if (itemIds != null) {
+            for (String itemId : itemIds) {
+                if (removeItemReplacement(itemId)) {
+                    changed = true;
+                }
+            }
+        }
+
+        if (tagIds != null) {
+            for (String tagId : tagIds) {
+                if (removeTagReplacement(tagId)) {
+                    changed = true;
+                }
+            }
+        }
+
+        if (changed) {
+            Oneenoughitem.LOGGER.info("Removed {} item replacements and {} tag replacements from runtime cache",
+                    itemIds != null ? itemIds.size() : 0, tagIds != null ? tagIds.size() : 0);
+        }
+    }
+
 
 
     public static Collection<String> trackSourceOf(String id) {

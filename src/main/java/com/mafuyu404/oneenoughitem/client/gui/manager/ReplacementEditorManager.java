@@ -8,6 +8,7 @@ import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.client.gui.cache.GlobalReplacementCache;
 import com.mafuyu404.oneenoughitem.client.gui.util.PathUtils;
 import com.mafuyu404.oneenoughitem.data.Replacements;
+import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.Utils;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.ChatFormatting;
@@ -238,8 +239,13 @@ public class ReplacementEditorManager {
                 }
             }
 
+            // 从全局缓存中移除
             GlobalReplacementCache.removeReplacement(matchItemsList, matchTagsList);
-            Oneenoughitem.LOGGER.debug("Removed replacement from global cache: items={}, tags={}",
+
+            // 从运行时缓存中移除
+            ReplacementCache.removeReplacements(matchItemsList, matchTagsList);
+
+            Oneenoughitem.LOGGER.debug("Removed replacement from both global and runtime cache: items={}, tags={}",
                     matchItemsList, matchTagsList);
         }
     }

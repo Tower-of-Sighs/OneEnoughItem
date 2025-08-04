@@ -263,7 +263,7 @@ public class RecipeDeduplicationUtil {
                 return;
             }
 
-            // 现在配方数据已经恢复，可以正确读取所有配方
+            // 现在配方数据已经恢复，可以正确读取所有配方（为什么读不到！！！）
             List<String> recipeIds = collectRecipeIds(new ArrayList<>(allMatchItems), new ArrayList<>(allMatchTags));
 
             if (recipeIds.isEmpty()) {
