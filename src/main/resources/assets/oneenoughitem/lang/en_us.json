@@ -65,6 +65,8 @@
   "gui.oneenoughitem.modernfix_warning.line2": "If you encounter recipe failure bugs,",
   "gui.oneenoughitem.modernfix_warning.line3": "please disable the faster_ingredients option.",
   "gui.oneenoughitem.modernfix_warning.line4": "Click OK to automatically disable this option",
+  "gui.oneenoughitem.deduplicate_recipes": "Deduplicate Recipes",
+  "gui.oneenoughitem.deduplicate_recipes.processing": "Processing...",
 
   "mode.oneenoughitem.add": "Add",
   "mode.oneenoughitem.modify": "Modify",
@@ -95,6 +97,12 @@
   "message.oneenoughitem.datapack_reload_triggered": "Datapack reload triggered",
   "message.oneenoughitem.cache_saved": "Cache saved (Ctrl+S)",
   "message.oneenoughitem.file_deleted": "File deleted: %s",
+  "message.oneenoughitem.reload_required": "Reload is required for it to take effect",
+  "message.oneenoughitem.no_recipes_found": "No recipes containing the specified item were found.",
+  "message.oneenoughitem.confirm_recipe_removal": "Found %s recipes containing the specified item. Are you sure you want to remove them?",
+  "message.oneenoughitem.recipes_removed": "Successfully removed %s recipes.",
+  "message.oneenoughitem.no_recipes_removed": "No recipes were removed.",
+  "message.oneenoughitem.script_generated": "Successfully generated KubeJS script with %s recipe removal rules, saved to: %s",
 
   "error.oneenoughitem.file_name_empty": "File name cannot be empty",
   "error.oneenoughitem.object_parse_failed": "Unable to parse data from object index %d",
@@ -123,9 +131,16 @@
   "error.oneenoughitem.result_item_already_replaced": "Result item cannot be a replaced item",
   "error.oneenoughitem.result_item_used_as_match": "Result item cannot be used as match in other rules",
   "error.oneenoughitem.tag_already_replaced": "This tag is already used as result in other rules",
+  "error.oneenoughitem.reload_failed": "Reload Failed",
+  "error.oneenoughitem.script_generation_failed": "Script generation failed: %s",
+  "error.oneenoughitem.script_write_failed": "Failed to write script file: %s",
+  "error.oneenoughitem.no_items_for_deduplication": "Please add items or tags to deduplicate first.",
+  "error.oneenoughitem.recipe_search_failed": "An error occurred while searching for recipes.",
+  "error.oneenoughitem.recipe_removal_failed": "An error occurred while removing recipes.",
 
   "warning.oneenoughitem.item_exists": "Duplicate item",
   "warning.oneenoughitem.tag_exists": "Duplicate tag",
+  "warning.oneenoughitem.no_recipes_found": "No recipes to remove were found.",
 
   "oneenoughitem.modernfix.warning.line1": "OneEnoughItem: Detected that the ModernFix option mixin.perf.faster_ingredients is set to true",
   "oneenoughitem.modernfix.warning.line2": " To ensure replaced items work correctly with recipes,",
@@ -134,6 +149,5 @@
   "oneenoughitem.modernfix.warning.hover": "Click to open config file: %s",
 
   "key.categories.oneenoughitem": "OneEnoughItem",
-  "key.oneenoughitem.open_editor": "Open Replacement Screen",
-  "error.oneenoughitem.reload_failed": "Reload Failed"
+  "key.oneenoughitem.open_editor": "Open Replacement Screen"
 }

@@ -47,6 +47,7 @@ public class ReplacementEditorManager {
     public Item getResultItem() { return resultItem; }
     public ResourceLocation getResultTag() { return resultTag; }
     public String getCurrentFileName() { return currentFileName; }
+    public Path getCurrentFilePath() { return currentFilePath; }
     public int getCurrentObjectIndex() { return currentObjectIndex; }
     public int getObjectSize() { return currentJsonObjects != null ? currentJsonObjects.size() : 0; }
 

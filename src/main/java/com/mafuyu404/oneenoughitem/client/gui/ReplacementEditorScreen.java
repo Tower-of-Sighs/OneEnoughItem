@@ -1,5 +1,8 @@
 package com.mafuyu404.oneenoughitem.client.gui;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.client.gui.cache.EditorCache;
 import com.mafuyu404.oneenoughitem.client.gui.cache.GlobalReplacementCache;
@@ -7,30 +10,43 @@ import com.mafuyu404.oneenoughitem.client.gui.components.ItemDisplayWidget;
 import com.mafuyu404.oneenoughitem.client.gui.components.ScrollablePanel;
 import com.mafuyu404.oneenoughitem.client.gui.components.TagDisplayWidget;
 import com.mafuyu404.oneenoughitem.client.gui.manager.ReplacementEditorManager;
-import com.mafuyu404.oneenoughitem.client.gui.util.GuiUtils;
-import com.mafuyu404.oneenoughitem.client.gui.util.PathUtils;
-import com.mafuyu404.oneenoughitem.client.gui.util.ReplacementUtils;
+import com.mafuyu404.oneenoughitem.client.gui.util.*;
+import com.mafuyu404.oneenoughitem.data.Replacements;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.ReplacementControl;
 import com.mafuyu404.oneenoughitem.init.Utils;
+import com.mojang.serialization.JsonOps;
+import dev.latvian.mods.kubejs.recipe.ItemMatch;
+import dev.latvian.mods.kubejs.recipe.RecipesEventJS;
+import dev.latvian.mods.kubejs.recipe.ReplacementMatch;
+import dev.latvian.mods.kubejs.recipe.filter.InputFilter;
+import dev.latvian.mods.kubejs.recipe.filter.OutputFilter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeManager;
+import net.minecraft.world.level.Level;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public class ReplacementEditorScreen extends Screen {
@@ -48,6 +64,8 @@ public class ReplacementEditorScreen extends Screen {
     private Button selectFileButton;
     private Button reloadButton;
     private Button clearAllButton;
+    private Button saveToJSONButton;
+    private Button deduplicateRecipesButton;
 
     private Button objectDropdownButton;
     private boolean showObjectDropdown = false;
@@ -173,9 +191,15 @@ public class ReplacementEditorScreen extends Screen {
                 button -> this.clearAll(), centerX - 75, fileY + 25, 60, BUTTON_HEIGHT);
         this.addRenderableWidget(this.clearAllButton);
 
-        Button saveToJsonButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.save_to_json"),
+        this.saveToJSONButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.save_to_json"),
                 button -> this.saveToJson(), centerX - 10, fileY + 25, 80, BUTTON_HEIGHT);
-        this.addRenderableWidget(saveToJsonButton);
+        this.addRenderableWidget(this.saveToJSONButton);
+        if (CompatUtil.isKubeJSLoaded()) {
+            this.deduplicateRecipesButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.deduplicate_recipes"),
+                    button -> this.deduplicateRelatedRecipes(), centerX + 75, fileY + 25, 80, BUTTON_HEIGHT);
+            this.addRenderableWidget(this.deduplicateRecipesButton);
+        }
+
 
         int panelY = fileY + 55;
         int leftPanelX = centerX - PANEL_WIDTH - MARGIN;
@@ -422,6 +446,26 @@ public class ReplacementEditorScreen extends Screen {
     private void saveToJson() {
         this.manager.saveReplacement();
     }
+
+    /**
+     * 移除与被替换物品和标签相关的配方(生成kjs脚本)
+     */
+    private void deduplicateRelatedRecipes() {
+        Path currentFilePath = this.manager.getCurrentFilePath();
+        RecipeDeduplicationUtil.DeduplicationResult result = RecipeDeduplicationUtil.deduplicateRecipes(currentFilePath, this::showMessage);
+
+        if (result.isSuccess()) {
+            this.showMessage(Component.translatable(result.getMessage(), result.getRecipeCount(), result.getScriptPath().toString())
+                    .withStyle(result.getFormatting()));
+        } else {
+            if (result.getFormatting() == ChatFormatting.YELLOW) {
+                this.showWarn(Component.translatable(result.getMessage()).withStyle(result.getFormatting()));
+            } else {
+                this.showError(Component.translatable(result.getMessage()).withStyle(result.getFormatting()));
+            }
+        }
+    }
+
 
     private void selectFile() {
         this.minecraft.setScreen(new FileSelectionScreen(this));

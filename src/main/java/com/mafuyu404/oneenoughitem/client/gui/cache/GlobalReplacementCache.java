@@ -145,6 +145,22 @@ public class GlobalReplacementCache extends BaseCache {
                 isValidString(itemId) && INSTANCE.resultItems.containsKey(itemId));
     }
 
+    /**
+     * 获取所有已替换的物品ID
+     */
+    public static Set<String> getAllReplacedItems() {
+        return INSTANCE.withInitializedReadLock(() ->
+                new HashSet<>(INSTANCE.replacedItems.keySet()));
+    }
+
+    /**
+     * 获取所有已替换的标签ID
+     */
+    public static Set<String> getAllReplacedTags() {
+        return INSTANCE.withInitializedReadLock(() ->
+                new HashSet<>(INSTANCE.replacedTags.keySet()));
+    }
+
     public static boolean isTagUsedAsResult(String tagId) {
         return INSTANCE.withInitializedReadLock(() ->
                 isValidString(tagId) && INSTANCE.resultTags.containsKey(tagId));

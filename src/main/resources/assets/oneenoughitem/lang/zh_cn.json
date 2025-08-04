@@ -57,6 +57,8 @@
   "gui.oneenoughitem.object.element_down": "▼ 对象元素",
   "gui.oneenoughitem.object.delete": "删除",
   "gui.oneenoughitem.save_to_json": "保存到JSON",
+  "gui.oneenoughitem.deduplicate_recipes": "配方去重",
+  "gui.oneenoughitem.deduplicate_recipes.processing": "处理中...",
 
   "gui.oneenoughitem.modernfix_warning.title": "OneEnoughItem",
   "gui.oneenoughitem.modernfix_warning.confirm": "确定",
@@ -65,6 +67,7 @@
   "gui.oneenoughitem.modernfix_warning.line2": "如果出现配方失效的bug，",
   "gui.oneenoughitem.modernfix_warning.line3": "请关闭faster_ingredients配置选项。",
   "gui.oneenoughitem.modernfix_warning.line4": "点击确定将自动关闭该选项",
+
 
   "mode.oneenoughitem.add": "添加",
   "mode.oneenoughitem.modify": "更改",
@@ -96,6 +99,11 @@
   "message.oneenoughitem.datapack_reload_triggered": "数据包重载已触发",
   "message.oneenoughitem.cache_saved": "缓存已保存 (Ctrl+S)",
   "message.oneenoughitem.file_deleted": "文件已删除: %s",
+  "message.oneenoughitem.no_recipes_found": "未找到包含指定物品的配方",
+  "message.oneenoughitem.confirm_recipe_removal": "找到 %s 个包含指定物品的配方，确定要移除吗？",
+  "message.oneenoughitem.recipes_removed": "成功移除 %s 个配方",
+  "message.oneenoughitem.no_recipes_removed": "没有配方被移除",
+  "message.oneenoughitem.script_generated": "成功生成KubeJS脚本，包含 %s 个配方移除规则，保存至: %s",
 
   "error.oneenoughitem.file_name_empty": "文件名不能为空",
   "error.oneenoughitem.object_parse_failed": "无法解析对象索引 %d 的数据",
@@ -124,9 +132,16 @@
   "error.oneenoughitem.result_item_already_replaced": "结果物品不能是已被替换的物品",
   "error.oneenoughitem.result_item_used_as_match": "结果物品不能是其他规则的匹配项",
   "error.oneenoughitem.tag_already_replaced": "该标签已被替换，无法再次添加",
+  "error.oneenoughitem.reload_failed": "重载失败",
+  "error.oneenoughitem.no_items_for_deduplication": "请先添加要去重的物品或标签",
+  "error.oneenoughitem.recipe_search_failed": "搜索配方时出错",
+  "error.oneenoughitem.recipe_removal_failed": "移除配方时出错",
+  "error.oneenoughitem.script_generation_failed": "脚本生成失败: %s",
+  "error.oneenoughitem.script_write_failed": "脚本文件写入失败: %s",
 
   "warning.oneenoughitem.item_exists": "重复添加的物品",
   "warning.oneenoughitem.tag_exists": "重复添加的标签",
+  "warning.oneenoughitem.no_recipes_found": "未找到需要移除的配方",
 
   "oneenoughitem.modernfix.warning.line1": "OneEnoughItem：检测到模组现代化修复配置选项 mixin.perf.faster_ingredients 为 true，",
   "oneenoughitem.modernfix.warning.line2": "为了保证本模组替换物品后配方生效，",

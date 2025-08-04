@@ -2,13 +2,13 @@ package com.mafuyu404.oneenoughitem.init;
 
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.data.Replacements;
+import dev.latvian.mods.kubejs.recipe.RecipeJS;
+import dev.latvian.mods.kubejs.recipe.filter.IDFilter;
+import dev.latvian.mods.kubejs.recipe.filter.RecipeFilter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class ReplacementCache {
     private static final HashMap<String, String> ItemMapCache = new HashMap<>();
@@ -75,17 +75,20 @@ public class ReplacementCache {
         }
     }
 
-    public static int getCacheSize() {
-        return ItemMapCache.size() + TagMapCache.size();
+    /**
+     * 获取所有已替换的物品ID
+     */
+    public static Set<String> getAllReplacedItems() {
+        return new HashSet<>(ItemMapCache.keySet());
     }
 
-    public static int getItemCacheSize() {
-        return ItemMapCache.size();
+    /**
+     * 获取所有已替换的标签ID
+     */
+    public static Set<String> getAllReplacedTags() {
+        return new HashSet<>(TagMapCache.keySet());
     }
 
-    public static int getTagCacheSize() {
-        return TagMapCache.size();
-    }
 
     public static Collection<String> trackSourceOf(String id) {
         Collection<String> result = new HashSet<>();
