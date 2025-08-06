@@ -7,10 +7,8 @@ import net.minecraft.world.item.Item;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.tags.ITagManager;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Utils {
     public static String getItemRegistryName(Item item) {
@@ -102,5 +100,20 @@ public class Utils {
         }
 
         return result;
+    }
+
+    public static List<ResourceLocation> getItemTags(Item item) {
+        ITagManager<Item> tagManager = ForgeRegistries.ITEMS.tags();
+
+        if (tagManager == null) {
+            return Collections.emptyList();
+        }
+
+        return tagManager.getReverseTag(item)
+                .map(reverseTag ->
+                        reverseTag.getTagKeys()
+                                .map(TagKey::location)
+                                .collect(Collectors.toList()))
+                .orElse(Collections.emptyList());
     }
 }

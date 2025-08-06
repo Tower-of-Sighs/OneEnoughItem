@@ -19,9 +19,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import javax.annotation.Nullable;
+import java.util.function.Predicate;
 
 @Mixin(value = ItemStack.class)
-public class ItemStackMixin {
+public abstract class ItemStackMixin {
     @Mutable
     @Shadow
     @Final
@@ -34,6 +35,8 @@ public class ItemStackMixin {
     @Final
     @org.jetbrains.annotations.Nullable
     private Holder.Reference<Item> delegate;
+
+    @Shadow public abstract Item getItem();
 
     @Inject(method = "forgeInit", at = @At("HEAD"), remap = false)
     private void replace(CallbackInfo ci) {
@@ -70,25 +73,54 @@ public class ItemStackMixin {
         }
     }
 
+    @Inject(method = "is(Ljava/util/function/Predicate;)Z", at = @At("HEAD"), cancellable = true)
+    private void extend(Predicate<Holder<Item>> predicate, CallbackInfoReturnable<Boolean> cir) {
+        if (!Config.DEEPER_REPLACE.get()) return;
+        if (!predicate.test(getItem().builtInRegistryHolder())) {
+            String itemId = Utils.getItemRegistryName(item);
+
+            boolean matched = false;
+
+            for (Item matchItem : ReplacementCache.trackSourceOf(itemId)) {
+                if (predicate.test(matchItem.builtInRegistryHolder())) matched = true;
+            }
+            cir.setReturnValue(matched);
+        }
+    }
+
+    @Inject(method = "is(Lnet/minecraft/core/Holder;)Z", at = @At("HEAD"), cancellable = true)
+    private void extend(Holder<Item> itemHolder, CallbackInfoReturnable<Boolean> cir) {
+        if (!Config.DEEPER_REPLACE.get()) return;
+        if (getItem().builtInRegistryHolder() != itemHolder) {
+            String itemId = Utils.getItemRegistryName(item);
+
+            boolean matched = false;
+
+            for (Item matchItem : ReplacementCache.trackSourceOf(itemId)) {
+                if (matchItem.builtInRegistryHolder() == itemHolder) matched = true;
+            }
+            cir.setReturnValue(matched);
+        }
+    }
+
     @Inject(method = "is(Lnet/minecraft/world/item/Item;)Z", at = @At("HEAD"), cancellable = true)
     private void extend(Item inputItem, CallbackInfoReturnable<Boolean> cir) {
         if (!Config.DEEPER_REPLACE.get()) return;
+        if (item != inputItem) {
+            String inputItemId = Utils.getItemRegistryName(inputItem);
+            String ItemId = Utils.getItemRegistryName(item);
 
-        boolean matched = item == inputItem;
-        // 直接一致了就没必要往下了
-        if (matched) return;
+            boolean matched = false;
 
-        String inputItemId = Utils.getItemRegistryName(inputItem);
-        String ItemId = Utils.getItemRegistryName(item);
-
-        for (String matchId : ReplacementCache.trackSourceOf(ItemId)) {
-            if (matchId.equals(inputItemId)) {
-                matched = true;
-                break;
+            for (String matchId : ReplacementCache.trackSourceIdOf(ItemId)) {
+                if (matchId.equals(inputItemId)) {
+                    matched = true;
+                    break;
+                }
             }
-        }
 
-        cir.setReturnValue(matched);
+            cir.setReturnValue(matched);
+        }
     }
 
     private boolean isInCreativeModeTabBuilding() {
