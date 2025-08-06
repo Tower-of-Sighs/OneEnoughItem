@@ -4,8 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="9516c189-d458-467d-a9ab-dc31d8e0c235" name="更改" comment="del help">
+    <list default="true" id="9516c189-d458-467d-a9ab-dc31d8e0c235" name="更改" comment="。。。。">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/mafuyu404/oneenoughitem/client/gui/util/RecipeDeduplicationUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/mafuyu404/oneenoughitem/client/gui/util/RecipeDeduplicationUtil.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/assets/oneenoughitem/lang/en_us.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/assets/oneenoughitem/lang/en_us.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/assets/oneenoughitem/lang/zh_cn.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/assets/oneenoughitem/lang/zh_cn.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -102,35 +105,35 @@
   <component name="ProjectViewState">
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Gradle.E:/work/OneEnoughItem [createMcpToSrg].executor": "Run",
-    "Gradle.E:/work/OneEnoughItem [wrapper genIntellijRuns].executor": "Run",
-    "Gradle.OneEnoughItem [build].executor": "Run",
-    "Gradle.OneEnoughItem [clean].executor": "Run",
-    "Gradle.OneEnoughItem [createMcpToSrg].executor": "Run",
-    "Gradle.OneEnoughItem [runClient].executor": "Run",
-    "Gradle.OneEnoughItem [runServer].executor": "Run",
-    "Gradle.下载源代码.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.go.formatter.settings.were.checked": "true",
-    "RunOnceActivity.go.migrated.go.modules.settings": "true",
-    "git-widget-placeholder": "master",
-    "go.import.settings.migrated": "true",
-    "ignore.virus.scanning.warn.message": "true",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "F:/code/mcmod/project/OneEnoughItem/libs",
-    "node.js.detected.package.eslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "项目",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Gradle.E:/work/OneEnoughItem [createMcpToSrg].executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.E:/work/OneEnoughItem [wrapper genIntellijRuns].executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.OneEnoughItem [build].executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.OneEnoughItem [clean].executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.OneEnoughItem [createMcpToSrg].executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.OneEnoughItem [runClient].executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.OneEnoughItem [runServer].executor&quot;: &quot;Run&quot;,
+    &quot;Gradle.下载源代码.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;F:/code/mcmod/project/OneEnoughItem/libs&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;项目&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="F:\code\mcmod\project\OneEnoughItem\libs" />
@@ -139,6 +142,7 @@
       <recent name="F:\code\mcmod\project\OneEnoughItem\src\main\resources\data\init" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="F:\code\mcmod\project\OneEnoughItem\run\server\world\datapacks\OEI\data\oei\replacements" />
       <recent name="F:\code\mcmod\project\OneEnoughItem\run\saves\New World\datapacks\OEI\data\oneenoughitem" />
       <recent name="F:\code\mcmod\project\OneEnoughItem\run\saves\New World\datapacks\TEST\data" />
       <recent name="F:\code\mcmod\project\OneEnoughItem\src\main\resources\data\oneenoughitem\oneenoughitem" />
@@ -251,9 +255,9 @@
     <recent_temporary>
       <list>
         <item itemvalue="Gradle.OneEnoughItem [runClient]" />
+        <item itemvalue="Gradle.OneEnoughItem [runServer]" />
         <item itemvalue="Gradle.OneEnoughItem [build]" />
         <item itemvalue="Gradle.OneEnoughItem [clean]" />
-        <item itemvalue="Gradle.OneEnoughItem [runServer]" />
         <item itemvalue="Gradle.OneEnoughItem [build]" />
       </list>
     </recent_temporary>
@@ -279,6 +283,9 @@
       <workItem from="1754011501371" duration="594000" />
       <workItem from="1754012116050" duration="7719000" />
       <workItem from="1754235816772" duration="23028000" />
+      <workItem from="1754309541510" duration="9328000" />
+      <workItem from="1754322886898" duration="989000" />
+      <workItem from="1754445896359" duration="4109000" />
     </task>
     <task id="LOCAL-00001" summary="1.0.2">
       <option name="closed" value="true" />
@@ -400,7 +407,31 @@
       <option name="project" value="LOCAL" />
       <updated>1754295602886</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="fix create the same name file">
+      <option name="closed" value="true" />
+      <created>1754322125557</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1754322125557</updated>
+    </task>
+    <task id="LOCAL-00017" summary="fix cache">
+      <option name="closed" value="true" />
+      <created>1754323880602</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1754323880602</updated>
+    </task>
+    <task id="LOCAL-00018" summary="fix server">
+      <option name="closed" value="true" />
+      <created>1754448548440</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1754448548440</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -434,7 +465,11 @@
     <MESSAGE value="修复检测x2" />
     <MESSAGE value="HELP.md" />
     <MESSAGE value="del help" />
-    <option name="LAST_COMMIT_MESSAGE" value="del help" />
+    <MESSAGE value="fix create the same name file" />
+    <MESSAGE value="fix cache" />
+    <MESSAGE value="fix server" />
+    <MESSAGE value="。。。。" />
+    <option name="LAST_COMMIT_MESSAGE" value="。。。。" />
     <option name="NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS" value="false" />
   </component>
   <component name="VgoProject">
