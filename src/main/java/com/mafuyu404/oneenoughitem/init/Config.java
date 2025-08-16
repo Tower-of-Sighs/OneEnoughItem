@@ -13,7 +13,7 @@ public class Config {
 //    public static final ForgeConfigSpec.ConfigValue<Boolean> EXTEND_SOURCE_TAGS;
     public static final ForgeConfigSpec.ConfigValue<Boolean> DEEPER_REPLACE;
     public static final ForgeConfigSpec.ConfigValue<Boolean> CLEAR_FOOD_PROPERTIES;
-    public static final ForgeConfigSpec.ConfigValue<Boolean> MODERNFIX_WARNING_SHOWN;
+    public static final ForgeConfigSpec.ConfigValue<Boolean> READ_KUBEJS_DATA;
 
     static {
         BUILDER.push("OEI Setting");
@@ -29,10 +29,10 @@ public class Config {
                 .define("DeeperReplace", false);
         CLEAR_FOOD_PROPERTIES = BUILDER
                 .comment("There won't any items in food list if items were replaced.")
-                .define("ClearFoodProperties", true);
-        MODERNFIX_WARNING_SHOWN = BUILDER
-                .comment("Internal flag to track if the ModernFix warning has been shown. Do not modify manually.(You don't need to modify it)")
-                .define("modernfixWarningShown", false);
+                .define("ClearFoodProperties", false);
+        READ_KUBEJS_DATA = BUILDER
+                .comment("Just read data dir of kjs also.")
+                .define("ReadKubeJSData", true);
         BUILDER.pop();
 
         SPEC = BUILDER.build();

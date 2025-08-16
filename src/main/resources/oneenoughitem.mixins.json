@@ -2,18 +2,17 @@
   "required": true,
   "minVersion": "0.8",
   "package": "com.mafuyu404.oneenoughitem.mixin",
+  "plugin": "com.mafuyu404.oneenoughitem.mixin.MixinPlugin",
   "compatibilityLevel": "JAVA_8",
   "refmap": "oneenoughitem.refmap.json",
   "mixins": [
     "ItemMixin",
-    "ItemStackMixin"
+    "ItemStackMixin",
+    "OldItemStackMixin"
   ],
   "client": [
   ],
   "injectors": {
     "defaultRequire": 1
-  },
-  "overwrites": {
-    "requireAnnotations": true
   }
 }

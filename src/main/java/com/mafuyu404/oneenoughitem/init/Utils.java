@@ -4,6 +4,7 @@ import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
+import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.tags.ITagManager;
 
@@ -16,7 +17,14 @@ public class Utils {
             return null;
         }
 
-        ResourceLocation registryName = ForgeRegistries.ITEMS.getKey(item);
+        ResourceLocation registryName = null;
+
+        for (var entry : ForgeRegistries.ITEMS.getEntries()) {
+            if (entry.getValue().equals(item)) {
+                registryName = entry.getKey().location();
+            }
+        }
+
         if (registryName == null) {
             Oneenoughitem.LOGGER.warn("getItemRegistryName: registryName is null for item: {}", item.getClass().getName());
             return null;
@@ -39,12 +47,14 @@ public class Utils {
                 return null;
             }
 
-            Item item = ForgeRegistries.ITEMS.getValue(resourceLocation);
+            Item item = null;
 
-//            if (item == null || item == Items.AIR) {
-//                Oneenoughitem.LOGGER.debug("getItemById: Item '{}' is null or AIR", registryName);
-//                return null;
-//            }
+            for (var entry : ForgeRegistries.ITEMS.getEntries()) {
+                if (entry.getKey().location().equals(resourceLocation)) {
+                    item = entry.getValue();
+                }
+            }
+
             return item;
         } catch (Exception e) {
             Oneenoughitem.LOGGER.debug("getItemById: Exception while getting item for registry name: {}", registryName, e);
@@ -52,57 +62,9 @@ public class Utils {
         }
     }
 
-    public static Collection<Item> getItemsOfTag(ResourceLocation tagId) {
-        TagKey<Item> tagKey = ForgeRegistries.ITEMS.tags().createTagKey(tagId);
-        ITagManager<Item> tagManager = ForgeRegistries.ITEMS.tags();
-        Collection<Item> result = new HashSet<>();
-
-        if (tagManager != null && tagManager.isKnownTagName(tagKey)) {
-            tagManager.getTag(tagKey).forEach(result::add);
-        }
-        return result;
-    }
-
-    public static boolean isTagExists(ResourceLocation tagId) {
-        TagKey<Item> tagKey = ForgeRegistries.ITEMS.tags().createTagKey(tagId);
-        ITagManager<Item> tagManager = ForgeRegistries.ITEMS.tags();
-        return tagManager != null && tagManager.isKnownTagName(tagKey);
-    }
-
-    public static List<Item> resolveItemList(List<String> identifiers) {
-        List<Item> result = new ArrayList<>();
-
-        for (String id : identifiers) {
-            if (id == null || id.isEmpty()) continue;
-
-            if (id.startsWith("#")) {
-                String tagIdString = id.substring(1);
-                try {
-                    ResourceLocation tagId = new ResourceLocation(tagIdString);
-                    Collection<Item> tagItems = getItemsOfTag(tagId);
-                    if (tagItems.isEmpty()) {
-                        Oneenoughitem.LOGGER.warn("Tag {} is empty or not found", tagId);
-                    } else {
-                        result.addAll(tagItems);
-                        Oneenoughitem.LOGGER.debug("Resolved tag {} to {} items", tagId, tagItems.size());
-                    }
-                } catch (Exception e) {
-                    Oneenoughitem.LOGGER.error("Invalid tag ID format: {}", id, e);
-                }
-            } else {
-                Item item = getItemById(id);
-                if (item != null) {
-                    result.add(item);
-                } else {
-                    Oneenoughitem.LOGGER.warn("Item ID not found: {}", id);
-                }
-            }
-        }
-
-        return result;
-    }
-
     public static List<ResourceLocation> getItemTags(Item item) {
+        if (isOldMC()) return List.of();
+
         ITagManager<Item> tagManager = ForgeRegistries.ITEMS.tags();
 
         if (tagManager == null) {
@@ -115,5 +77,19 @@ public class Utils {
                                 .map(TagKey::location)
                                 .collect(Collectors.toList()))
                 .orElse(Collections.emptyList());
+    }
+
+    public static void loadAllReplacement() {
+        ReplacementCache.clearCache();
+        ReplacementLoader.loadAll().forEach(ReplacementCache::putReplacement);
+    }
+
+    public static boolean isItemIdEmpty(String id) {
+        return id == null || id.equals("minecraft:air");
+    }
+
+    public static boolean isOldMC() {
+        String ver = FMLLoader.versionInfo().mcVersion();
+        return ver.startsWith("1.18") || ver.startsWith("1.17");
     }
 }

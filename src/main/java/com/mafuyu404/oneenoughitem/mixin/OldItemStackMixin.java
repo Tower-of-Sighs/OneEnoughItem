@@ -5,10 +5,8 @@ import com.mafuyu404.oneenoughitem.init.Config;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.ReplacementControl;
 import com.mafuyu404.oneenoughitem.init.Utils;
-import net.minecraft.core.Holder;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,23 +18,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import javax.annotation.Nullable;
-import java.util.function.Predicate;
+import java.lang.reflect.Field;
 
 @Mixin(value = ItemStack.class)
-public abstract class ItemStackMixin {
+public abstract class OldItemStackMixin {
     @Mutable
     @Shadow
     @Final
     @Deprecated
     @Nullable
     private Item item;
-
-    @Mutable
-    @Shadow
-    @Final
-    @Nullable
-    @SuppressWarnings("target")
-    private Holder.Reference<Item> delegate;
 
     @Shadow public abstract Item getItem();
 
@@ -63,7 +54,15 @@ public abstract class ItemStackMixin {
                 Item replacementItem = Utils.getItemById(targetItemId);
                 if (replacementItem != null) {
                     item = replacementItem;
-                    delegate = ForgeRegistries.ITEMS.getDelegateOrThrow(replacementItem);
+                    try {
+                        Field itemDelegateField = Item.class.getField("delegate");
+                        var delegate = itemDelegateField.get(item);
+                        Field stackDelegateField = ItemStack.class.getDeclaredField("delegate");
+                        stackDelegateField.setAccessible(true);
+                        stackDelegateField.set(this, delegate);
+                    } catch (NoSuchFieldException e) {
+                        throw new RuntimeException(e);
+                    }
                 } else {
                     Oneenoughitem.LOGGER.warn("ItemStackMixin: Replacement item is null for targetItemId: {}, original item: {}",
                             targetItemId, originItemId);
@@ -75,35 +74,35 @@ public abstract class ItemStackMixin {
         }
     }
 
-    @Inject(method = "is(Ljava/util/function/Predicate;)Z", at = @At("HEAD"), cancellable = true)
-    private void extend(Predicate<Holder<Item>> predicate, CallbackInfoReturnable<Boolean> cir) {
-        if (!Config.DEEPER_REPLACE.get()) return;
-        if (!predicate.test(getItem().builtInRegistryHolder())) {
-            String itemId = Utils.getItemRegistryName(item);
+//    @Inject(method = "is(Ljava/util/function/Predicate;)Z", at = @At("HEAD"), cancellable = true)
+//    private void extend(Predicate<Holder<Item>> predicate, CallbackInfoReturnable<Boolean> cir) {
+//        if (!Config.DEEPER_REPLACE.get()) return;
+//        if (!predicate.test(getItem().builtInRegistryHolder())) {
+//            String itemId = Utils.getItemRegistryName(item);
+//
+//            boolean matched = false;
+//
+//            for (Item matchItem : ReplacementCache.trackSourceOf(itemId)) {
+//                if (predicate.test(matchItem.builtInRegistryHolder())) matched = true;
+//            }
+//            cir.setReturnValue(matched);
+//        }
+//    }
 
-            boolean matched = false;
-
-            for (Item matchItem : ReplacementCache.trackSourceOf(itemId)) {
-                if (predicate.test(matchItem.builtInRegistryHolder())) matched = true;
-            }
-            cir.setReturnValue(matched);
-        }
-    }
-
-    @Inject(method = "is(Lnet/minecraft/core/Holder;)Z", at = @At("HEAD"), cancellable = true)
-    private void extend(Holder<Item> itemHolder, CallbackInfoReturnable<Boolean> cir) {
-        if (!Config.DEEPER_REPLACE.get()) return;
-        if (getItem().builtInRegistryHolder() != itemHolder) {
-            String itemId = Utils.getItemRegistryName(item);
-
-            boolean matched = false;
-
-            for (Item matchItem : ReplacementCache.trackSourceOf(itemId)) {
-                if (matchItem.builtInRegistryHolder() == itemHolder) matched = true;
-            }
-            cir.setReturnValue(matched);
-        }
-    }
+//    @Inject(method = "is(Lnet/minecraft/core/Holder;)Z", at = @At("HEAD"), cancellable = true)
+//    private void extend(Holder<Item> itemHolder, CallbackInfoReturnable<Boolean> cir) {
+//        if (!Config.DEEPER_REPLACE.get()) return;
+//        if (getItem().builtInRegistryHolder() != itemHolder) {
+//            String itemId = Utils.getItemRegistryName(item);
+//
+//            boolean matched = false;
+//
+//            for (Item matchItem : ReplacementCache.trackSourceOf(itemId)) {
+//                if (matchItem.builtInRegistryHolder() == itemHolder) matched = true;
+//            }
+//            cir.setReturnValue(matched);
+//        }
+//    }
 
     @Inject(method = "is(Lnet/minecraft/world/item/Item;)Z", at = @At("HEAD"), cancellable = true)
     private void extend(Item inputItem, CallbackInfoReturnable<Boolean> cir) {

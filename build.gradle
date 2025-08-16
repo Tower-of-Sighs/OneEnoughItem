@@ -21,7 +21,7 @@ group = mod_group_id
 version = mod_version
 
 base {
-    archivesName = mod_name
+    archivesName = "OEI-lite"
 }
 
 java {
@@ -65,7 +65,7 @@ minecraft {
     // However, it must be at "META-INF/accesstransformer.cfg" in the final mod jar to be loaded by Forge.
     // This default location is a best practice to automatically put the file in the right place in the final jar.
     // See https://docs.minecraftforge.net/en/latest/advanced/accesstransformers/ for more information.
-     accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
+    // accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
 
     // Default run configurations.
     // These can be tweaked, removed, or duplicated as needed.
@@ -108,12 +108,6 @@ minecraft {
             args '--username', 'Mafuyu404'
         }
 
-        server {
-            workingDirectory project.file('run/server')
-            property 'forge.enabledGameTestNamespaces', mod_id
-//            args '--nogui'
-        }
-
         // This run config launches GameTestServer and runs all registered gametests, then exits.
         // By default, the server will crash when no gametests are provided.
         // The gametest system is also enabled by default for other run configs under the /test command.
@@ -146,11 +140,17 @@ repositories {
 
     // If you have mod jar dependencies in ./libs, you can declare them as a repository like so.
     // See https://docs.gradle.org/current/userguide/declaring_repositories.html#sub:flat_dir_resolver
-    flatDir {
-        dir 'libs'
+    // flatDir {
+    //     dir 'libs'
+    // }
+    maven {
+        // Add curse maven to repositories
+        name = "Curse Maven"
+        url = "https://www.cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
     }
-    maven { url 'https://maven.aliyun.com/repository/public' }
-    maven { url 'https://maven.aliyun.com/repository/google' }
     maven {
         // location of the maven that hosts JEI files since January 2023
         // Patchouli
@@ -158,14 +158,6 @@ repositories {
         url = "https://maven.blamejared.com/"
         content {
             includeGroup "mezz.jei"
-        }
-    }
-    maven {
-        // Add curse maven to repositories
-        name = "Curse Maven"
-        url = "https://www.cursemaven.com"
-        content {
-            includeGroup "curse.maven"
         }
     }
 }
@@ -187,6 +179,7 @@ dependencies {
     // Example mod dependency using a mod jar from ./libs with a flat dir repository
     // This maps to ./libs/coolmod-${mc_version}-${coolmod_version}.jar
     // The group id is ignored when searching -- in this case, it is "blank"
+    // implementation fg.deobf("blank:coolmod-${mc_version}:${coolmod_version}")
 
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
@@ -194,20 +187,14 @@ dependencies {
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
-    compileOnly fg.deobf("mezz.jei:jei-1.20.1-forge-api:15.20.0.104")
-    implementation fg.deobf("mezz.jei:jei-1.20.1-forge:15.20.0.104")
-    compileOnly fg.deobf("curse.maven:oelib-1319210:6841973")
-    runtimeOnly fg.deobf("curse.maven:oelib-1319210:6841973")
-    implementation fg.deobf("curse.maven:oelib-1319210:6841973")
-    jarJar("curse.maven:oelib-1319210:6841973"){
-        jarJar.ranged(it, '[0.0.2,1.0.0)')
-    }
-//    implementation fg.deobf("curse.maven:farmers-delight-398521:6597298")
     implementation fg.deobf("curse.maven:kubejs-238086:5853326")
     implementation fg.deobf("curse.maven:rhino-416294:6186971")
     implementation fg.deobf("curse.maven:architectury-api-419699:5137938")
-}
 
+    compileOnly fg.deobf("mezz.jei:jei-1.20.1-forge-api:15.20.0.104")
+    implementation fg.deobf("mezz.jei:jei-1.20.1-forge:15.20.0.104")
+
+}
 
 // This block of code expands all declared replace properties in the specified resource targets.
 // A missing property will result in an error. Properties are expanded using ${} Groovy notation.
@@ -218,8 +205,7 @@ tasks.named('processResources', ProcessResources).configure {
                              forge_version       : forge_version, forge_version_range: forge_version_range,
                              loader_version_range: loader_version_range,
                              mod_id              : mod_id, mod_name: mod_name, mod_license: mod_license, mod_version: mod_version,
-                             mod_authors         : mod_authors, mod_description: mod_description,
-                            oelib_version_range  : oelib_version_range,]
+                             mod_authors         : mod_authors, mod_description: mod_description,]
 
     inputs.properties replaceProperties
 
@@ -239,7 +225,7 @@ tasks.named('jar', Jar).configure {
                     "Implementation-Vendor"   : mod_authors,
                     "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")])
     }
-    exclude 'data/oneenoughitem/replacements/example.json'
+
     // This is the preferred method to reobfuscate your jar file
     finalizedBy 'reobfJar'
 }
