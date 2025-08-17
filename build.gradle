@@ -121,6 +121,7 @@ dependencies {
     compileOnly "curse.maven:oelib-1319210:6882494"
     runtimeOnly "curse.maven:oelib-1319210:6882494"
     runtimeOnly "libs:architectury:13.0.8-neoforge"
+    runtimeOnly "libs:modernfix:neoforge-5.24.3+mc1.21.1"
     implementation "curse.maven:oelib-1319210:6882494"
     jarJar("curse.maven:oelib-1319210:6882494")
 
