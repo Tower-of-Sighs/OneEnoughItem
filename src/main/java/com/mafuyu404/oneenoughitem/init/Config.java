@@ -1,0 +1,40 @@
+package com.mafuyu404.oneenoughitem.init;
+
+import com.mafuyu404.oneenoughitem.Oneenoughitem;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.config.ModConfigEvent;
+import net.neoforged.neoforge.common.ModConfigSpec;
+
+@EventBusSubscriber(modid = Oneenoughitem.MOD_ID)
+public class Config {
+    public static final ModConfigSpec SPEC;
+    private static final ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
+
+    public static final ModConfigSpec.ConfigValue<Boolean> DEEPER_REPLACE;
+    public static final ModConfigSpec.ConfigValue<Boolean> MODERNFIX_WARNING_SHOWN;
+
+    public static boolean IS_DEEPER_REPLACE_ENABLED;
+
+    static {
+        BUILDER.push("OEI Setting");
+
+        DEEPER_REPLACE = BUILDER
+                .comment("For example, now you can heal iron golem with eggs that replaced iron ingot.")
+                .define("DeeperReplace", false);
+        MODERNFIX_WARNING_SHOWN = BUILDER
+                .comment("Internal flag to track if the ModernFix warning has been shown. Do not modify manually.(You don't need to modify it)")
+                .define("modernfixWarningShown", false);
+        BUILDER.pop();
+
+        SPEC = BUILDER.build();
+    }
+
+    @SubscribeEvent
+    public static void onConfigLoading(final ModConfigEvent.Loading event) {
+        if (event.getConfig().getSpec() == SPEC) {
+            IS_DEEPER_REPLACE_ENABLED = DEEPER_REPLACE.get();
+            Oneenoughitem.LOGGER.info("Config loaded. DEEPER_REPLACE is set to: {}", IS_DEEPER_REPLACE_ENABLED);
+        }
+    }
+}
