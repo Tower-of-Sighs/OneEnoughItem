@@ -15,13 +15,20 @@ public class ReplacementCache {
     }
 
     public static String matchItem(String id) {
-        List<ResourceLocation> tags = Utils.getItemTags(Utils.getItemById(id));
-        if (tags.isEmpty()) return ItemMapCache.getOrDefault(id, null);
+        String direct = ItemMapCache.get(id);
+        if (direct != null) return direct;
+
+        Item item = Utils.getItemById(id);
+        if (item == null) return null;
+
+        List<ResourceLocation> tags = Utils.getItemTags(item);
+        if (tags.isEmpty()) return null;
+
         for (ResourceLocation tag : tags) {
-            String item = matchTag(tag);
-            if (item != null) return item;
+            String mapped = matchTag(tag);
+            if (mapped != null) return mapped;
         }
-        return ItemMapCache.getOrDefault(id, null);
+        return null;
     }
 
     public static String matchTag(String tagId) {

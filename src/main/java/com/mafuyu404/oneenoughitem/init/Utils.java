@@ -17,19 +17,19 @@ public class Utils {
             return null;
         }
 
-        ResourceLocation registryName = null;
-
-        for (var entry : ForgeRegistries.ITEMS.getEntries()) {
-            if (entry.getValue().equals(item)) {
-                registryName = entry.getKey().location();
+        if (isOldMC()) {
+            for (var entry : ForgeRegistries.ITEMS.getEntries()) {
+                if (entry.getValue().equals(item)) {
+                     return entry.getKey().location().toString();
+                }
             }
         }
 
+        ResourceLocation registryName = ForgeRegistries.ITEMS.getKey(item);
         if (registryName == null) {
             Oneenoughitem.LOGGER.warn("getItemRegistryName: registryName is null for item: {}", item.getClass().getName());
             return null;
         }
-
         return registryName.toString();
     }
 
@@ -42,19 +42,20 @@ public class Utils {
         try {
             ResourceLocation resourceLocation = new ResourceLocation(registryName);
 
-            if (!ForgeRegistries.ITEMS.containsKey(resourceLocation)) {
+            if (isOldMC()) {
+                for (var entry : ForgeRegistries.ITEMS.getEntries()) {
+                    if (entry.getKey().location().equals(resourceLocation)) {
+                        return entry.getValue();
+                    }
+                }
                 Oneenoughitem.LOGGER.debug("getItemById: Item '{}' not found in registry", registryName);
                 return null;
             }
-
-            Item item = null;
-
-            for (var entry : ForgeRegistries.ITEMS.getEntries()) {
-                if (entry.getKey().location().equals(resourceLocation)) {
-                    item = entry.getValue();
-                }
+            Item item = ForgeRegistries.ITEMS.getValue(resourceLocation);
+            if (item == null) {
+                Oneenoughitem.LOGGER.debug("getItemById: Item '{}' not found in registry", registryName);
+                return null;
             }
-
             return item;
         } catch (Exception e) {
             Oneenoughitem.LOGGER.debug("getItemById: Exception while getting item for registry name: {}", registryName, e);

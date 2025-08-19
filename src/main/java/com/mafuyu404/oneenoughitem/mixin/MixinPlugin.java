@@ -11,11 +11,27 @@ import java.util.Set;
 import static com.ibm.icu.impl.ClassLoaderUtil.getClassLoader;
 
 public class MixinPlugin implements IMixinConfigPlugin {
+    private Boolean isOldVersion = null;
+
+    private boolean isOldMC() {
+        if (isOldVersion == null) {
+            try {
+                String ver = net.minecraftforge.fml.loading.FMLLoader.versionInfo().mcVersion();
+                isOldVersion = ver.startsWith("1.18") || ver.startsWith("1.17");
+            } catch (Exception e) {
+                // 如果获取版本失败，默认为新版本
+                isOldVersion = false;
+            }
+        }
+        return isOldVersion;
+    }
+
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         boolean whenItemStackMixin = mixinClassName.equals("com.mafuyu404.oneenoughitem.mixin.ItemStackMixin");
         boolean whenOldItemStackMixin = mixinClassName.equals("com.mafuyu404.oneenoughitem.mixin.OldItemStackMixin");
-        boolean isOldVer = Utils.isOldMC();
+        boolean isOldVer = isOldMC();
+
         if (whenItemStackMixin && isOldVer) {
             return false;
         }
@@ -24,7 +40,6 @@ public class MixinPlugin implements IMixinConfigPlugin {
         }
         return true;
     }
-
     @Override
     public void acceptTargets(Set<String> myTargets, Set<String> otherTargets) {
 
