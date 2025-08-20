@@ -1,6 +1,6 @@
 package com.mafuyu404.oneenoughitem;
 
-import com.mafuyu404.oelib.core.DataRegistry;
+import com.mafuyu404.oelib.forge.data.DataRegistry;
 import com.mafuyu404.oneenoughitem.data.Replacements;
 import com.mafuyu404.oneenoughitem.init.Config;
 import net.minecraftforge.fml.ModLoadingContext;

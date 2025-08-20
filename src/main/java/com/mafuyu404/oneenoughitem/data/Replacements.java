@@ -1,6 +1,6 @@
 package com.mafuyu404.oneenoughitem.data;
 
-import com.mafuyu404.oelib.api.DataDriven;
+import com.mafuyu404.oelib.api.data.DataDriven;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 

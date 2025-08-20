@@ -196,10 +196,10 @@ dependencies {
 
     compileOnly fg.deobf("mezz.jei:jei-1.20.1-forge-api:15.20.0.104")
     implementation fg.deobf("mezz.jei:jei-1.20.1-forge:15.20.0.104")
-    compileOnly fg.deobf("curse.maven:oelib-1319210:6841973")
-    runtimeOnly fg.deobf("curse.maven:oelib-1319210:6841973")
-    implementation fg.deobf("curse.maven:oelib-1319210:6841973")
-    jarJar("curse.maven:oelib-1319210:6841973"){
+    compileOnly fg.deobf("curse.maven:oelib-1319210:6884828")
+    runtimeOnly fg.deobf("curse.maven:oelib-1319210:6884828")
+    implementation fg.deobf("curse.maven:oelib-1319210:6884828")
+    jarJar("curse.maven:oelib-1319210:6884828"){
         jarJar.ranged(it, '[0.0.2,1.0.0)')
     }
 //    implementation fg.deobf("curse.maven:farmers-delight-398521:6597298")

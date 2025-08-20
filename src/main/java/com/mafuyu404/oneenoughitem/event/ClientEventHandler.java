@@ -1,7 +1,7 @@
 package com.mafuyu404.oneenoughitem.event;
 
-import com.mafuyu404.oelib.core.DataManager;
-import com.mafuyu404.oelib.event.DataReloadEvent;
+import com.mafuyu404.oelib.forge.data.DataManager;
+import com.mafuyu404.oelib.forge.event.DataReloadEvent;
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.client.ModKeyMappings;
 import com.mafuyu404.oneenoughitem.client.gui.ReplacementEditorScreen;
