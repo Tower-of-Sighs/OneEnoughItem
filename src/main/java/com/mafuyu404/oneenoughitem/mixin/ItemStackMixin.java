@@ -110,6 +110,8 @@ public abstract class ItemStackMixin {
             String inputItemId = Utils.getItemRegistryName(inputItem);
             String ItemId = Utils.getItemRegistryName(item);
 
+            if (Utils.isItemIdEmpty(inputItemId) || Utils.isItemIdEmpty(ItemId)) return;
+
             boolean matched = false;
 
             for (String matchId : ReplacementCache.trackSourceIdOf(ItemId)) {

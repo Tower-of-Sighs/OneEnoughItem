@@ -116,4 +116,9 @@ public class Utils {
                                 .collect(Collectors.toList()))
                 .orElse(Collections.emptyList());
     }
+
+    public static boolean isItemIdEmpty(String id) {
+        return id == null || id.equals("minecraft:air");
+    }
+
 }
