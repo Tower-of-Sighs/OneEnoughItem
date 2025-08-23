@@ -11,52 +11,86 @@ import java.util.*;
 public class ReplacementCache {
     private static final Map<String, String> ItemMapCache = new HashMap<>();
     private static final HashMap<String, String> TagMapCache = new HashMap<>();
+    private static final Map<String, Set<String>> ResultToSources = new HashMap<>();
+
+    private static void addMapping(String sourceItemId, String resultItemId) {
+        String prev = ItemMapCache.put(sourceItemId, resultItemId);
+        if (prev != null && !prev.equals(resultItemId)) {
+            Set<String> prevSources = ResultToSources.get(prev);
+            if (prevSources != null) {
+                prevSources.remove(sourceItemId);
+                if (prevSources.isEmpty()) {
+                    ResultToSources.remove(prev);
+                }
+            }
+        }
+        ResultToSources.computeIfAbsent(resultItemId, k -> new HashSet<>()).add(sourceItemId);
+    }
 
     public static void putReplacement(Replacements replacement, HolderLookup.RegistryLookup<Item> registryLookup) {
-        List<Item> resolvedItems = Utils.resolveItemList(replacement.matchItems(), registryLookup);
-        // 处理物品替换
-        for (Item item : resolvedItems) {
-            String id = Utils.getItemRegistryName(item);
-            if (id != null) {
-                ItemMapCache.put(id, replacement.resultItems());
-                Oneenoughitem.LOGGER.debug("Added item replacement mapping: {} -> {}", id, replacement.resultItems());
+        List<Item> resolvedItems = Collections.emptyList();
+        int directCount = 0;
+        int tagCount = (int) replacement.matchItems().stream().filter(s -> s != null && s.startsWith("#")).count();
+
+        if (registryLookup != null) {
+            resolvedItems = Utils.resolveItemList(replacement.matchItems(), registryLookup);
+            for (Item item : resolvedItems) {
+                String id = Utils.getItemRegistryName(item);
+                if (id != null) {
+                    addMapping(id, replacement.resultItems());
+                    Oneenoughitem.LOGGER.debug("Added item replacement mapping: {} -> {}", id, replacement.resultItems());
+                }
+            }
+
+            for (String matchItem : replacement.matchItems()) {
+                if (matchItem != null && matchItem.startsWith("#")) {
+                    String tagId = matchItem.substring(1);
+                    TagMapCache.put(tagId, replacement.resultItems());
+                    Oneenoughitem.LOGGER.debug("Added tag replacement mapping: {} -> {}", tagId, replacement.resultItems());
+                }
+            }
+        } else {
+            for (String matchItem : replacement.matchItems()) {
+                if (matchItem != null && !matchItem.isEmpty() && !matchItem.startsWith("#")) {
+                    addMapping(matchItem, replacement.resultItems());
+                    directCount++;
+                    Oneenoughitem.LOGGER.debug("Added item replacement mapping (no-registry): {} -> {}", matchItem, replacement.resultItems());
+                }
+            }
+            if (tagCount > 0) {
+                Oneenoughitem.LOGGER.debug("Deferred {} tag mappings until registry becomes available", tagCount);
             }
         }
 
-        // 处理标签替换
-        for (String matchItem : replacement.matchItems()) {
-            if (matchItem.startsWith("#")) {
-                String tagId = matchItem.substring(1);
-                TagMapCache.put(tagId, replacement.resultItems());
-                Oneenoughitem.LOGGER.debug("Added tag replacement mapping: {} -> {}", tagId, replacement.resultItems());
-            }
-        }
-
-        if (resolvedItems.isEmpty() && replacement.matchItems().stream().noneMatch(s -> s.startsWith("#"))) {
+        int itemCount = (registryLookup != null) ? resolvedItems.size() : directCount;
+        if (itemCount == 0 && tagCount == 0) {
             Oneenoughitem.LOGGER.warn("No valid items or tags resolved from matchItems: {}", replacement.matchItems());
         } else {
-            int tagCount = (int) replacement.matchItems().stream().filter(s -> s.startsWith("#")).count();
             Oneenoughitem.LOGGER.info("Added replacement rule for {} items and {} tags: {} -> {}",
-                    resolvedItems.size(), tagCount, replacement.matchItems(), replacement.resultItems());
+                    itemCount, tagCount, replacement.matchItems(), replacement.resultItems());
         }
     }
 
     public static void putReplacementDirect(String sourceItemId, String targetItemId) {
         if (sourceItemId != null && targetItemId != null) {
-            ItemMapCache.put(sourceItemId, targetItemId);
+            addMapping(sourceItemId, targetItemId);
         }
     }
 
     public static void putReplacementsBatch(Map<String, String> mappings) {
-        ItemMapCache.putAll(mappings);
+        for (Map.Entry<String, String> e : mappings.entrySet()) {
+            if (e.getKey() != null && e.getValue() != null) {
+                addMapping(e.getKey(), e.getValue());
+            }
+        }
     }
-
 
     public static void clearCache() {
         int previousItemSize = ItemMapCache.size();
         int previousTagSize = TagMapCache.size();
         ItemMapCache.clear();
         TagMapCache.clear();
+        ResultToSources.clear();
         if (previousItemSize > 0 || previousTagSize > 0) {
             Oneenoughitem.LOGGER.info("Cleared {} cached item mappings and {} cached tag mappings",
                     previousItemSize, previousTagSize);
@@ -91,18 +125,10 @@ public class ReplacementCache {
     }
 
     /**
-     * 获取所有已替换的标签ID
+     * 获取所有以某结果为目标的源物品ID集合（反向索引查找，零分配）
      */
-    public static Set<String> getAllReplacedTags() {
-        return new HashSet<>(TagMapCache.keySet());
-    }
-
-
-    public static Collection<String> trackSourceOf(String id) {
-        Collection<String> result = new HashSet<>();
-        ItemMapCache.forEach((matchItem, resultItem) -> {
-            if (resultItem.equals(id)) result.add(matchItem);
-        });
-        return result;
+    public static Set<String> trackSourceOf(String id) {
+        Set<String> set = ResultToSources.get(id);
+        return set != null ? set : Collections.emptySet();
     }
 }

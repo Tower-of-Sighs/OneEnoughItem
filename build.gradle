@@ -62,7 +62,7 @@ neoForge {
 
         server {
             server()
-            programArgument '--nogui'
+//            programArgument '--nogui'
             systemProperty 'neoforge.enabledGameTestNamespaces', project.mod_id
         }
 
@@ -124,7 +124,7 @@ dependencies {
     runtimeOnly "libs:modernfix:neoforge-5.24.3+mc1.21.1"
     implementation "curse.maven:oelib-1319210:6882494"
     jarJar("curse.maven:oelib-1319210:6882494")
-
+    implementation "curse.maven:farmers-delight-398521:6597295"
     implementation files('libs/rhino-2101.2.7-build.74.jar')
     implementation files('libs/kubejs-neoforge-2101.7.1-build.181.jar')
 }
