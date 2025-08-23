@@ -26,7 +26,6 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.lwjgl.glfw.GLFW;
 
 @EventBusSubscriber(modid = Oneenoughitem.MOD_ID, value = Dist.CLIENT)
@@ -37,7 +36,7 @@ public class ClientEventHandler {
         Minecraft client = Minecraft.getInstance();
         while (ModKeyMappings.OPEN_EDITOR.consumeClick()) {
             if (client.screen == null && hasCtrlDown(client)) {
-                client.setScreen(new  ReplacementEditorScreen());
+                client.setScreen(new ReplacementEditorScreen());
             }
         }
     }

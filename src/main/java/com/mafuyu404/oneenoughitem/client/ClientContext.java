@@ -5,7 +5,8 @@ import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.fml.loading.FMLLoader;
 
 public final class ClientContext {
-    private ClientContext() {}
+    private ClientContext() {
+    }
 
     public static boolean isInCreativeInventory() {
         if (!FMLLoader.getDist().isClient()) {
