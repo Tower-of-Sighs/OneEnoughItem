@@ -95,6 +95,14 @@ public class ItemStackMixin {
         }
 
         String ItemId = Utils.getItemRegistryName(item);
+
+        if (Utils.isItemIdEmpty(inputItemId) || Utils.isItemIdEmpty(ItemId)) return;
+
+        for (String matchId : ReplacementCache.trackSourceOf(ItemId)) {
+            if (matchId.equals(inputItemId)) {
+                matched = true;
+                break;
+            }
         // 先基于反向索引快速判空（避免无意义计算）
         Set<String> sources = ReplacementCache.trackSourceOf(ItemId);
         if (sources.isEmpty()) {
