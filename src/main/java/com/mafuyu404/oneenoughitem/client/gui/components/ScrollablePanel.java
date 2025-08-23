@@ -15,7 +15,7 @@ public class ScrollablePanel extends AbstractWidget {
     private int contentHeight = 0;
     private final int maxVisibleHeight;
     private boolean isDragging = false;
-    private int scrollbarWidth = 6;
+    private final int scrollbarWidth = 6;
     private int scrollbarHeight = 0;
     private int scrollbarY = 0;
 

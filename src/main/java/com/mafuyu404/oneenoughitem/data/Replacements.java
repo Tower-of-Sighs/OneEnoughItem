@@ -1,15 +1,16 @@
 package com.mafuyu404.oneenoughitem.data;
 
-import com.mafuyu404.oelib.api.DataDriven;
+import com.mafuyu404.oelib.api.data.DataDriven;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
 import java.util.List;
 
 @DataDriven(
-        modid = "oneenoughitem",
+        modid = "oei",
         folder = "replacements",
         syncToClient = true,
+        enableCache = false,
         validator = ReplacementValidator.class,
         supportArray = true
 )

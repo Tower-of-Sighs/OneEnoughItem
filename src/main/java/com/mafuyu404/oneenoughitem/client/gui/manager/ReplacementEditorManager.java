@@ -8,6 +8,7 @@ import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.client.gui.cache.GlobalReplacementCache;
 import com.mafuyu404.oneenoughitem.client.gui.util.PathUtils;
 import com.mafuyu404.oneenoughitem.data.Replacements;
+import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.Utils;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.ChatFormatting;
@@ -22,7 +23,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class ReplacementEditorManager {
@@ -42,13 +46,37 @@ public class ReplacementEditorManager {
     private Runnable uiUpdateCallback;
 
     // Getters
-    public Set<Item> getMatchItems() { return new HashSet<>(matchItems); }
-    public Set<ResourceLocation> getMatchTags() { return new HashSet<>(matchTags); }
-    public Item getResultItem() { return resultItem; }
-    public ResourceLocation getResultTag() { return resultTag; }
-    public String getCurrentFileName() { return currentFileName; }
-    public int getCurrentObjectIndex() { return currentObjectIndex; }
-    public int getObjectSize() { return currentJsonObjects != null ? currentJsonObjects.size() : 0; }
+    public Set<Item> getMatchItems() {
+        return new HashSet<>(matchItems);
+    }
+
+    public Set<ResourceLocation> getMatchTags() {
+        return new HashSet<>(matchTags);
+    }
+
+    public Item getResultItem() {
+        return resultItem;
+    }
+
+    public ResourceLocation getResultTag() {
+        return resultTag;
+    }
+
+    public String getCurrentFileName() {
+        return currentFileName;
+    }
+
+    public Path getCurrentFilePath() {
+        return currentFilePath;
+    }
+
+    public int getCurrentObjectIndex() {
+        return currentObjectIndex;
+    }
+
+    public int getObjectSize() {
+        return currentJsonObjects != null ? currentJsonObjects.size() : 0;
+    }
 
     public void setUiUpdateCallback(Runnable callback) {
         this.uiUpdateCallback = callback;
@@ -60,9 +88,17 @@ public class ReplacementEditorManager {
         }
     }
 
-    public void addMatchItem(Item item) { this.matchItems.add(item); }
-    public void addMatchTag(ResourceLocation tagId) { this.matchTags.add(tagId); }
-    public void removeMatchTag(ResourceLocation tagId) { this.matchTags.remove(tagId); }
+    public void addMatchItem(Item item) {
+        this.matchItems.add(item);
+    }
+
+    public void addMatchTag(ResourceLocation tagId) {
+        this.matchTags.add(tagId);
+    }
+
+    public void removeMatchTag(ResourceLocation tagId) {
+        this.matchTags.remove(tagId);
+    }
 
     public boolean removeMatchItem(Item item) {
         String targetItemId = Utils.getItemRegistryName(item);
@@ -203,8 +239,13 @@ public class ReplacementEditorManager {
                 }
             }
 
+            // 从全局缓存中移除
             GlobalReplacementCache.removeReplacement(matchItemsList, matchTagsList);
-            Oneenoughitem.LOGGER.debug("Removed replacement from global cache: items={}, tags={}",
+
+            // 从运行时缓存中移除
+            ReplacementCache.removeReplacements(matchItemsList, matchTagsList);
+
+            Oneenoughitem.LOGGER.debug("Removed replacement from both global and runtime cache: items={}, tags={}",
                     matchItemsList, matchTagsList);
         }
     }
@@ -212,12 +253,20 @@ public class ReplacementEditorManager {
     public void createReplacementFile(String datapackName, String fileName) {
         executeWithErrorHandling(() -> {
             Path datapackPath = PathUtils.getDatapackPath(datapackName);
-            Path replacementsPath = datapackPath.resolve("data/oneenoughitem/replacements");
+            Path replacementsPath = datapackPath.resolve("data/oei/replacements");
 
             Files.createDirectories(replacementsPath);
             createPackMcmetaIfNeeded(datapackPath);
 
             Path filePath = replacementsPath.resolve(fileName + ".json");
+
+            // 检查文件是否已存在
+            if (Files.exists(filePath)) {
+                showError(Component.translatable("error.oneenoughitem.file_already_exists", fileName + ".json")
+                        .withStyle(ChatFormatting.RED));
+                return;
+            }
+
             JsonArray emptyObjects = new JsonArray();
 
             try (FileWriter writer = new FileWriter(filePath.toFile())) {
@@ -406,7 +455,8 @@ public class ReplacementEditorManager {
         });
     }
 
-    private record ValidationResult(boolean isValid, Component errorMessage) {}
+    private record ValidationResult(boolean isValid, Component errorMessage) {
+    }
 
     private ValidationResult validateReplacementInput() {
         boolean hasMatchItems = !this.matchItems.isEmpty() || !this.matchTags.isEmpty();
@@ -426,7 +476,8 @@ public class ReplacementEditorManager {
         return new ValidationResult(true, null);
     }
 
-    private record ReplacementData(List<String> matchItemsList, List<String> matchTagsList, String resultItemString) {}
+    private record ReplacementData(List<String> matchItemsList, List<String> matchTagsList, String resultItemString) {
+    }
 
     private ReplacementData prepareReplacementData() {
         List<String> matchItemsList = new ArrayList<>();
@@ -580,7 +631,6 @@ public class ReplacementEditorManager {
             if (Minecraft.getInstance().player != null) {
                 Minecraft.getInstance().player.connection.sendCommand("reload");
 
-                // 重载后重建全局缓存
                 GlobalReplacementCache.rebuild();
 
                 this.showMessage(Component.translatable("message.oneenoughitem.datapack_reload_triggered").withStyle(ChatFormatting.GREEN));

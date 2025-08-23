@@ -65,8 +65,7 @@ public class TagDisplayWidget extends AbstractWidget {
                 }
 
                 textX = this.getX() + 3 - this.scrollOffset;
-            }
-            else if (textWidth > availableWidth) {
+            } else if (textWidth > availableWidth) {
                 // 悬停但还未开始滚动，显示截断文本
                 displayText = this.truncateText(fullTagText, availableWidth);
             }

@@ -1,6 +1,7 @@
 package com.mafuyu404.oneenoughitem.mixin;
 
 import com.mafuyu404.oneenoughitem.api.EditableItem;
+import com.mafuyu404.oneenoughitem.init.ModConfig;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.Utils;
 import net.minecraft.world.food.FoodProperties;
@@ -15,10 +16,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(value = Item.class)
 @Implements(@Interface(iface = EditableItem.class, prefix = "lazy$"))
 public abstract class ItemMixin implements EditableItem {
-    @Shadow public abstract Item asItem();
+    @Shadow
+    public abstract Item asItem();
 
     @Mutable
-    @Shadow @Final @Nullable
+    @Shadow
+    @Final
+    @Nullable
     private FoodProperties foodProperties;
 
     //    @ModifyVariable(method = "<init>", at = @At("HEAD"), argsOnly = true)
@@ -44,6 +48,8 @@ public abstract class ItemMixin implements EditableItem {
 
     @Inject(method = "getFoodProperties", at = @At("HEAD"), cancellable = true)
     private void qq(CallbackInfoReturnable<FoodProperties> cir) {
+        if (!ModConfig.CLEAR_FOOD_PROPERTIES.getValue()) return;
+
         String itemId = Utils.getItemRegistryName(asItem());
         if (itemId != null) {
             String matched = ReplacementCache.matchItem(itemId);

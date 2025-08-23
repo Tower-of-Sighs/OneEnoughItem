@@ -15,7 +15,10 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -143,6 +146,22 @@ public class GlobalReplacementCache extends BaseCache {
     public static boolean isItemUsedAsResult(String itemId) {
         return INSTANCE.withInitializedReadLock(() ->
                 isValidString(itemId) && INSTANCE.resultItems.containsKey(itemId));
+    }
+
+    /**
+     * 获取所有已替换的物品ID
+     */
+    public static Set<String> getAllReplacedItems() {
+        return INSTANCE.withInitializedReadLock(() ->
+                new HashSet<>(INSTANCE.replacedItems.keySet()));
+    }
+
+    /**
+     * 获取所有已替换的标签ID
+     */
+    public static Set<String> getAllReplacedTags() {
+        return INSTANCE.withInitializedReadLock(() ->
+                new HashSet<>(INSTANCE.replacedTags.keySet()));
     }
 
     public static boolean isTagUsedAsResult(String tagId) {

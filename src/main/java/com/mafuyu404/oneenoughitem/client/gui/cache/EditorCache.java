@@ -5,10 +5,10 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 
-import java.io.*;
-import java.nio.file.Files;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -62,18 +62,18 @@ public class EditorCache extends BaseCache {
                             Item resultItem, ResourceLocation resultTag, String fileName) {
         try {
             // 确保目录存在
-            Files.createDirectories(cacheFile.getParent());
+            java.nio.file.Files.createDirectories(cacheFile.getParent());
 
             // 创建临时文件，确保原子性写入
-            Path tempFile = cacheFile.resolveSibling(cacheFile.getFileName() + ".tmp");
+            java.nio.file.Path tempFile = cacheFile.resolveSibling(cacheFile.getFileName() + ".tmp");
 
             // 如果临时文件已存在，先删除
-            if (Files.exists(tempFile)) {
-                Files.delete(tempFile);
+            if (java.nio.file.Files.exists(tempFile)) {
+                java.nio.file.Files.delete(tempFile);
             }
 
             try (DataOutputStream dos = new DataOutputStream(
-                    new BufferedOutputStream(Files.newOutputStream(tempFile)))) {
+                    new java.io.BufferedOutputStream(java.nio.file.Files.newOutputStream(tempFile)))) {
 
                 // 写入版本号
                 dos.writeInt(cacheVersion);
@@ -82,7 +82,7 @@ public class EditorCache extends BaseCache {
                 dos.writeInt(matchItems.size());
                 for (Item item : matchItems) {
                     ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
-                    dos.writeUTF(id.toString());
+                    dos.writeUTF(id != null ? id.toString() : "");
                 }
 
                 // 写入匹配标签
@@ -94,7 +94,7 @@ public class EditorCache extends BaseCache {
                 // 写入结果物品
                 if (resultItem != null) {
                     ResourceLocation id = BuiltInRegistries.ITEM.getKey(resultItem);
-                    dos.writeUTF(id.toString());
+                    dos.writeUTF(id != null ? id.toString() : "");
                 } else {
                     dos.writeUTF("");
                 }
@@ -109,7 +109,7 @@ public class EditorCache extends BaseCache {
             }
 
             // 原子性替换文件
-            Files.move(tempFile, cacheFile, StandardCopyOption.REPLACE_EXISTING);
+            java.nio.file.Files.move(tempFile, cacheFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
 
             Oneenoughitem.LOGGER.debug("Editor cache saved successfully to: {}", cacheFile);
 
@@ -121,13 +121,13 @@ public class EditorCache extends BaseCache {
 
     public static CacheData loadCache() {
         return INSTANCE.withReadLock(() -> {
-            if (!Files.exists(INSTANCE.cacheFile)) {
+            if (!java.nio.file.Files.exists(INSTANCE.cacheFile)) {
                 Oneenoughitem.LOGGER.debug("Editor cache file not found: {}", INSTANCE.cacheFile);
                 return null;
             }
 
             try (DataInputStream dis = new DataInputStream(
-                    new BufferedInputStream(Files.newInputStream(INSTANCE.cacheFile)))) {
+                    new java.io.BufferedInputStream(java.nio.file.Files.newInputStream(INSTANCE.cacheFile)))) {
 
                 int version = dis.readInt();
                 if (version != INSTANCE.cacheVersion) {

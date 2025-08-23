@@ -19,16 +19,68 @@ repositories {
     // for more information about repositories.
     maven { url "https://maven.shedaniel.me/" }
     maven { url "https://maven.terraformersmc.com/releases/" }
+    maven {
+        // Add curse maven to repositories
+        name = "Curse Maven"
+        url = "https://www.cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
+    maven {
+        // location of the maven that hosts JEI files since January 2023
+        // Patchouli
+        name = "Jared's maven"
+        url = "https://maven.blamejared.com/"
+        content {
+            includeGroup "mezz.jei"
+        }
+    }
+    maven { // for Porting Lib: Fabric ASM
+        url = "https://jitpack.io/"
+    }
+    maven { url = "https://mvn.devos.one/releases/" }
+    maven { url = "https://nexus.resourcefulbees.com/repository/maven-public/"}
+    maven {
+        url "https://maven.jamieswhiteshirt.com/libs-release"
+        content {
+            includeGroup "com.jamieswhiteshirt"
+        }
+    }
 }
+
+def portingLibModules = [
+        "common", "items", "fluids", "extensions", "tags", "recipe_book_categories",
+        "entity", "tool_actions", "transfer", "registries", "lazy_registration",
+        "data", "model_builders", "model_generators", "model_loader", "model_materials",
+        "models", "networking", "utility", "base", "blocks", "client_events", "level_events",
+        "loot"
+]
 
 dependencies {
     // To change the versions see the gradle.properties file
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+    modCompileOnly ("mezz.jei:jei-1.20.1-fabric-api:15.20.0.104")
+    modImplementation ("mezz.jei:jei-1.20.1-fabric:15.20.0.104")
 
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-    modApi files("libs/OELib-0.0.2.jar")
+    modImplementation "curse.maven:oelib-1319210:6875022"
+    modImplementation "curse.maven:architectury-api-419699:5137936"
+    modImplementation "curse.maven:jupiter-1072905:6843040"
+//    modImplementation "dev.onyxstudios.cardinal-components-api:cardinal-components-base:${project.cca_version}" // SlashBlade
+//    modImplementation "dev.onyxstudios.cardinal-components-api:cardinal-components-item:${project.cca_version}"
+//    modImplementation "dev.onyxstudios.cardinal-components-api:cardinal-components-entity:${project.cca_version}"
+//    modImplementation files("libs/FarmersDelight-1.20.1-2.4.0+refabricated.jar")
+//    modImplementation "curse.maven:slashblade-refabricated-1324741:6914777"
+//    modImplementation "curse.maven:forge-config-api-port-fabric-547434:6325013"
+//    portingLibModules.each {
+//        modImplementation("io.github.fabricators_of_create.Porting-Lib:${it}:${port_version}")
+//    }
+//    modImplementation("com.github.Chocohead:Fabric-ASM:${fabric_asm_version}") {
+//        exclude (group: "net.fabricmc.fabric-api")
+//    }
 }
 
 loom {

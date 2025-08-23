@@ -7,9 +7,7 @@ import com.mafuyu404.oneenoughitem.client.gui.components.ItemDisplayWidget;
 import com.mafuyu404.oneenoughitem.client.gui.components.ScrollablePanel;
 import com.mafuyu404.oneenoughitem.client.gui.components.TagDisplayWidget;
 import com.mafuyu404.oneenoughitem.client.gui.manager.ReplacementEditorManager;
-import com.mafuyu404.oneenoughitem.client.gui.util.GuiUtils;
-import com.mafuyu404.oneenoughitem.client.gui.util.PathUtils;
-import com.mafuyu404.oneenoughitem.client.gui.util.ReplacementUtils;
+import com.mafuyu404.oneenoughitem.client.gui.util.*;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.ReplacementControl;
 import com.mafuyu404.oneenoughitem.init.Utils;
@@ -48,17 +46,19 @@ public class ReplacementEditorScreen extends Screen {
     private Button selectFileButton;
     private Button reloadButton;
     private Button clearAllButton;
+    private Button saveToJSONButton;
+    private Button deduplicateRecipesButton;
 
     private Button objectDropdownButton;
     private boolean showObjectDropdown = false;
-    private List<Button> objectIndexButtons = new ArrayList<>();
+    private final List<Button> objectIndexButtons = new ArrayList<>();
 
     private Button addMatchItemButton;
     private Button addMatchTagButton;
     private Button clearMatchButton;
     private ScrollablePanel matchPanel;
-    private List<ItemDisplayWidget> matchItemWidgets;
-    private List<TagDisplayWidget> matchTagWidgets;
+    private final List<ItemDisplayWidget> matchItemWidgets;
+    private final List<TagDisplayWidget> matchTagWidgets;
 
     private Button selectResultItemButton;
     private Button clearResultButton;
@@ -80,14 +80,16 @@ public class ReplacementEditorScreen extends Screen {
             for (String itemId : cache.matchItems()) {
                 ResourceLocation id = new ResourceLocation(itemId);
                 Item item = BuiltInRegistries.ITEM.get(id);
-                this.manager.addMatchItem(item);
+                if (item != null) {
+                    this.manager.addMatchItem(item);
 
-                // 在跳过替换的情况下创建ItemStack
-                ItemStack displayStack = ReplacementControl.withSkipReplacement(() -> new ItemStack(item));
+                    // 在跳过替换的情况下创建ItemStack
+                    ItemStack displayStack = ReplacementControl.withSkipReplacement(() -> new ItemStack(item));
 
-                ItemDisplayWidget widget = new ItemDisplayWidget(0, 0, displayStack,
-                        button -> this.removeMatchItem(item), itemId, true);
-                this.matchItemWidgets.add(widget);
+                    ItemDisplayWidget widget = new ItemDisplayWidget(0, 0, displayStack,
+                            button -> this.removeMatchItem(item), itemId, true);
+                    this.matchItemWidgets.add(widget);
+                }
             }
 
             for (String tagId : cache.matchTags()) {
@@ -171,9 +173,15 @@ public class ReplacementEditorScreen extends Screen {
                 button -> this.clearAll(), centerX - 75, fileY + 25, 60, BUTTON_HEIGHT);
         this.addRenderableWidget(this.clearAllButton);
 
-        Button saveToJsonButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.save_to_json"),
+        this.saveToJSONButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.save_to_json"),
                 button -> this.saveToJson(), centerX - 10, fileY + 25, 80, BUTTON_HEIGHT);
-        this.addRenderableWidget(saveToJsonButton);
+        this.addRenderableWidget(this.saveToJSONButton);
+        if (CompatUtil.isKubeJSLoaded()) {
+            this.deduplicateRecipesButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.deduplicate_recipes"),
+                    button -> this.deduplicateRelatedRecipes(), centerX + 75, fileY + 25, 80, BUTTON_HEIGHT);
+            this.addRenderableWidget(this.deduplicateRecipesButton);
+        }
+
 
         int panelY = fileY + 55;
         int leftPanelX = centerX - PANEL_WIDTH - MARGIN;
@@ -253,6 +261,7 @@ public class ReplacementEditorScreen extends Screen {
 
         this.rebuildPanels();
     }
+
     private void removeMatchItemById(String itemId) {
         if (itemId != null) {
             ResourceLocation id = new ResourceLocation(itemId);
@@ -417,9 +426,30 @@ public class ReplacementEditorScreen extends Screen {
         this.manager.createReplacementFile(datapackName, fileName);
         this.fileNameBox.setValue(this.manager.getCurrentFileName());
     }
+
     private void saveToJson() {
         this.manager.saveReplacement();
     }
+
+    /**
+     * 移除与被替换物品和标签相关的配方(生成kjs脚本)
+     */
+    private void deduplicateRelatedRecipes() {
+        Path currentFilePath = this.manager.getCurrentFilePath();
+        RecipeDeduplicationUtil.DeduplicationResult result = RecipeDeduplicationUtil.deduplicateRecipes(currentFilePath, this::showMessage);
+
+        if (result.isSuccess()) {
+            this.showMessage(Component.translatable(result.getMessage(), result.getRecipeCount(), result.getScriptPath().toString())
+                    .withStyle(result.getFormatting()));
+        } else {
+            if (result.getFormatting() == ChatFormatting.YELLOW) {
+                this.showWarn(Component.translatable(result.getMessage()).withStyle(result.getFormatting()));
+            } else {
+                this.showError(Component.translatable(result.getMessage()).withStyle(result.getFormatting()));
+            }
+        }
+    }
+
 
     private void selectFile() {
         this.minecraft.setScreen(new FileSelectionScreen(this));

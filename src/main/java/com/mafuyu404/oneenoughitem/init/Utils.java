@@ -88,4 +88,8 @@ public class Utils {
 
         return result;
     }
+
+    public static boolean isItemIdEmpty(String id) {
+        return id == null || id.equals("minecraft:air");
+    }
 }

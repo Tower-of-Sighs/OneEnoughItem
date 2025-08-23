@@ -1,6 +1,6 @@
 package com.mafuyu404.oneenoughitem.data;
 
-import com.mafuyu404.oelib.api.DataValidator;
+import com.mafuyu404.oelib.api.data.DataValidator;
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.init.Utils;
 import net.minecraft.resources.ResourceLocation;

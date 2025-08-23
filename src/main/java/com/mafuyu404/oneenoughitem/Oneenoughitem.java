@@ -1,8 +1,9 @@
 package com.mafuyu404.oneenoughitem;
 
-import com.mafuyu404.oelib.core.DataRegistry;
+import com.mafuyu404.oelib.fabric.data.DataRegistry;
 import com.mafuyu404.oneenoughitem.data.Replacements;
 import com.mafuyu404.oneenoughitem.event.ModEventHandler;
+import com.mafuyu404.oneenoughitem.init.ModConfig;
 import net.fabricmc.api.ModInitializer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,6 +14,7 @@ public class Oneenoughitem implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        ModConfig.register();
         DataRegistry.register(Replacements.class);
         ModEventHandler.register();
     }
