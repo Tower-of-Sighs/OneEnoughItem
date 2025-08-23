@@ -13,13 +13,14 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.Item;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.lwjgl.glfw.GLFW;
 
-@EventBusSubscriber(modid = Oneenoughitem.MOD_ID)
+@EventBusSubscriber(modid = Oneenoughitem.MOD_ID, value = Dist.CLIENT)
 public class ClientEventHandler {
 
     @SubscribeEvent
@@ -27,7 +28,7 @@ public class ClientEventHandler {
         Minecraft client = Minecraft.getInstance();
         while (ModKeyMappings.OPEN_EDITOR.consumeClick()) {
             if (client.screen == null && hasCtrlDown(client)) {
-                client.setScreen(new ReplacementEditorScreen());
+                client.setScreen(new  ReplacementEditorScreen());
             }
         }
     }
@@ -52,31 +53,34 @@ public class ClientEventHandler {
 
     private static void rebuildReplacementCache() {
         DataManager<Replacements> manager = DataManager.get(Replacements.class);
-        if (manager != null) {
-            ReplacementCache.clearCache();
-
-            MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
-            if (server != null) {
-                HolderLookup.RegistryLookup<Item> registryLookup = server.registryAccess().lookupOrThrow(Registries.ITEM);
-
-                var replacements = manager.getDataList();
-                for (Replacements replacement : replacements) {
-                    ReplacementCache.putReplacement(replacement, registryLookup);
-                }
-
-                Oneenoughitem.LOGGER.debug("Rebuilt replacement cache with {} rules from OELib data manager",
-                        replacements.size());
-            } else {
-                Oneenoughitem.LOGGER.warn("No server instance available, cannot rebuild replacement cache with registry lookup");
-
-                var replacements = manager.getDataList();
-                for (Replacements replacement : replacements) {
-                    Oneenoughitem.LOGGER.debug("Skipping replacement cache for {} due to missing server context",
-                            replacement.resultItems());
-                }
-            }
-        } else {
+        if (manager == null) {
             Oneenoughitem.LOGGER.warn("No replacement data manager found in OELib");
+            return;
         }
+
+        ReplacementCache.clearCache();
+        var replacements = manager.getDataList();
+
+        MinecraftServer server = DataManager.getCurrentServer();
+        if (server == null) {
+            Oneenoughitem.LOGGER.warn("No server instance available, cannot rebuild replacement cache with registry lookup");
+            for (Replacements replacement : replacements) {
+                ReplacementCache.putReplacement(replacement, null);
+            }
+            Oneenoughitem.LOGGER.debug(
+                    "Rebuilt replacement cache (client provisional without registry) with {} rules",
+                    replacements.size()
+            );
+            return;
+        }
+
+        HolderLookup.RegistryLookup<Item> registryLookup = server.registryAccess().lookupOrThrow(Registries.ITEM);
+        for (Replacements replacement : replacements) {
+            ReplacementCache.putReplacement(replacement, registryLookup);
+        }
+        Oneenoughitem.LOGGER.debug(
+                "Rebuilt replacement cache with {} rules from OELib data manager",
+                replacements.size()
+        );
     }
 }

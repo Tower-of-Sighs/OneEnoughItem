@@ -1,6 +1,7 @@
 package com.mafuyu404.oneenoughitem.mixin;
 
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
+import com.mafuyu404.oneenoughitem.client.ClientContext;
 import com.mafuyu404.oneenoughitem.init.Config;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.ReplacementControl;
@@ -19,6 +20,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.Set;
 
 @Mixin(value = ItemStack.class)
 public class ItemStackMixin {
@@ -48,7 +51,7 @@ public class ItemStackMixin {
             return;
         }
 
-        if (isInCreativeModeTabBuilding()) {
+        if (ClientContext.isInCreativeInventory()) {
             return;
         }
 
@@ -71,13 +74,12 @@ public class ItemStackMixin {
 
                 newItem.verifyComponentsAfterLoad((ItemStack) (Object) this);
 
-                Oneenoughitem.LOGGER.debug("Successfully replaced item {} with {}", originItemId, targetItemId);
+//                Oneenoughitem.LOGGER.debug("Successfully replaced item {} with {}", originItemId, targetItemId);
             } else {
                 Oneenoughitem.LOGGER.warn("Target item not found: {}", targetItemId);
             }
         }
     }
-
 
     @Inject(method = "is(Lnet/minecraft/world/item/Item;)Z", at = @At("HEAD"), cancellable = true)
     private void extend(Item inputItem, CallbackInfoReturnable<Boolean> cir) {
@@ -92,32 +94,16 @@ public class ItemStackMixin {
             return;
         }
 
-        String inputItemId = Utils.getItemRegistryName(inputItem);
         String ItemId = Utils.getItemRegistryName(item);
-
-        for (String matchId : ReplacementCache.trackSourceOf(ItemId)) {
-            if (matchId.equals(inputItemId)) {
-                matched = true;
-                break;
-            }
+        // 先基于反向索引快速判空（避免无意义计算）
+        Set<String> sources = ReplacementCache.trackSourceOf(ItemId);
+        if (sources.isEmpty()) {
+            return;
         }
 
-        cir.setReturnValue(matched);
-    }
-
-    private boolean isInCreativeModeTabBuilding() {
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        for (StackTraceElement element : stackTrace) {
-            String className = element.getClassName();
-            String methodName = element.getMethodName();
-
-            if (className.contains("CreativeModeTab") ||
-                    className.contains("CreativeModeTabs") ||
-                    methodName.contains("buildContents") ||
-                    methodName.contains("accept")) {
-                return true;
-            }
+        String inputItemId = Utils.getItemRegistryName(inputItem);
+        if (sources.contains(inputItemId)) {
+            cir.setReturnValue(true);
         }
-        return false;
     }
 }

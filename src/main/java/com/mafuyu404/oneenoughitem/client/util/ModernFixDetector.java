@@ -4,6 +4,7 @@ import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.init.Config;
 import net.minecraft.client.Minecraft;
 import net.neoforged.fml.ModList;
+import net.neoforged.fml.loading.FMLPaths;
 
 import java.nio.file.Path;
 
@@ -41,7 +42,6 @@ public class ModernFixDetector {
 
 
     public static Path getConfigPath() {
-        return Minecraft.getInstance().gameDirectory.toPath()
-                .resolve("config").resolve(CONFIG_FILE_NAME);
+        return FMLPaths.CONFIGDIR.get().resolve(CONFIG_FILE_NAME);
     }
 }
