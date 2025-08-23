@@ -95,15 +95,13 @@ public class ItemStackMixin {
         }
 
         String itemId = Utils.getItemRegistryName(item);
-
-        // 先基于反向索引快速判空（避免无意义计算）
-        Set<String> sources = ReplacementCache.trackSourceOf(itemId);
-        if (sources.isEmpty()) {
-            return;
-        }
-
         String inputItemId = Utils.getItemRegistryName(inputItem);
-        if (Utils.isItemIdEmpty(inputItemId) || Utils.isItemIdEmpty(itemId)) return;
+
+        if (Utils.isItemIdEmpty(itemId) || Utils.isItemIdEmpty(inputItemId)) return;
+
+        Set<String> sources = ReplacementCache.trackSourceOf(itemId);
+        if (sources.isEmpty()) return;
+
         if (sources.contains(inputItemId)) {
             cir.setReturnValue(true);
         }
