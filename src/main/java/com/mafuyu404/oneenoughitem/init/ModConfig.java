@@ -20,7 +20,8 @@ public class ModConfig extends AutoInitConfigContainer {
             new BooleanEntry("config.oei.common.enable_lite", false).json("Enable_Lite");
     public static final IConfigEntry<Integer> DATA_REWRITE_MODE =
             new IntegerEntry("config.oei.common.data_rewrite_mode", 2, 0, 2).json("Rewrite_Mode");
-
+    public static final IConfigEntry<Integer> TAG_REWRITE_MODE =
+            new IntegerEntry("config.oei.common.tag_rewrite_mode", 1, 0, 1).json("Tag_Rewrite_Mode");
     public ModConfig() {
         super(new ResourceLocation(Oneenoughitem.MODID, "oei_common_config"), "config.oei.common.title", "./config/oei/common.json");
     }

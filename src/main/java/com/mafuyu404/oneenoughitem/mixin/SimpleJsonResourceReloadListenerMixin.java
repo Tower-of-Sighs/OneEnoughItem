@@ -46,9 +46,9 @@ public abstract class SimpleJsonResourceReloadListenerMixin {
         MixinUtils.FieldRule baseRule = DIR_RULES.get(this.directory);
         if (baseRule == null) return;
 
-        // 先扫描本次重载的映射，并在配方开始重载的时候覆盖映射，保证后面的反序列化阶段也能识别到本次的映射
+        // 先扫描本次重载的映射；在 recipes 阶段若尚未开启覆盖映射，则开启
         Map<String, String> currentItemMap = MixinUtils.ReplacementLoader.loadCurrentReplacements(resourceManager);
-        if ("recipes".equals(this.directory)) {
+        if ("recipes".equals(this.directory) && !ReplacementCache.hasReloadOverride()) {
             ReplacementCache.beginReloadOverride(currentItemMap);
         }
 

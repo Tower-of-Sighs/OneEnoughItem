@@ -176,12 +176,6 @@ public class ReplacementEditorScreen extends Screen {
         this.saveToJSONButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.save_to_json"),
                 button -> this.saveToJson(), centerX - 10, fileY + 25, 80, BUTTON_HEIGHT);
         this.addRenderableWidget(this.saveToJSONButton);
-        if (CompatUtil.isKubeJSLoaded()) {
-            this.deduplicateRecipesButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.deduplicate_recipes"),
-                    button -> this.deduplicateRelatedRecipes(), centerX + 75, fileY + 25, 80, BUTTON_HEIGHT);
-            this.addRenderableWidget(this.deduplicateRecipesButton);
-        }
-
 
         int panelY = fileY + 55;
         int leftPanelX = centerX - PANEL_WIDTH - MARGIN;
@@ -430,26 +424,6 @@ public class ReplacementEditorScreen extends Screen {
     private void saveToJson() {
         this.manager.saveReplacement();
     }
-
-    /**
-     * 移除与被替换物品和标签相关的配方(生成kjs脚本)
-     */
-    private void deduplicateRelatedRecipes() {
-        Path currentFilePath = this.manager.getCurrentFilePath();
-        RecipeDeduplicationUtil.DeduplicationResult result = RecipeDeduplicationUtil.deduplicateRecipes(currentFilePath, this::showMessage);
-
-        if (result.isSuccess()) {
-            this.showMessage(Component.translatable(result.getMessage(), result.getRecipeCount(), result.getScriptPath().toString())
-                    .withStyle(result.getFormatting()));
-        } else {
-            if (result.getFormatting() == ChatFormatting.YELLOW) {
-                this.showWarn(Component.translatable(result.getMessage()).withStyle(result.getFormatting()));
-            } else {
-                this.showError(Component.translatable(result.getMessage()).withStyle(result.getFormatting()));
-            }
-        }
-    }
-
 
     private void selectFile() {
         this.minecraft.setScreen(new FileSelectionScreen(this));
