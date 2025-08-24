@@ -36,6 +36,10 @@ public class ModEventHandler {
 
             Oneenoughitem.LOGGER.info("Replacement cache rebuilt due to data reload: {} entries loaded, {} invalid",
                     loadedCount, invalidCount);
+            Oneenoughitem.LOGGER.info("Recipe JSON rewrite mode (server): {}", String.valueOf(com.mafuyu404.oneenoughitem.init.ModConfig.DATA_REWRITE_MODE.getValue()));
+
+            // 关键：Replacements 已重建，关闭本次重载的覆盖映射
+            ReplacementCache.endReloadOverride();
         }
     }
 

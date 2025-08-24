@@ -48,8 +48,13 @@ public class ClientEventHandler {
             GlobalReplacementCache.rebuild();
             Oneenoughitem.LOGGER.info("Replacement cache rebuilt due to data reload: {} entries loaded, {} invalid",
                     loadedCount, invalidCount);
+            Oneenoughitem.LOGGER.info("Recipe JSON rewrite mode (client): {}", String.valueOf(com.mafuyu404.oneenoughitem.init.ModConfig.DATA_REWRITE_MODE.getValue()));
+
+            // 关键：客户端也关闭覆盖映射
+            ReplacementCache.endReloadOverride();
         }
     }
+
 
     public static void onPlayerJoin(ClientPacketListener handler, PacketSender sender, Minecraft client) {
         if (ModernFixDetector.shouldShowWarning()) {

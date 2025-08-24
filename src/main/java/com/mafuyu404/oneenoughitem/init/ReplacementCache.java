@@ -10,10 +10,12 @@ import java.util.*;
 public class ReplacementCache {
     private static final Map<String, String> ItemMapCache = new HashMap<>();
     private static final HashMap<String, String> TagMapCache = new HashMap<>();
+    private static volatile Map<String, String> ReloadOverrideItemMap = null;
 
     public static String matchItem(String id) {
-        return ItemMapCache.getOrDefault(id, null);
+        return Objects.requireNonNullElse(ReloadOverrideItemMap, ItemMapCache).getOrDefault(id, null);
     }
+
 
     public static String matchTag(String tagId) {
         return TagMapCache.getOrDefault(tagId, null);
@@ -59,6 +61,21 @@ public class ReplacementCache {
             Oneenoughitem.LOGGER.info("Added replacement rule for {} items and {} tags: {} -> {}",
                     resolvedItems.size(), tagCount, replacement.matchItems(), replacement.resultItems());
         }
+    }
+
+    // 给 JSON 拦截层做快速判断
+    public static boolean hasAnyMappings() {
+        return !ItemMapCache.isEmpty() || !TagMapCache.isEmpty();
+    }
+
+    public static boolean isSourceItemId(String id) {
+        if (id == null) return false;
+        return Objects.requireNonNullElse(ReloadOverrideItemMap, ItemMapCache).containsKey(id);
+    }
+
+
+    public static boolean isSourceTagId(String id) {
+        return id != null && TagMapCache.containsKey(id);
     }
 
     public static void clearCache() {
@@ -139,5 +156,27 @@ public class ReplacementCache {
             if (resultItem.equals(id)) result.add(Utils.getItemById(matchItem));
         });
         return result;
+    }
+
+    // 开始/结束 “重载期覆盖映射”
+    public static void beginReloadOverride(Map<String, String> currentItemMap) {
+        if (currentItemMap == null || currentItemMap.isEmpty()) {
+            ReloadOverrideItemMap = null;
+            return;
+        }
+        ReloadOverrideItemMap = new HashMap<>(currentItemMap);
+        Oneenoughitem.LOGGER.info("Enabled reload-override mapping for this resource reload: {} items",
+                ReloadOverrideItemMap.size());
+    }
+
+    public static void endReloadOverride() {
+        if (ReloadOverrideItemMap != null) {
+            Oneenoughitem.LOGGER.info("Disabled reload-override mapping: {} entries", ReloadOverrideItemMap.size());
+        }
+        ReloadOverrideItemMap = null;
+    }
+
+    public static boolean hasReloadOverride() {
+        return ReloadOverrideItemMap != null;
     }
 }

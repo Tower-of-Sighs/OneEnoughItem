@@ -5,8 +5,10 @@
   "compatibilityLevel": "JAVA_8",
   "refmap": "oneenoughitem-refmap.json",
   "mixins": [
+    "CreativeModeTabMixin",
     "ItemMixin",
-    "ItemStackMixin"
+    "ItemStackMixin",
+    "SimpleJsonResourceReloadListenerMixin"
   ],
   "client": [
   ],
