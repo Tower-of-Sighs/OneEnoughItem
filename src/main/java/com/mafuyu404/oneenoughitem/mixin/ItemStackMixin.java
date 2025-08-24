@@ -46,7 +46,7 @@ public class ItemStackMixin {
             return;
         }
 
-        if (ClientContext.isInCreativeInventory()) {
+        if (isInCreativeModeTabBuilding()) {
             return;
         }
 
@@ -100,5 +100,9 @@ public class ItemStackMixin {
         if (sources.contains(inputItemId)) {
             cir.setReturnValue(true);
         }
+    }
+
+    private boolean isInCreativeModeTabBuilding(){
+        return ClientContext.isBuilding();
     }
 }

@@ -1,28 +1,18 @@
 package com.mafuyu404.oneenoughitem.client;
 
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.fml.loading.FMLLoader;
 
 public final class ClientContext {
-    private ClientContext() {
+    private static final ThreadLocal<Boolean> IS_BUILDING = ThreadLocal.withInitial(() -> false);
+
+    public static void beginBuilding() {
+        IS_BUILDING.set(true);
     }
 
-    public static boolean isInCreativeInventory() {
-        if (!FMLLoader.getDist().isClient()) {
-            return false;
-        }
-        return ClientOnly.isInCreativeInventory();
+    public static void endBuilding() {
+        IS_BUILDING.set(false);
     }
 
-    @OnlyIn(Dist.CLIENT)
-    private static final class ClientOnly {
-        private static boolean isInCreativeInventory() {
-            var mc = net.minecraft.client.Minecraft.getInstance();
-            if (mc == null) return false;
-            var screen = mc.screen;
-            if (screen == null) return false;
-            return screen instanceof net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
-        }
+    public static boolean isBuilding() {
+        return IS_BUILDING.get();
     }
 }
