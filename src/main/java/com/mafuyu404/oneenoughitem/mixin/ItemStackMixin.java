@@ -36,11 +36,6 @@ public class ItemStackMixin {
     @Final
     PatchedDataComponentMap components;
 
-    @Inject(method = "<init>(Lnet/minecraft/world/level/ItemLike;I)V", at = @At("TAIL"))
-    private void replace(ItemLike itemLike, int count, CallbackInfo ci) {
-        performReplacement();
-    }
-
     @Inject(method = "<init>(Lnet/minecraft/world/level/ItemLike;ILnet/minecraft/core/component/PatchedDataComponentMap;)V", at = @At("TAIL"))
     private void replaceWithComponents(ItemLike itemLike, int count, PatchedDataComponentMap components, CallbackInfo ci) {
         performReplacement();
