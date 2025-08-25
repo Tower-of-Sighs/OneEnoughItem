@@ -48,7 +48,7 @@ public abstract class ItemMixin implements EditableItem {
 
     @Inject(method = "getFoodProperties", at = @At("HEAD"), cancellable = true)
     private void qq(CallbackInfoReturnable<FoodProperties> cir) {
-        if (!Config.CLEAR_FOOD_PROPERTIES.get()) return;
+        if (!Config.CLEAR_FOOD_PROPERTIES.getValue()) return;
 
         String itemId = Utils.getItemRegistryName(asItem());
         if (itemId != null) {

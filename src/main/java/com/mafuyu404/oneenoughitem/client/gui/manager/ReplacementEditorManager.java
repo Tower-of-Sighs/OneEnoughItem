@@ -284,7 +284,7 @@ public class ReplacementEditorManager {
         }, e -> showError(Component.translatable("error.oneenoughitem.file_create_failed", e.getMessage())
                 .withStyle(ChatFormatting.RED)));
     }
-    
+
     private void createPackMcmetaIfNeeded(Path datapackPath) throws IOException {
         Path packMcmetaPath = datapackPath.resolve("pack.mcmeta");
         if (!Files.exists(packMcmetaPath)) {

@@ -37,7 +37,8 @@ public abstract class ItemStackMixin {
     @org.jetbrains.annotations.Nullable
     private Holder.Reference<Item> delegate;
 
-    @Shadow public abstract Item getItem();
+    @Shadow
+    public abstract Item getItem();
 
     @Inject(method = "forgeInit", at = @At("HEAD"), remap = false)
     private void replace(CallbackInfo ci) {
@@ -76,7 +77,7 @@ public abstract class ItemStackMixin {
 
     @Inject(method = "is(Ljava/util/function/Predicate;)Z", at = @At("HEAD"), cancellable = true)
     private void extend(Predicate<Holder<Item>> predicate, CallbackInfoReturnable<Boolean> cir) {
-        if (!Config.DEEPER_REPLACE.get()) return;
+        if (!Config.DEEPER_REPLACE.getValue()) return;
         if (!predicate.test(getItem().builtInRegistryHolder())) {
             String itemId = Utils.getItemRegistryName(item);
 
@@ -91,14 +92,17 @@ public abstract class ItemStackMixin {
 
     @Inject(method = "is(Lnet/minecraft/core/Holder;)Z", at = @At("HEAD"), cancellable = true)
     private void extend(Holder<Item> itemHolder, CallbackInfoReturnable<Boolean> cir) {
-        if (!Config.DEEPER_REPLACE.get()) return;
+        if (!Config.DEEPER_REPLACE.getValue()) return;
         if (getItem().builtInRegistryHolder() != itemHolder) {
             String itemId = Utils.getItemRegistryName(item);
 
             boolean matched = false;
 
             for (Item matchItem : ReplacementCache.trackSourceOf(itemId)) {
-                if (matchItem.builtInRegistryHolder() == itemHolder) matched = true;
+                if (matchItem.builtInRegistryHolder() == itemHolder) {
+                    matched = true;
+                    break;
+                }
             }
             cir.setReturnValue(matched);
         }
@@ -106,7 +110,7 @@ public abstract class ItemStackMixin {
 
     @Inject(method = "is(Lnet/minecraft/world/item/Item;)Z", at = @At("HEAD"), cancellable = true)
     private void extend(Item inputItem, CallbackInfoReturnable<Boolean> cir) {
-        if (!Config.DEEPER_REPLACE.get()) return;
+        if (!Config.DEEPER_REPLACE.getValue()) return;
         if (item != inputItem) {
             String inputItemId = Utils.getItemRegistryName(inputItem);
             String ItemId = Utils.getItemRegistryName(item);

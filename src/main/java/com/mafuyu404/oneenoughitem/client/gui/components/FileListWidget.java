@@ -20,6 +20,8 @@ public class FileListWidget extends ObjectSelectionList<FileListWidget.FileEntry
 
     public FileListWidget(Minecraft minecraft, int width, int height, int y, int itemHeight, BiConsumer<Path, Integer> onFileSelect) {
         super(minecraft, width, height, y, y + height, itemHeight);
+        this.setRenderBackground(false);
+        this.setRenderTopAndBottom(false);
         this.onFileSelect = onFileSelect;
     }
 
@@ -93,7 +95,6 @@ public class FileListWidget extends ObjectSelectionList<FileListWidget.FileEntry
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
-
         for (Button button : this.actionButtons) {
             button.render(graphics, mouseX, mouseY, partialTick);
         }
@@ -108,11 +109,6 @@ public class FileListWidget extends ObjectSelectionList<FileListWidget.FileEntry
         }
 
         return super.mouseClicked(mouseX, mouseY, button);
-    }
-
-    @Override
-    protected void renderBackground(GuiGraphics graphics) {
-        GuiUtils.drawListBackground(graphics, this.x0, this.y0, this.getWidth(), this.getHeight());
     }
 
     public class FileEntry extends ObjectSelectionList.Entry<FileEntry> {

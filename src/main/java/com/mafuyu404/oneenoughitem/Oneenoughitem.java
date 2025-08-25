@@ -3,9 +3,7 @@ package com.mafuyu404.oneenoughitem;
 import com.mafuyu404.oelib.forge.data.DataRegistry;
 import com.mafuyu404.oneenoughitem.data.Replacements;
 import com.mafuyu404.oneenoughitem.init.Config;
-import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.LogManager;
@@ -17,7 +15,7 @@ public class Oneenoughitem {
     public static final Logger LOGGER = LogManager.getLogger();
 
     public Oneenoughitem() {
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        Config.register();
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
     }
 

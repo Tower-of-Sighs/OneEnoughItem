@@ -15,7 +15,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 @Mixin(TagLoader.class)
 public abstract class TagLoaderMixin<T> {
@@ -45,7 +48,7 @@ public abstract class TagLoaderMixin<T> {
     @Inject(method = "load(Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/Map;", at = @At("RETURN"))
     private void oei$replaceTagItems(ResourceManager resourceManager,
                                      CallbackInfoReturnable<Map<ResourceLocation, List<TagLoader.EntryWithSource>>> cir) {
-        int mode = Config.TAG_REWRITE_MODE.get();
+        int mode = Config.TAG_REWRITE_MODE.getValue();
         if (mode == 0) {
             return;
         }

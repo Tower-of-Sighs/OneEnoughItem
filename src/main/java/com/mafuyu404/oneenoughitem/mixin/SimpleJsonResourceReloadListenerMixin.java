@@ -1,4 +1,3 @@
-
 package com.mafuyu404.oneenoughitem.mixin;
 
 import com.google.gson.JsonArray;
@@ -35,11 +34,11 @@ public abstract class SimpleJsonResourceReloadListenerMixin {
                                           ProfilerFiller profiler,
                                           CallbackInfoReturnable<Map<ResourceLocation, JsonElement>> cir) {
         // 0 不动、1 保留、2 完全替换
-        Integer mode = Config.DATA_REWRITE_MODE.get();
+        Integer mode = Config.DATA_REWRITE_MODE.getValue();
         if (mode == null) mode = 0;
 
-        Map<String, MixinUtils.FieldRule> dirRules = Config.parseDirRules();
-        
+        Map<String, MixinUtils.FieldRule> dirRules = Config.getDirRulesFromConfig();
+
         MixinUtils.FieldRule baseRule = dirRules.get(this.directory);
         if (baseRule == null) return;
 

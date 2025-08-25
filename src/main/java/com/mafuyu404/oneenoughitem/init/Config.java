@@ -1,90 +1,82 @@
 package com.mafuyu404.oneenoughitem.init;
 
+import com.iafenvoy.jupiter.ConfigManager;
+import com.iafenvoy.jupiter.ServerConfigManager;
+import com.iafenvoy.jupiter.config.container.AutoInitConfigContainer;
+import com.iafenvoy.jupiter.config.entry.BooleanEntry;
+import com.iafenvoy.jupiter.config.entry.IntegerEntry;
+import com.iafenvoy.jupiter.interfaces.IConfigEntry;
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.fml.common.Mod;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import net.minecraft.resources.ResourceLocation;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
-@Mod.EventBusSubscriber(modid = Oneenoughitem.MODID, bus = Mod.EventBusSubscriber.Bus.MOD)
-public class Config {
+public class Config extends AutoInitConfigContainer {
+    public static final Config INSTANCE = new Config();
 
-    public static final ForgeConfigSpec SPEC;
-    private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
+    public static final IConfigEntry<Boolean> DEEPER_REPLACE =
+            new BooleanEntry("config.oei.common.deeper_replace", false).json("Deeper_Replace");
+    public static final IConfigEntry<Boolean> ENABLE_LITE =
+            new BooleanEntry("config.oei.common.enable_lite", false).json("Enable_Lite");
+    public static final IConfigEntry<Boolean> CLEAR_FOOD_PROPERTIES =
+            new BooleanEntry("config.oei.common.clear_food_properties", true).json("Clear_Food_Properties");
+    public static final IConfigEntry<Integer> DATA_REWRITE_MODE =
+            new IntegerEntry("config.oei.common.data_rewrite_mode", 2, 0, 2).json("Data_Rewrite_Mode");
+    public static final IConfigEntry<Integer> TAG_REWRITE_MODE =
+            new IntegerEntry("config.oei.common.tag_rewrite_mode", 1, 0, 1).json("Tag_Rewrite_Mode");
+    public static final IConfigEntry<List<DirRule>> DATA_DIR_RULES =
+            new ListDirRuleEntry(
+                    "config.oei.common.data_dir_rules",
+                    List.of(
+                            new DirRule("recipes", List.of("item", "id", "result"), true),
+                            new DirRule("advancements", List.of("item"), false)
+                    )
+            ).json("Data_Dir_Rules");
 
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> DATA_DIR_RULES;
-    public static final ForgeConfigSpec.ConfigValue<Boolean> DEEPER_REPLACE;
-    public static final ForgeConfigSpec.ConfigValue<Boolean> CLEAR_FOOD_PROPERTIES;
-    public static final ForgeConfigSpec.ConfigValue<Boolean> MODERNFIX_WARNING_SHOWN;
-    public static final ForgeConfigSpec.ConfigValue<Integer> DATA_REWRITE_MODE ;
-    public static final ForgeConfigSpec.ConfigValue<Integer> TAG_REWRITE_MODE ;
-
-    static {
-        BUILDER.push("Common Setting");
-
-        DEEPER_REPLACE = BUILDER
-                .comment("For example, now you can heal iron golem with eggs that replaced iron ingot.")
-                .define("DeeperReplace", false);
-
-        CLEAR_FOOD_PROPERTIES = BUILDER
-                .comment("There won't any items in food list if items were replaced.")
-                .define("ClearFoodProperties", true);
-
-        MODERNFIX_WARNING_SHOWN = BUILDER
-                .comment("Internal flag to track if the ModernFix warning has been shown. Do not modify manually.(You don't need to modify it)")
-                .define("modernfixWarningShown", false);
-
-        DATA_REWRITE_MODE = BUILDER
-                .comment(
-                        "Controls the replacement mode for data pack JSONs, excluding tags.\n" +
-                                "The data pack scope is determined by the DATA_DIR_RULES configuration (e.g., recipes, advancements, etc.).\n" +
-                                "0 = No changes, 1 = Keep all data, 2 = Remove all data related to replaced items."
-                )
-                .defineInRange("DataRewriteMode", 2, 0, 2);
-
-        TAG_REWRITE_MODE = BUILDER
-                .comment(
-                        "Controls the replacement mode for tags, affecting only item tags.\n" +
-                                "0 = No changes, 1 = Remove all item tags related to replaced items."
-                )
-                .defineInRange("TagRewriteMode", 1, 0, 1);
-
-        BUILDER.pop();
-
-
-
-        BUILDER.push("Recipe Settings");
-
-        DATA_DIR_RULES = BUILDER
-                .comment(
-                        "Specifies which data directories should be checked and rewritten (e.g., recipes, advancements, etc.).\n" +
-                                "Each directory can define which fields to check and whether deep replacement should be applied.\n" +
-                                "Example: recipes -> {fields: [\"item\",\"id\",\"result\"], deepReplace: true}"
-                )
-                .define("DataDirRules", List.of(
-                        "recipes,item|id|result,true",
-                        "advancements,item,false"
-                ));
-
-        BUILDER.pop();
-
-        SPEC = BUILDER.build();
+    public Config() {
+        super(new ResourceLocation(Oneenoughitem.MODID, "oei_common_config"), "config.oei.common.title", "./config/oei/common.json");
     }
 
-    public static Map<String, MixinUtils.FieldRule> parseDirRules() {
-        Map<String, MixinUtils.FieldRule> map = new HashMap<>();
-        for (String s : DATA_DIR_RULES.get()) {
-            try {
-                String[] parts = s.split(",");
-                if (parts.length < 3) continue;
-                String dir = parts[0].trim();
-                Set<String> fields = new HashSet<>(Arrays.asList(parts[1].trim().split("\\|")));
-                boolean deepReplace = Boolean.parseBoolean(parts[2].trim());
-                map.put(dir, new MixinUtils.FieldRule(fields, deepReplace));
-            } catch (Exception e) {
-                Oneenoughitem.LOGGER.warn("Invalid DirRule config: {}", s, e);
-            }
-        }
-        return map;
+
+    @Override
+    public void init() {
+        this.createTab("common", "config.oei.common.category.common")
+                .add(DEEPER_REPLACE)
+                .add(CLEAR_FOOD_PROPERTIES)
+                .add(ENABLE_LITE)
+                .add(DATA_REWRITE_MODE)
+                .add(TAG_REWRITE_MODE);
+        this.createTab("recipe", "config.oei.common.category.recipe")
+                .add(DATA_DIR_RULES);
+    }
+
+    public static void register() {
+        ConfigManager.getInstance().registerConfigHandler(Config.INSTANCE);
+        ServerConfigManager.registerServerConfig(Config.INSTANCE, ServerConfigManager.PermissionChecker.IS_OPERATOR);
+    }
+
+    public record DirRule(
+            String directory,
+            List<String> fields,
+            boolean deepReplace
+    ) {
+        public static final Codec<DirRule> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                Codec.STRING.fieldOf("directory").forGetter(DirRule::directory),
+                Codec.STRING.listOf().fieldOf("fields").forGetter(DirRule::fields),
+                Codec.BOOL.fieldOf("deepReplace").forGetter(DirRule::deepReplace)
+        ).apply(instance, DirRule::new));
+    }
+
+    public static Map<String, MixinUtils.FieldRule> getDirRulesFromConfig() {
+        return Config.DATA_DIR_RULES.getValue().stream()
+                .collect(Collectors.toMap(
+                        Config.DirRule::directory,
+                        rule -> new MixinUtils.FieldRule(new HashSet<>(rule.fields()), rule.deepReplace())
+                ));
     }
 }

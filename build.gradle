@@ -193,7 +193,7 @@ dependencies {
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-
+    implementation fg.deobf("curse.maven:jupiter-1072905:6843043")
     compileOnly fg.deobf("mezz.jei:jei-1.20.1-forge-api:15.20.0.104")
     implementation fg.deobf("mezz.jei:jei-1.20.1-forge:15.20.0.104")
     compileOnly fg.deobf("curse.maven:oelib-1319210:6884828")

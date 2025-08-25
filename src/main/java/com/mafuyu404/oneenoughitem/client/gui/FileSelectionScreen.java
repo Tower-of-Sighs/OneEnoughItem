@@ -112,7 +112,6 @@ public class FileSelectionScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(graphics);
 
         int centerX = this.width / 2;
         int centerY = this.height / 2;

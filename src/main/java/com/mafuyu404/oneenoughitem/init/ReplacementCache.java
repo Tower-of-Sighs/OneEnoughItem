@@ -149,6 +149,7 @@ public class ReplacementCache {
         });
         return result;
     }
+
     public static Collection<Item> trackSourceOf(String id) {
         Collection<Item> result = new HashSet<>();
         ItemMapCache.forEach((matchItem, resultItem) -> {
