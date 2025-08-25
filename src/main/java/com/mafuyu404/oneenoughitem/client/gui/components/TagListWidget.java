@@ -17,6 +17,8 @@ public class TagListWidget extends ObjectSelectionList<TagListWidget.TagEntry> {
 
     public TagListWidget(Minecraft minecraft, int width, int height, int y, int itemHeight, Consumer<ResourceLocation> onTagSelect) {
         super(minecraft, width, height, y, y + height, itemHeight);
+        this.setRenderBackground(false);
+        this.setRenderTopAndBottom(false);
         this.onTagSelect = onTagSelect;
     }
 
@@ -55,17 +57,16 @@ public class TagListWidget extends ObjectSelectionList<TagListWidget.TagEntry> {
             ReplacementUtils.ReplacementInfo replacementInfo = ReplacementUtils.getTagReplacementInfo(this.tagId);
 
             int textColor = replacementInfo.isReplaced() ? 0xFFFF5555 : 0xFFFFFFFF;
+            if (isMouseOver && !replacementInfo.isReplaced()) {
+                textColor = 0xFFFFFF88;
+            }
+
             graphics.drawString(TagListWidget.this.minecraft.font, tagText, x + 5, y + 5, textColor);
 
             if (replacementInfo.isReplaced()) {
                 ReplacementUtils.ReplacementIndicator.renderTagReplaced(graphics, x + entryWidth - 20, y + 2);
             }
-
-            if (isMouseOver) {
-                graphics.fill(x, y, x + entryWidth, y + entryHeight, 0x40FFFFFF);
-            }
         }
-
         @Override
         public boolean mouseClicked(double mouseX, double mouseY, int button) {
             TagListWidget.this.onTagSelect.accept(this.tagId);

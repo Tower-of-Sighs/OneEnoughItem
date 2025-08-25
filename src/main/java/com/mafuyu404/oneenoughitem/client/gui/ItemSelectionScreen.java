@@ -2,6 +2,7 @@ package com.mafuyu404.oneenoughitem.client.gui;
 
 import com.mafuyu404.oneenoughitem.client.gui.cache.GlobalReplacementCache;
 import com.mafuyu404.oneenoughitem.client.gui.components.ItemGridWidget;
+import com.mafuyu404.oneenoughitem.client.gui.util.GuiUtils;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.ReplacementControl;
 import com.mafuyu404.oneenoughitem.init.Utils;
@@ -67,10 +68,11 @@ public class ItemSelectionScreen extends Screen {
         this.searchBox.setHint(Component.translatable("gui.oneenoughitem.search.hint"));
         this.addRenderableWidget(this.searchBox);
 
-        this.sortButton = Button.builder(Component.translatable("gui.oneenoughitem.sort." + this.sortMode.name().toLowerCase()),
-                        button -> this.cycleSortMode())
-                .bounds(centerX + 90, 15, 70, 18)
-                .build();
+        this.sortButton = GuiUtils.createButton(
+                Component.translatable("gui.oneenoughitem.sort." + this.sortMode.name().toLowerCase()),
+                btn -> this.cycleSortMode(),
+                centerX + 90, 15, 70, 18
+        );
         this.addRenderableWidget(this.sortButton);
 
         int gridStartX = centerX - (GRID_WIDTH * 18) / 2;
@@ -79,22 +81,19 @@ public class ItemSelectionScreen extends Screen {
         this.addRenderableWidget(this.itemGrid);
 
         int buttonY = gridStartY + GRID_HEIGHT * 18 + 10;
-        this.prevPageButton = Button.builder(Component.literal("<"),
-                        button -> this.previousPage())
-                .bounds(centerX - 80, buttonY, 25, 18)
-                .build();
+        this.prevPageButton = GuiUtils.createButton(Component.literal("<"),
+                btn -> this.previousPage(),
+                centerX - 80, buttonY, 25, 18);
         this.addRenderableWidget(this.prevPageButton);
 
-        this.nextPageButton = Button.builder(Component.literal(">"),
-                        button -> this.nextPage())
-                .bounds(centerX + 55, buttonY, 25, 18)
-                .build();
+        this.nextPageButton = GuiUtils.createButton(Component.literal(">"),
+                btn -> this.nextPage(),
+                centerX + 55, buttonY, 25, 18);
         this.addRenderableWidget(this.nextPageButton);
 
-        this.backButton = Button.builder(Component.translatable("gui.oneenoughitem.back"),
-                        button -> this.onClose())
-                .bounds(centerX - 40, buttonY, 80, 18)
-                .build();
+        this.backButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.back"),
+                btn -> this.onClose(),
+                centerX - 40, buttonY, 80, 18);
         this.addRenderableWidget(this.backButton);
 
         this.updateGrid();

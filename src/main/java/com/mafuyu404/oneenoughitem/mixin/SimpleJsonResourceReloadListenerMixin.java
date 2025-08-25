@@ -29,12 +29,6 @@ public abstract class SimpleJsonResourceReloadListenerMixin {
     @Final
     private String directory;
 
-    private static final Map<String, MixinUtils.FieldRule> DIR_RULES = Map.of(
-            "recipes", new MixinUtils.FieldRule(Set.of("item", "id"), true),
-            "advancements", new MixinUtils.FieldRule(Set.of("item"), false),
-            "predicates", new MixinUtils.FieldRule(Set.of("item"), false)
-    );
-
     @Inject(method = "prepare(Lnet/minecraft/server/packs/resources/ResourceManager;Lnet/minecraft/util/profiling/ProfilerFiller;)Ljava/util/Map;", at = @At("RETURN"))
     private void oei$replaceItemIdsInJson(ResourceManager resourceManager,
                                           ProfilerFiller profiler,
@@ -43,15 +37,16 @@ public abstract class SimpleJsonResourceReloadListenerMixin {
         Integer mode = ModConfig.DATA_REWRITE_MODE.getValue();
         if (mode == null) mode = 0;
 
-        MixinUtils.FieldRule baseRule = DIR_RULES.get(this.directory);
+        Map<String, MixinUtils.FieldRule> dirRules = ModConfig.getDirRulesFromConfig();
+
+        MixinUtils.FieldRule baseRule = dirRules.get(this.directory);
         if (baseRule == null) return;
 
-        // 先扫描本次重载的映射；在 recipes 阶段若尚未开启覆盖映射，则开启
+        // 先扫描本次重载的映射，并在配方开始重载的时候覆盖映射，保证后面的反序列化阶段也能识别到本次的映射
         Map<String, String> currentItemMap = MixinUtils.ReplacementLoader.loadCurrentReplacements(resourceManager);
-        if ("recipes".equals(this.directory) && !ReplacementCache.hasReloadOverride()) {
+        if ("recipes".equals(this.directory)) {
             ReplacementCache.beginReloadOverride(currentItemMap);
         }
-
         if (mode == 0) return;
 
         Set<String> currentSourceIds = new HashSet<>(currentItemMap.keySet());

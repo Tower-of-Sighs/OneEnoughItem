@@ -1,5 +1,6 @@
 package com.mafuyu404.oneenoughitem.client.gui.components;
 
+import com.mafuyu404.oneenoughitem.client.gui.util.GuiUtils;
 import com.mafuyu404.oneenoughitem.client.gui.util.ReplacementUtils;
 import com.mafuyu404.oneenoughitem.init.ReplacementControl;
 import com.mafuyu404.oneenoughitem.init.Utils;
@@ -41,8 +42,7 @@ public class ItemGridWidget extends AbstractWidget {
             int itemX = this.getX() + col * 18;
             int itemY = this.getY() + row * 18;
 
-            graphics.fill(itemX, itemY, itemX + 18, itemY + 18, 0xFF8B8B8B);
-            graphics.fill(itemX + 1, itemY + 1, itemX + 17, itemY + 17, 0xFF373737);
+            GuiUtils.drawItemBox(graphics, itemX, itemY, 18, 18);
 
             ItemStack itemStack = this.items.get(i);
             ReplacementControl.withSkipReplacement(() -> {

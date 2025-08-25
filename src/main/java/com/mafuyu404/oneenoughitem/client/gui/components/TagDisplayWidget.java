@@ -1,5 +1,7 @@
 package com.mafuyu404.oneenoughitem.client.gui.components;
 
+import com.mafuyu404.oneenoughitem.Oneenoughitem;
+import com.mafuyu404.oneenoughitem.client.gui.util.GuiUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -21,7 +23,8 @@ public class TagDisplayWidget extends AbstractWidget {
     private static final int SCROLL_DELAY = 250; // 悬停0.5秒后开始滚动（要不然有点违和）
     private long lastScrollTime = 0;
     private static final int SCROLL_INTERVAL = 60;
-
+    private static final ResourceLocation ITEM_BOX_TEX = new ResourceLocation(Oneenoughitem.MODID, "textures/gui/item_box.png");
+    private static final ResourceLocation CROSS_TEX = new ResourceLocation(Oneenoughitem.MODID, "textures/gui/cross.png");
 
     public TagDisplayWidget(int x, int y, ResourceLocation tagId, Button.OnPress removeAction) {
         super(x, y, 70, 20, Component.empty());
@@ -31,8 +34,7 @@ public class TagDisplayWidget extends AbstractWidget {
 
     @Override
     protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        graphics.fill(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height, 0xFF404040);
-        graphics.fill(this.getX() + 1, this.getY() + 1, this.getX() + this.width - 1, this.getY() + this.height - 1, 0xFF606060);
+        GuiUtils.drawItemBox(graphics, this.getX(), this.getY(), this.width, this.height);
 
         String fullTagText = "#" + this.tagId.toString();
         String displayText = fullTagText;
@@ -99,11 +101,11 @@ public class TagDisplayWidget extends AbstractWidget {
         }
 
         if (this.isHovered() && this.removeAction != null) {
-            graphics.fill(this.getX() + this.width - 12, this.getY() + 2, this.getX() + this.width - 2, this.getY() + 12, 0xFFFF0000);
-            graphics.drawString(font, "×", this.getX() + this.width - 9, this.getY() + 4, 0xFFFFFFFF, false);
+            int crossX = this.getX() + this.width - 9;
+            int crossY = this.getY() + 1;
+            graphics.blit(CROSS_TEX, crossX, crossY, 0, 0, 8, 8, 8, 8);
         }
     }
-
     private String truncateText(String text, int maxWidth) {
         if (this.font.width(text) <= maxWidth) {
             return text;
@@ -119,8 +121,10 @@ public class TagDisplayWidget extends AbstractWidget {
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (this.isHovered() && this.removeAction != null) {
-            if (mouseX >= this.getX() + this.width - 12 && mouseX <= this.getX() + this.width - 2 &&
-                    mouseY >= this.getY() + 2 && mouseY <= this.getY() + 12) {
+            int crossX = this.getX() + this.width - 9;
+            int crossY = this.getY() + 1;
+            if (mouseX >= crossX && mouseX <= crossX + 8 &&
+                    mouseY >= crossY && mouseY <= crossY + 8) {
                 this.removeAction.onPress(null);
                 return true;
             }

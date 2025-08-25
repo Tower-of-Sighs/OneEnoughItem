@@ -4,8 +4,6 @@ import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.init.MixinUtils;
 import com.mafuyu404.oneenoughitem.init.ModConfig;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
-import com.mafuyu404.oneenoughitem.init.Utils;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.tags.TagEntry;
@@ -17,7 +15,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 @Mixin(TagLoader.class)
 public abstract class TagLoaderMixin<T> {
@@ -27,12 +28,11 @@ public abstract class TagLoaderMixin<T> {
     private String directory;
 
     private static final String ITEMS_TAG_DIR = "tags/items";
-    private static final String BLOCKS_TAG_DIR = "tags/blocks";
 
     @Inject(method = "load(Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/Map;", at = @At("HEAD"))
     private void oei$beginOverrideForTags(ResourceManager resourceManager,
                                           CallbackInfoReturnable<Map<ResourceLocation, List<TagLoader.EntryWithSource>>> cir) {
-        if (!ITEMS_TAG_DIR.equals(this.directory) && !BLOCKS_TAG_DIR.equals(this.directory)) {
+        if (!ITEMS_TAG_DIR.equals(this.directory)) {
             return;
         }
         try {
@@ -53,9 +53,7 @@ public abstract class TagLoaderMixin<T> {
             return;
         }
 
-        final boolean isItemsDir = ITEMS_TAG_DIR.equals(this.directory);
-        final boolean isBlocksDir = BLOCKS_TAG_DIR.equals(this.directory);
-        if (!isItemsDir && !isBlocksDir) {
+        if (!ITEMS_TAG_DIR.equals(this.directory)) {
             return;
         }
 
@@ -99,22 +97,22 @@ public abstract class TagLoaderMixin<T> {
                     iterator.remove();
                     dropped++;
                     touched = true;
-                    Oneenoughitem.LOGGER.debug("{} tag rewrite: drop '{}' from {} (replaced by '{}')",
-                            isItemsDir ? "Item" : "Block", fromStr, tagId, mapped);
+                    Oneenoughitem.LOGGER.debug("Item tag rewrite: drop '{}' from {} (replaced by '{}')",
+                            fromStr, tagId, mapped);
                 }
             }
 
             if (touched) {
                 totalTags++;
                 totalDropped += dropped;
-                Oneenoughitem.LOGGER.info("{} tag rewrite: {} -> dropped={}",
-                        isItemsDir ? "Item" : "Block", tagId, dropped);
+                Oneenoughitem.LOGGER.info("Item tag rewrite: {} -> dropped={}",
+                        tagId, dropped);
             }
         }
 
         if (totalTags > 0) {
-            Oneenoughitem.LOGGER.info("{} tags rewrite summary (mode={}): affectedTags={}, totalDropped={}",
-                    (isItemsDir ? "Item" : "Block"), mode, totalTags, totalDropped);
+            Oneenoughitem.LOGGER.info("Item tags rewrite summary (mode={}): affectedTags={}, totalDropped={}",
+                    mode, totalTags, totalDropped);
         }
     }
 }
