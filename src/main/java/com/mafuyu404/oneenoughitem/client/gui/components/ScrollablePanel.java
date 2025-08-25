@@ -13,7 +13,7 @@ public class ScrollablePanel extends AbstractWidget {
     private final List<AbstractWidget> widgets = new ArrayList<>();
     private int scrollOffset = 0;
     private int contentHeight = 0;
-    private final int maxVisibleHeight;
+    private int maxVisibleHeight;
     private boolean isDragging = false;
     private final int scrollbarWidth = 6;
     private int scrollbarHeight = 0;
@@ -49,14 +49,16 @@ public class ScrollablePanel extends AbstractWidget {
         } else {
             this.scrollbarHeight = 0;
         }
+        int maxScroll = Math.max(0, this.contentHeight - this.maxVisibleHeight);
+        this.scrollOffset = Math.max(0, Math.min(this.scrollOffset, maxScroll));
     }
 
     @Override
     public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        graphics.fill(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.height, 0x80000000);
 
         graphics.enableScissor(this.getX(), this.getY(), this.getX() + this.width, this.getY() + this.maxVisibleHeight);
 
+        AbstractWidget hoveredChild = null;
         for (AbstractWidget widget : this.widgets) {
             int widgetY = widget.getY() - this.scrollOffset;
             // 检查widget是否在可见区域内
@@ -64,11 +66,21 @@ public class ScrollablePanel extends AbstractWidget {
                 int originalY = widget.getY();
                 widget.setY(widgetY);
                 widget.render(graphics, mouseX, mouseY, partialTick);
-                widget.setY(originalY); // 恢复原始位置
+
+                if (mouseY >= widgetY && mouseY <= widgetY + widget.getHeight() &&
+                        mouseX >= widget.getX() && mouseX <= widget.getX() + widget.getWidth()) {
+                    hoveredChild = widget;
+                }
+                widget.setY(originalY);
             }
         }
 
         graphics.disableScissor();
+
+        if (hoveredChild instanceof ItemDisplayWidget idw) {
+            idw.renderTooltip(graphics, mouseX, mouseY);
+        }
+
 
         if (this.contentHeight > this.maxVisibleHeight) {
             this.drawScrollbar(graphics);
@@ -76,10 +88,10 @@ public class ScrollablePanel extends AbstractWidget {
     }
 
     private void drawScrollbar(GuiGraphics graphics) {
-        int scrollbarX = this.getX() + this.width - this.scrollbarWidth;
+        int scrollbarX = this.getX() + this.width - this.scrollbarWidth - 33;
         int trackHeight = this.maxVisibleHeight;
 
-        graphics.fill(scrollbarX, this.getY(), scrollbarX + this.scrollbarWidth, this.getY() + trackHeight, 0xFF404040);
+        graphics.fill(scrollbarX, this.getY(), scrollbarX + this.scrollbarWidth, this.getY() + trackHeight, 0x30FFFFFF);
 
         int maxScroll = Math.max(0, this.contentHeight - this.maxVisibleHeight);
         if (maxScroll > 0) {
@@ -87,7 +99,7 @@ public class ScrollablePanel extends AbstractWidget {
             this.scrollbarY = this.getY() + (int) (scrollRatio * (trackHeight - this.scrollbarHeight));
 
             graphics.fill(scrollbarX, this.scrollbarY, scrollbarX + this.scrollbarWidth,
-                    this.scrollbarY + this.scrollbarHeight, 0xFF808080);
+                    this.scrollbarY + this.scrollbarHeight, 0x50FFFFFF);
         }
     }
 
@@ -176,6 +188,12 @@ public class ScrollablePanel extends AbstractWidget {
 
 
     public void updateWidgetPositions() {
+        this.updateContentHeight();
+    }
+
+    public void setVisibleHeight(int height) {
+        this.maxVisibleHeight = Math.max(0, height);
+        this.height = this.maxVisibleHeight;
         this.updateContentHeight();
     }
 

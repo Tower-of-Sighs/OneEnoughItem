@@ -1,6 +1,7 @@
 package com.mafuyu404.oneenoughitem.client.gui;
 
 import com.mafuyu404.oneenoughitem.client.gui.components.TagListWidget;
+import com.mafuyu404.oneenoughitem.client.gui.util.GuiUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -57,10 +58,8 @@ public class TagSelectionScreen extends Screen {
         this.tagList.setX(20);
         this.addRenderableWidget(this.tagList);
 
-        this.backButton = Button.builder(Component.translatable("gui.oneenoughitem.back"),
-                        button -> this.onClose())
-                .bounds(centerX - 40, this.height - 50, 80, 18)
-                .build();
+        this.backButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.back"),
+                btn -> this.onClose(), centerX - 40, this.height - 50, 80, 18);
         this.addRenderableWidget(this.backButton);
 
         this.updateTagList();
@@ -86,7 +85,14 @@ public class TagSelectionScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        int panelX = 20;
+        int panelY = 40;
+        int panelW = this.width - 40;
+        int panelH = this.height - 100;
+
         super.render(graphics, mouseX, mouseY, partialTick);
+
+        GuiUtils.drawPanelBackground(graphics, panelX, panelY, panelW, panelH);
 
         String tagCount = this.filteredTags.size() + " tags";
         graphics.drawString(this.font, tagCount, 10, this.height - 30, 0xFFFFFF);

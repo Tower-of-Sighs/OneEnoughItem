@@ -59,7 +59,8 @@ public class ClientEventHandler {
                         // 让屏幕在下次渲染前 rebuild contents，从而立即套用后处理替换
                         CreativeModeTabs.tryRebuildTabContents(enabled, hasPerm, registries);
                     }
-                } catch (Exception ignore) {}
+                } catch (Exception ignore) {
+                }
 
                 Oneenoughitem.LOGGER.info("Replacement cache rebuilt due to data reload: {} entries loaded, {} invalid",
                         event.getLoadedCount(), event.getInvalidCount());
@@ -70,6 +71,7 @@ public class ClientEventHandler {
             });
         }
     }
+
     private static void refreshAllCreativeModeTabIcons() {
         try {
             for (CreativeModeTab tab : CreativeModeTabs.tabs()) {

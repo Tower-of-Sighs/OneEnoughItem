@@ -68,6 +68,7 @@ public class ModConfig extends AutoInitConfigContainer {
                 Codec.BOOL.fieldOf("deepReplace").forGetter(DirRule::deepReplace)
         ).apply(instance, DirRule::new));
     }
+
     public static Map<String, MixinUtils.FieldRule> getDirRulesFromConfig() {
         return ModConfig.DATA_DIR_RULES.getValue().stream()
                 .collect(Collectors.toMap(

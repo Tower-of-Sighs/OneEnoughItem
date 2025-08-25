@@ -1,4 +1,3 @@
-
 package com.mafuyu404.oneenoughitem.mixin;
 
 import com.google.gson.JsonArray;

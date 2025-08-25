@@ -56,6 +56,9 @@ public class TagListWidget extends ObjectSelectionList<TagListWidget.TagEntry> {
             ReplacementUtils.ReplacementInfo replacementInfo = ReplacementUtils.getTagReplacementInfo(this.tagId);
 
             int textColor = replacementInfo.isReplaced() ? 0xFFFF5555 : 0xFFFFFFFF;
+            if (isMouseOver && !replacementInfo.isReplaced()) {
+                textColor = 0xFFFFFF88;
+            }
             graphics.drawString(TagListWidget.this.minecraft.font, tagText, x + 5, y + 5, textColor);
 
             if (replacementInfo.isReplaced()) {

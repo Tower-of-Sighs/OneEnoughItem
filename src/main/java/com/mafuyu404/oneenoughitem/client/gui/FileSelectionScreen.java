@@ -6,6 +6,7 @@ import com.mafuyu404.oneenoughitem.client.gui.util.PathUtils;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -117,9 +118,8 @@ public class FileSelectionScreen extends Screen {
         int panelX = centerX - PANEL_WIDTH / 2;
         int panelY = centerY - PANEL_HEIGHT / 2;
 
+        super.renderBackground(graphics, mouseX, mouseY, partialTick);
         GuiUtils.drawPanelBackground(graphics, panelX, panelY, PANEL_WIDTH, PANEL_HEIGHT);
-
-        super.render(graphics, mouseX, mouseY, partialTick);
 
         graphics.drawCenteredString(this.font, this.title, centerX, panelY - 35, 0xFFFFFF);
 
@@ -132,6 +132,9 @@ public class FileSelectionScreen extends Screen {
         } else {
             Component helpText = Component.translatable("gui.oneenoughitem.file_selection.help");
             graphics.drawCenteredString(this.font, helpText, centerX, panelY + PANEL_HEIGHT + 15, 0xCCCCCC);
+        }
+        for (Renderable renderable : this.renderables) {
+            renderable.render(graphics, mouseX, mouseY, partialTick);
         }
     }
 

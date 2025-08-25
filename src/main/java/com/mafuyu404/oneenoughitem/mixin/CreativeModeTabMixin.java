@@ -38,6 +38,7 @@ public abstract class CreativeModeTabMixin implements CreativeModeTabIconRefresh
     @Shadow
     @Final
     private Supplier<ItemStack> iconGenerator;
+
     @Inject(
             method = "buildContents",
             at = @At("HEAD")
@@ -55,10 +56,12 @@ public abstract class CreativeModeTabMixin implements CreativeModeTabIconRefresh
         oei$applyReplacementToTabItems();
         ClientContext.endBuilding();
     }
+
     @Override
     public void oei$refreshIconCache() {
         iconItemStack = null;
     }
+
     private void oei$applyReplacementToTabItems() {
         try {
             if (this.displayItems != null && !this.displayItems.isEmpty()) {

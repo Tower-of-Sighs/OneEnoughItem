@@ -1,14 +1,16 @@
 package com.mafuyu404.oneenoughitem.client.gui;
 
-import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.client.gui.cache.EditorCache;
 import com.mafuyu404.oneenoughitem.client.gui.cache.GlobalReplacementCache;
 import com.mafuyu404.oneenoughitem.client.gui.components.ItemDisplayWidget;
 import com.mafuyu404.oneenoughitem.client.gui.components.ScrollablePanel;
 import com.mafuyu404.oneenoughitem.client.gui.components.TagDisplayWidget;
+import com.mafuyu404.oneenoughitem.client.gui.editor.FileActions;
+import com.mafuyu404.oneenoughitem.client.gui.editor.ItemsController;
+import com.mafuyu404.oneenoughitem.client.gui.editor.ObjectDropdownController;
+import com.mafuyu404.oneenoughitem.client.gui.editor.PanelsLayoutHelper;
 import com.mafuyu404.oneenoughitem.client.gui.manager.ReplacementEditorManager;
 import com.mafuyu404.oneenoughitem.client.gui.util.GuiUtils;
-import com.mafuyu404.oneenoughitem.client.gui.util.PathUtils;
 import com.mafuyu404.oneenoughitem.client.gui.util.ReplacementUtils;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.ReplacementControl;
@@ -18,6 +20,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -26,12 +29,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class ReplacementEditorScreen extends Screen {
     private static final int PANEL_WIDTH = 220;
@@ -39,7 +39,13 @@ public class ReplacementEditorScreen extends Screen {
     private static final int BUTTON_WIDTH = 70;
     private static final int BUTTON_HEIGHT = 18;
     private static final int MARGIN = 8;
-
+    private static final float EDITOR_SCALE_X = 1.24f;
+    private static final float EDITOR_SCALE_Y = 2.255f;
+    private static final int EDITOR_SHIFT_X = 5;
+    private static final int EDITOR_SHIFT_Y = 0;
+    private static final int EDITOR_INNER_MARGIN_X = 13;
+    private static final int EDITOR_HEADER_GAP = 13;
+    private static final int EDITOR_BOTTOM_MARGIN = 14;
     private final ReplacementEditorManager manager;
 
     private EditBox datapackNameBox;
@@ -49,11 +55,14 @@ public class ReplacementEditorScreen extends Screen {
     private Button reloadButton;
     private Button clearAllButton;
     private Button saveToJSONButton;
-    private Button deduplicateRecipesButton;
+
+    // 对象下拉菜单
     private Button objectDropdownButton;
     private boolean showObjectDropdown = false;
     private final List<Button> objectIndexButtons = new ArrayList<>();
+    private ScrollablePanel objectDropdownPanel;
 
+    // 面板与控件
     private Button addMatchItemButton;
     private Button addMatchTagButton;
     private Button clearMatchButton;
@@ -62,17 +71,23 @@ public class ReplacementEditorScreen extends Screen {
     private final List<TagDisplayWidget> matchTagWidgets;
 
     private Button selectResultItemButton;
-    private Button selectResultTagButton;
     private Button clearResultButton;
     private ScrollablePanel resultPanel;
     private ItemDisplayWidget resultItemWidget;
     private TagDisplayWidget resultTagWidget;
+
+    private final PanelsLayoutHelper panelsHelper = new PanelsLayoutHelper();
+    private final FileActions fileActions;
+    private final ItemsController itemsController;
 
     public ReplacementEditorScreen() {
         super(Component.translatable("gui.oneenoughitem.replacement_editor.title"));
         this.manager = new ReplacementEditorManager();
         this.matchItemWidgets = new ArrayList<>();
         this.matchTagWidgets = new ArrayList<>();
+        this.fileActions = new FileActions(this.manager);
+        this.itemsController = new ItemsController(this.manager, this::syncManagerDataToWidgets);
+
         this.loadFromCache();
     }
 
@@ -179,22 +194,23 @@ public class ReplacementEditorScreen extends Screen {
         int panelY = fileY + 55;
         int leftPanelX = centerX - PANEL_WIDTH - MARGIN;
         int rightPanelX = centerX + MARGIN;
+        int offsetX = 10;
 
         this.addMatchItemButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.add_item"),
-                button -> this.openItemSelection(true), leftPanelX + 5, panelY, BUTTON_WIDTH, BUTTON_HEIGHT);
+                button -> this.openItemSelection(true), leftPanelX + 5 + offsetX, panelY, BUTTON_WIDTH, BUTTON_HEIGHT);
         this.addRenderableWidget(this.addMatchItemButton);
 
         this.addMatchTagButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.add_tag"),
-                button -> this.openTagSelection(true), leftPanelX + BUTTON_WIDTH + 8, panelY, BUTTON_WIDTH, BUTTON_HEIGHT);
+                button -> this.openTagSelection(true), leftPanelX + BUTTON_WIDTH + 8 + offsetX, panelY, BUTTON_WIDTH, BUTTON_HEIGHT);
         this.addRenderableWidget(this.addMatchTagButton);
 
         this.clearMatchButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.clear"),
-                button -> this.clearMatchItems(), leftPanelX + BUTTON_WIDTH * 2 + 11, panelY, 50, BUTTON_HEIGHT);
+                button -> this.clearMatchItems(), leftPanelX + BUTTON_WIDTH * 2 + 11 + offsetX, panelY, 50, BUTTON_HEIGHT);
         this.addRenderableWidget(this.clearMatchButton);
 
-        int resultButtonSpacing = 10; // 按钮间距
-        int totalResultButtonWidth = BUTTON_WIDTH + resultButtonSpacing + 50; // 选择物品按钮宽度 + 间距 + 清空按钮宽度
-        int resultButtonStartX = rightPanelX + (PANEL_WIDTH - totalResultButtonWidth) / 2; // 居中计算起始位置
+        int resultButtonSpacing = 10;
+        int totalResultButtonWidth = BUTTON_WIDTH + resultButtonSpacing + 50;
+        int resultButtonStartX = rightPanelX + (PANEL_WIDTH - totalResultButtonWidth) / 2 + offsetX;
 
         this.selectResultItemButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.select_item"),
                 button -> this.openItemSelection(false), resultButtonStartX, panelY, BUTTON_WIDTH, BUTTON_HEIGHT);
@@ -204,10 +220,24 @@ public class ReplacementEditorScreen extends Screen {
                 button -> this.clearResultItem(), resultButtonStartX + BUTTON_WIDTH + resultButtonSpacing, panelY, 50, BUTTON_HEIGHT);
         this.addRenderableWidget(this.clearResultButton);
 
-        this.matchPanel = new ScrollablePanel(leftPanelX + 5, panelY + 25, PANEL_WIDTH - 10, PANEL_HEIGHT - 30);
+        int editorW = Math.round(PANEL_WIDTH * EDITOR_SCALE_X);
+        int editorH = Math.round(PANEL_HEIGHT * EDITOR_SCALE_Y);
+        int editorY = panelY + EDITOR_SHIFT_Y;
+        int leftEditorX = leftPanelX + EDITOR_SHIFT_X;
+
+        int marginX = Math.round(EDITOR_INNER_MARGIN_X * EDITOR_SCALE_X);
+        int headerGap = Math.round(EDITOR_HEADER_GAP * EDITOR_SCALE_Y);
+        int bottomMargin = Math.round(EDITOR_BOTTOM_MARGIN * EDITOR_SCALE_Y);
+
+        this.matchPanel = new ScrollablePanel(
+                leftEditorX + marginX,
+                editorY + headerGap,
+                editorW - marginX * 2,
+                editorH - headerGap - bottomMargin
+        );
         this.addRenderableWidget(this.matchPanel);
 
-        this.resultPanel = new ScrollablePanel(rightPanelX + 5, panelY + 25, PANEL_WIDTH - 10, PANEL_HEIGHT - 30);
+        this.resultPanel = new ScrollablePanel(rightPanelX + 12, panelY + 32, PANEL_WIDTH - 10, PANEL_HEIGHT - 30);
         this.addRenderableWidget(this.resultPanel);
 
         this.rebuildPanels();
@@ -270,46 +300,24 @@ public class ReplacementEditorScreen extends Screen {
 
 
     private void updateObjectDropdown() {
-        for (Button button : this.objectIndexButtons) {
-            this.removeWidget(button);
+        for (Button b : this.objectIndexButtons) {
+            this.removeWidget(b);
         }
         this.objectIndexButtons.clear();
 
-        if (this.showObjectDropdown && this.manager.getObjectSize() > 0) {
-            int startX = this.objectDropdownButton.getX();
-            int startY = this.objectDropdownButton.getY() + this.objectDropdownButton.getHeight() + 2;
-
-            for (int i = 0; i < this.manager.getObjectSize(); i++) {
-                final int index = i;
-                String buttonText = String.valueOf(i + 1);
-                if (this.manager.getCurrentObjectIndex() == i) {
-                    buttonText += " ✓";
-                }
-
-                Button indexButton = GuiUtils.createObjectDropdownButton(Component.literal(buttonText),
-                        button -> this.selectObjectIndex(index),
-                        startX, startY + i * 22, 40, 20);
-                this.objectIndexButtons.add(indexButton);
-                this.addRenderableWidget(indexButton);
-            }
-
-            if (this.manager.getCurrentObjectIndex() >= 0) {
-                Button deleteButton = GuiUtils.createObjectDropdownButton(Component.translatable("gui.oneenoughitem.object.delete"),
-                        button -> this.deleteCurrentObjectElement(),
-                        startX + 45, startY + this.manager.getCurrentObjectIndex() * 22, 50, 20);
-                this.objectIndexButtons.add(deleteButton);
-                this.addRenderableWidget(deleteButton);
-            }
-        }
+        this.objectDropdownPanel = ObjectDropdownController.rebuildDropdownPanel(
+                this.objectDropdownButton,
+                this.showObjectDropdown,
+                this.manager,
+                this.objectIndexButtons,
+                this::selectObjectIndex,
+                this::deleteCurrentObjectElement
+        );
 
         if (this.objectDropdownButton != null) {
-            String buttonText = this.showObjectDropdown ?
-                    Component.translatable("gui.oneenoughitem.object.element_up").getString() :
-                    Component.translatable("gui.oneenoughitem.object.element_down").getString();
-            if (this.manager.getCurrentObjectIndex() >= 0) {
-                buttonText += " (" + (this.manager.getCurrentObjectIndex() + 1) + "/" + this.manager.getObjectSize() + ")";
-            }
-            this.objectDropdownButton.setMessage(Component.literal(buttonText));
+            this.objectDropdownButton.setMessage(
+                    ObjectDropdownController.buildDropdownButtonText(this.showObjectDropdown, this.manager)
+            );
         }
     }
 
@@ -348,7 +356,6 @@ public class ReplacementEditorScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        super.render(graphics, mouseX, mouseY, partialTick);
 
         int centerX = this.width / 2;
         int topY = 15;
@@ -356,6 +363,17 @@ public class ReplacementEditorScreen extends Screen {
         int panelY = fileY + 55;
         int leftPanelX = centerX - PANEL_WIDTH - MARGIN;
         int rightPanelX = centerX + MARGIN;
+
+        int editorW = Math.round(PANEL_WIDTH * EDITOR_SCALE_X);
+        int editorH = Math.round(PANEL_HEIGHT * EDITOR_SCALE_Y);
+        int editorY = panelY + EDITOR_SHIFT_Y;
+        int leftEditorX = leftPanelX + EDITOR_SHIFT_X;
+        int rightEditorX = rightPanelX + EDITOR_SHIFT_X;
+
+        super.renderBackground(graphics, mouseX, mouseY, partialTick);
+
+        GuiUtils.drawEditorPanel(graphics, leftEditorX, editorY, editorW, editorH);
+        GuiUtils.drawEditorPanel(graphics, rightEditorX, editorY, editorW, editorH);
 
         graphics.drawCenteredString(Minecraft.getInstance().font, this.title,
                 centerX, 20, 0xFFFFFF);
@@ -366,23 +384,6 @@ public class ReplacementEditorScreen extends Screen {
 
         Component fileInfo = Component.translatable("gui.oneenoughitem.current_file", fileName);
         graphics.drawCenteredString(Minecraft.getInstance().font, fileInfo, centerX, 8, 0xAAAAAA);
-
-        if (this.showObjectDropdown && this.manager.getObjectSize() > 0) {
-            int dropdownX = this.objectDropdownButton.getX();
-            int dropdownY = this.objectDropdownButton.getY() + this.objectDropdownButton.getHeight() + 2;
-            int dropdownWidth = 40;
-            int dropdownHeight = this.manager.getObjectSize() * 22;
-
-            GuiUtils.drawObjectDropdownBackground(graphics, dropdownX, dropdownY, dropdownWidth, dropdownHeight);
-
-            if (this.manager.getCurrentObjectIndex() >= 0) {
-                GuiUtils.drawObjectDropdownBackground(graphics, dropdownX + 45,
-                        dropdownY + this.manager.getCurrentObjectIndex() * 22, 50, 20);
-            }
-        }
-
-        GuiUtils.drawPanelBackground(graphics, leftPanelX, panelY, PANEL_WIDTH, PANEL_HEIGHT);
-        GuiUtils.drawPanelBackground(graphics, rightPanelX, panelY, PANEL_WIDTH, PANEL_HEIGHT);
 
         graphics.drawCenteredString(Minecraft.getInstance().font, Component.translatable("gui.oneenoughitem.match_items"),
                 leftPanelX + PANEL_WIDTH / 2, panelY - 12, 0xFFFFFF);
@@ -403,6 +404,13 @@ public class ReplacementEditorScreen extends Screen {
         graphics.drawCenteredString(Minecraft.getInstance().font,
                 Component.translatable("gui.oneenoughitem.save_to_cache"),
                 centerX, panelY + PANEL_HEIGHT + 25, 0xFFFF00);
+
+        if (this.showObjectDropdown && this.objectDropdownPanel != null) {
+            this.objectDropdownPanel.render(graphics, mouseX, mouseY, partialTick);
+        }
+        for (Renderable renderable : this.renderables) {
+            renderable.render(graphics, mouseX, mouseY, partialTick);
+        }
     }
 
     private void createFile() {
@@ -415,17 +423,17 @@ public class ReplacementEditorScreen extends Screen {
         }
 
         this.manager.createReplacementFile(datapackName, fileName);
-        this.fileNameBox.setValue(this.manager.getCurrentFileName());
+        String newName = this.fileActions.createFile(datapackName, fileName);
+        this.fileNameBox.setValue(newName);
     }
 
     private void saveToJson() {
-        this.manager.saveReplacement();
+        this.fileActions.saveToJson();
     }
 
     private void selectFile() {
-        this.minecraft.setScreen(new FileSelectionScreen(this));
+        this.fileActions.selectFile(this.minecraft, this);
     }
-
 
     public void onFileSelected(Path filePath, int mode) {
         switch (mode) {
@@ -444,7 +452,7 @@ public class ReplacementEditorScreen extends Screen {
     }
 
     private void removeMatchItem(Item item) {
-        boolean removed = this.manager.removeMatchItem(item);
+        boolean removed = this.itemsController.removeMatchItem(item);
         if (removed) {
             this.syncManagerDataToWidgets();
         }
@@ -481,14 +489,14 @@ public class ReplacementEditorScreen extends Screen {
     private void clearMatchItems() {
         this.matchItemWidgets.clear();
         this.matchTagWidgets.clear();
-        this.manager.clearMatchItems();
+        this.itemsController.clearMatchItems();
         this.rebuildPanels();
     }
 
     private void clearResultItem() {
         this.resultItemWidget = null;
         this.resultTagWidget = null;
-        this.manager.clearResultItem();
+        this.itemsController.clearResultItem();
         this.rebuildPanels();
     }
 
@@ -511,9 +519,10 @@ public class ReplacementEditorScreen extends Screen {
             }
         }
 
-        this.manager.addMatchItem(item);
+        this.itemsController.addMatchItem(item);
         this.syncManagerDataToWidgets();
     }
+
 
     public void addMatchTag(ResourceLocation tagId) {
         if (this.manager.getMatchTags().contains(tagId)) {
@@ -527,7 +536,7 @@ public class ReplacementEditorScreen extends Screen {
             return;
         }
 
-        this.manager.addMatchTag(tagId);
+        this.itemsController.addMatchTag(tagId);
         TagDisplayWidget widget = new TagDisplayWidget(0, 0, tagId,
                 button -> this.removeMatchTag(tagId));
         this.matchTagWidgets.add(widget);
@@ -557,64 +566,28 @@ public class ReplacementEditorScreen extends Screen {
         this.syncManagerDataToWidgets();
     }
 
-
     public void setResultTag(ResourceLocation tagId) {
-        this.manager.setResultTag(tagId);
+        this.itemsController.setResultTag(tagId);
         this.resultTagWidget = new TagDisplayWidget(0, 0, tagId, null);
         this.resultItemWidget = null;
         this.rebuildPanels();
     }
 
     private void removeMatchTag(ResourceLocation tagId) {
-        this.manager.removeMatchTag(tagId);
+        this.itemsController.removeMatchTag(tagId);
         this.matchTagWidgets.removeIf(widget -> widget.getTagId().equals(tagId));
         this.rebuildPanels();
     }
 
     protected void rebuildPanels() {
-        this.matchPanel.clearWidgets();
-        this.resultPanel.clearWidgets();
-
-        int itemsPerRow = 10;
-        int itemSize = 18;
-        int spacing = 2;
-        int index = 0;
-
-        for (ItemDisplayWidget widget : this.matchItemWidgets) {
-            int row = index / itemsPerRow;
-            int col = index % itemsPerRow;
-            int x = this.matchPanel.getX() + col * (itemSize + spacing);
-            int y = this.matchPanel.getY() + row * (itemSize + spacing);
-            widget.setPosition(x, y);
-            this.matchPanel.addWidget(widget);
-            index++;
-        }
-
-        int tagStartY = ((this.matchItemWidgets.size() + itemsPerRow - 1) / itemsPerRow) * (itemSize + spacing) + 10;
-        index = 0;
-        for (TagDisplayWidget widget : this.matchTagWidgets) {
-            int row = index / 3;
-            int col = index % 3;
-            int x = this.matchPanel.getX() + col * 70;
-            int y = this.matchPanel.getY() + tagStartY + row * 22;
-            widget.setPosition(x, y);
-            this.matchPanel.addWidget(widget);
-            index++;
-        }
-
-        if (this.resultItemWidget != null) {
-            this.resultItemWidget.setPosition(this.resultPanel.getX() + this.resultPanel.getWidth() / 2 - 9,
-                    this.resultPanel.getY() + 20);
-            this.resultPanel.addWidget(this.resultItemWidget);
-        }
-        if (this.resultTagWidget != null) {
-            this.resultTagWidget.setPosition(this.resultPanel.getX() + this.resultPanel.getWidth() / 2 - 35,
-                    this.resultPanel.getY() + 20);
-            this.resultPanel.addWidget(this.resultTagWidget);
-        }
-
-        this.matchPanel.updateWidgetPositions();
-        this.resultPanel.updateWidgetPositions();
+        this.panelsHelper.rebuildPanels(
+                this.matchPanel,
+                this.resultPanel,
+                this.matchItemWidgets,
+                this.matchTagWidgets,
+                this.resultItemWidget,
+                this.resultTagWidget
+        );
     }
 
     private void showError(Component message) {
@@ -636,24 +609,51 @@ public class ReplacementEditorScreen extends Screen {
     }
 
     public List<Path> scanReplacementFiles() {
-        List<Path> jsonFiles = new ArrayList<>();
-        try {
-            Path replacementsPath = PathUtils.getReplacementsPath();
-            if (Files.exists(replacementsPath)) {
-                try (Stream<Path> paths = Files.walk(replacementsPath)) {
-                    paths.filter(Files::isRegularFile)
-                            .filter(path -> path.toString().toLowerCase().endsWith(".json"))
-                            .forEach(jsonFiles::add);
-                }
-            }
-        } catch (IOException e) {
-            Oneenoughitem.LOGGER.error("Failed to scan replacement files", e);
-        }
-        return jsonFiles;
+        return this.fileActions.scanReplacementFiles();
     }
 
     @Override
     public boolean isPauseScreen() {
         return false;
+    }
+
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (this.showObjectDropdown && this.objectDropdownPanel != null) {
+            if (this.objectDropdownPanel.mouseClicked(mouseX, mouseY, button)) {
+                return true;
+            }
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (this.showObjectDropdown && this.objectDropdownPanel != null) {
+            if (this.objectDropdownPanel.mouseReleased(mouseX, mouseY, button)) {
+                return true;
+            }
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (this.showObjectDropdown && this.objectDropdownPanel != null) {
+            if (this.objectDropdownPanel.mouseDragged(mouseX, mouseY, button, dragX, dragY)) {
+                return true;
+            }
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (this.showObjectDropdown && this.objectDropdownPanel != null) {
+            if (this.objectDropdownPanel.mouseScrolled(mouseX, mouseY, scrollX, scrollY)) {
+                return true;
+            }
+        }
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
     }
 }

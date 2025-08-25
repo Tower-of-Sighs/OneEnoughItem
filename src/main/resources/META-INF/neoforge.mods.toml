@@ -19,12 +19,12 @@ versionRange = "[21.1.194,)"
 ordering = "NONE"
 side = "BOTH"
 
-#[[dependencies.oneenoughitem]]
-#modId = "oelib"
-#type = "required"
-#versionRange = "[0.0.1,)"
-#ordering = "NONE"
-#side = "BOTH"
+[[dependencies.oneenoughitem]]
+modId = "oelib"
+type = "required"
+versionRange = "[0.0.1,)"
+ordering = "NONE"
+side = "BOTH"
 
 [[dependencies.oneenoughitem]]
 modId = "jupiter"

@@ -138,9 +138,20 @@ public class ReplacementCache {
         return new HashSet<>(ItemMapCache.keySet());
     }
 
-    public static Set<String> trackSourceOf(String id) {
-        Set<String> set = ResultToSources.get(id);
-        return set != null ? set : Collections.emptySet();
+    public static Collection<String> trackSourceIdOf(String id) {
+        Collection<String> result = new HashSet<>();
+        ItemMapCache.forEach((matchItem, resultItem) -> {
+            if (resultItem.equals(id)) result.add(matchItem);
+        });
+        return result;
+    }
+
+    public static Collection<Item> trackSourceOf(String id) {
+        Collection<Item> result = new HashSet<>();
+        ItemMapCache.forEach((matchItem, resultItem) -> {
+            if (resultItem.equals(id)) result.add(Utils.getItemById(matchItem));
+        });
+        return result;
     }
 
     // 开始/结束 “重载期覆盖映射”

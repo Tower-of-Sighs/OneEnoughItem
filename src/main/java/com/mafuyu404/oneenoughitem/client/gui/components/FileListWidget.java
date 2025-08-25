@@ -101,6 +101,10 @@ public class FileListWidget extends ObjectSelectionList<FileListWidget.FileEntry
     }
 
     @Override
+    protected void renderListBackground(GuiGraphics guiGraphics) {
+    }
+
+    @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         for (Button actionButton : this.actionButtons) {
             if (actionButton.mouseClicked(mouseX, mouseY, button)) {
@@ -109,11 +113,6 @@ public class FileListWidget extends ObjectSelectionList<FileListWidget.FileEntry
         }
 
         return super.mouseClicked(mouseX, mouseY, button);
-    }
-
-    @Override
-    protected void renderListBackground(GuiGraphics graphics) {
-        GuiUtils.drawListBackground(graphics, this.getX(), this.getY(), this.width, this.height);
     }
 
     public class FileEntry extends ObjectSelectionList.Entry<FileEntry> {
@@ -126,7 +125,6 @@ public class FileListWidget extends ObjectSelectionList<FileListWidget.FileEntry
         @Override
         public void render(GuiGraphics graphics, int index, int y, int x, int entryWidth, int entryHeight,
                            int mouseX, int mouseY, boolean isMouseOver, float partialTick) {
-
             boolean isSelected = FileListWidget.this.selectedEntry == this;
 
             GuiUtils.drawFileEntryBackground(graphics, x, y, entryWidth, entryHeight, isMouseOver, isSelected);
