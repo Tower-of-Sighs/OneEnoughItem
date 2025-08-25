@@ -5,7 +5,7 @@ license = "GPL-3.0 license"
 
 [[mods]]
 modId = "oneenoughitem"
-version = "${mod_version}"
+version = "1.0.5"
 displayName = "oneenoughitem"
 authors = "zhenshiz"
 description = '''
