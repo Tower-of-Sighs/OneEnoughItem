@@ -66,7 +66,7 @@ dependencies {
     modImplementation ("mezz.jei:jei-1.20.1-fabric:15.20.0.104")
 
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-    modImplementation "curse.maven:oelib-1319210:6875022"
+    modImplementation (include("curse.maven:oelib-1319210:6875022"))
     modImplementation "curse.maven:architectury-api-419699:5137936"
     modImplementation "curse.maven:jupiter-1072905:6843040"
     modImplementation "curse.maven:kubejs-238086:5853321"
