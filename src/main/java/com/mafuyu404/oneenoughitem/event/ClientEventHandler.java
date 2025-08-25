@@ -8,6 +8,7 @@ import com.mafuyu404.oneenoughitem.client.gui.ReplacementEditorScreen;
 import com.mafuyu404.oneenoughitem.client.gui.cache.GlobalReplacementCache;
 import com.mafuyu404.oneenoughitem.client.util.ModernFixDetector;
 import com.mafuyu404.oneenoughitem.data.Replacements;
+import com.mafuyu404.oneenoughitem.init.Config;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -83,6 +84,10 @@ public class ClientEventHandler {
                 GlobalReplacementCache.rebuild();
                 Oneenoughitem.LOGGER.info("Replacement cache rebuilt due to data reload: {} entries loaded, {} invalid",
                         event.getLoadedCount(), event.getInvalidCount());
+
+                Oneenoughitem.LOGGER.info("Recipe JSON rewrite mode (client): {}", String.valueOf(Config.DATA_REWRITE_MODE.get()));
+
+                ReplacementCache.endReloadOverride();
             });
         }
     }

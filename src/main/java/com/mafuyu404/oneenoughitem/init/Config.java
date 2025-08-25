@@ -14,6 +14,8 @@ public class Config {
     public static final ForgeConfigSpec.ConfigValue<Boolean> DEEPER_REPLACE;
     public static final ForgeConfigSpec.ConfigValue<Boolean> CLEAR_FOOD_PROPERTIES;
     public static final ForgeConfigSpec.ConfigValue<Boolean> MODERNFIX_WARNING_SHOWN;
+    public static final ForgeConfigSpec.ConfigValue<Integer> DATA_REWRITE_MODE ;
+    public static final ForgeConfigSpec.ConfigValue<Integer> TAG_REWRITE_MODE ;
 
     static {
         BUILDER.push("OEI Setting");
@@ -33,6 +35,12 @@ public class Config {
         MODERNFIX_WARNING_SHOWN = BUILDER
                 .comment("Internal flag to track if the ModernFix warning has been shown. Do not modify manually.(You don't need to modify it)")
                 .define("modernfixWarningShown", false);
+        DATA_REWRITE_MODE = BUILDER
+                .comment("")
+                .defineInRange("DataRewriteMode", 2, 0, 2);
+        TAG_REWRITE_MODE = BUILDER
+                .comment("")
+                .defineInRange("TagRewriteMode", 1, 0, 1);
         BUILDER.pop();
 
         SPEC = BUILDER.build();

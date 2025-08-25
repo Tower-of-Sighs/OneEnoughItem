@@ -4,6 +4,7 @@ import com.mafuyu404.oelib.forge.data.DataManager;
 import com.mafuyu404.oelib.forge.event.DataReloadEvent;
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.data.Replacements;
+import com.mafuyu404.oneenoughitem.init.Config;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -23,6 +24,9 @@ public class ServerEventHandler {
             rebuildReplacementCache("data-reload");
             Oneenoughitem.LOGGER.info("Server replacement cache rebuilt due to data reload: {} entries loaded, {} invalid",
                     event.getLoadedCount(), event.getInvalidCount());
+            Oneenoughitem.LOGGER.info("Recipe JSON rewrite mode (server): {}", String.valueOf(Config.DATA_REWRITE_MODE.get()));
+
+            ReplacementCache.endReloadOverride();
         }
     }
 

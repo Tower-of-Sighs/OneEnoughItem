@@ -6,7 +6,9 @@
   "refmap": "oneenoughitem.refmap.json",
   "mixins": [
     "ItemMixin",
-    "ItemStackMixin"
+    "ItemStackMixin",
+    "SimpleJsonResourceReloadListenerMixin",
+    "TagLoaderMixin"
   ],
   "client": [
   ],
