@@ -2,7 +2,7 @@ package com.mafuyu404.oneenoughitem.mixin;
 
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.client.ClientContext;
-import com.mafuyu404.oneenoughitem.init.Config;
+import com.mafuyu404.oneenoughitem.init.ModConfig;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.ReplacementControl;
 import com.mafuyu404.oneenoughitem.init.Utils;
@@ -69,7 +69,7 @@ public class ItemStackMixin {
 
                 newItem.verifyComponentsAfterLoad((ItemStack) (Object) this);
 
-//                Oneenoughitem.LOGGER.debug("Successfully replaced item {} with {}", originItemId, targetItemId);
+                Oneenoughitem.LOGGER.debug("Successfully replaced item {} with {}", originItemId, targetItemId);
             } else {
                 Oneenoughitem.LOGGER.warn("Target item not found: {}", targetItemId);
             }
@@ -79,7 +79,7 @@ public class ItemStackMixin {
     @Inject(method = "is(Lnet/minecraft/world/item/Item;)Z", at = @At("HEAD"), cancellable = true)
     private void extend(Item inputItem, CallbackInfoReturnable<Boolean> cir) {
         // 使用缓存的静态布尔值，避免在配置加载前访问配置
-        if (!Config.IS_DEEPER_REPLACE_ENABLED) {
+        if (!ModConfig.DEEPER_REPLACE.getValue()) {
             return;
         }
 

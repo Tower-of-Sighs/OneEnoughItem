@@ -4,8 +4,11 @@
   "package": "com.mafuyu404.oneenoughitem.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
+    "CreativeModeTabMixin",
+    "ItemStackAccessor",
     "ItemStackMixin",
-    "CreativeModeTabMixin"
+    "SimpleJsonResourceReloadListenerMixin",
+    "TagLoaderMixin"
   ],
   "client": [
   ],

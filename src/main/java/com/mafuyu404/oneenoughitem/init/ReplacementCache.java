@@ -12,6 +12,28 @@ public class ReplacementCache {
     private static final Map<String, String> ItemMapCache = new HashMap<>();
     private static final HashMap<String, String> TagMapCache = new HashMap<>();
     private static final Map<String, Set<String>> ResultToSources = new HashMap<>();
+    private static volatile Map<String, String> ReloadOverrideItemMap = null;
+
+
+    public static String matchItem(String id) {
+        return Objects.requireNonNullElse(ReloadOverrideItemMap, ItemMapCache).getOrDefault(id, null);
+    }
+
+    public static String matchTag(String tagId) {
+        return TagMapCache.getOrDefault(tagId, null);
+    }
+
+    public static String matchTag(ResourceLocation tagId) {
+        return tagId != null ? matchTag(tagId.toString()) : null;
+    }
+
+    public static boolean isTagReplaced(String tagId) {
+        return tagId != null && TagMapCache.containsKey(tagId);
+    }
+
+    public static boolean isTagReplaced(ResourceLocation tagId) {
+        return tagId != null && isTagReplaced(tagId.toString());
+    }
 
     private static void addMapping(String sourceItemId, String resultItemId) {
         String prev = ItemMapCache.put(sourceItemId, resultItemId);
@@ -85,6 +107,21 @@ public class ReplacementCache {
         }
     }
 
+    // 给 JSON 拦截层做快速判断
+    public static boolean hasAnyMappings() {
+        return !ItemMapCache.isEmpty() || !TagMapCache.isEmpty();
+    }
+
+    public static boolean isSourceItemId(String id) {
+        if (id == null) return false;
+        return Objects.requireNonNullElse(ReloadOverrideItemMap, ItemMapCache).containsKey(id);
+    }
+
+
+    public static boolean isSourceTagId(String id) {
+        return id != null && TagMapCache.containsKey(id);
+    }
+
     public static void clearCache() {
         int previousItemSize = ItemMapCache.size();
         int previousTagSize = TagMapCache.size();
@@ -97,38 +134,34 @@ public class ReplacementCache {
         }
     }
 
-    public static String matchItem(String id) {
-        return ItemMapCache.getOrDefault(id, null);
-    }
-
-    public static String matchTag(String tagId) {
-        return TagMapCache.getOrDefault(tagId, null);
-    }
-
-    public static String matchTag(ResourceLocation tagId) {
-        return tagId != null ? matchTag(tagId.toString()) : null;
-    }
-
-    public static boolean isTagReplaced(String tagId) {
-        return tagId != null && TagMapCache.containsKey(tagId);
-    }
-
-    public static boolean isTagReplaced(ResourceLocation tagId) {
-        return tagId != null && isTagReplaced(tagId.toString());
-    }
-
-    /**
-     * 获取所有已替换的物品ID
-     */
     public static Set<String> getAllReplacedItems() {
         return new HashSet<>(ItemMapCache.keySet());
     }
 
-    /**
-     * 获取所有以某结果为目标的源物品ID集合（反向索引查找，零分配）
-     */
     public static Set<String> trackSourceOf(String id) {
         Set<String> set = ResultToSources.get(id);
         return set != null ? set : Collections.emptySet();
+    }
+
+    // 开始/结束 “重载期覆盖映射”
+    public static void beginReloadOverride(Map<String, String> currentItemMap) {
+        if (currentItemMap == null || currentItemMap.isEmpty()) {
+            ReloadOverrideItemMap = null;
+            return;
+        }
+        ReloadOverrideItemMap = new HashMap<>(currentItemMap);
+        Oneenoughitem.LOGGER.info("Enabled reload-override mapping for this resource reload: {} items",
+                ReloadOverrideItemMap.size());
+    }
+
+    public static void endReloadOverride() {
+        if (ReloadOverrideItemMap != null) {
+            Oneenoughitem.LOGGER.info("Disabled reload-override mapping: {} entries", ReloadOverrideItemMap.size());
+        }
+        ReloadOverrideItemMap = null;
+    }
+
+    public static boolean hasReloadOverride() {
+        return ReloadOverrideItemMap != null;
     }
 }
