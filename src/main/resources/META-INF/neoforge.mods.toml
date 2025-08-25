@@ -27,6 +27,13 @@ side = "BOTH"
 #side = "BOTH"
 
 [[dependencies.oneenoughitem]]
+modId = "jupiter"
+type = "required"
+versionRange = "[2.0,)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.oneenoughitem]]
 modId = "minecraft"
 type = "required"
 versionRange = "[1.21,1.21.2)"

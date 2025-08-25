@@ -142,12 +142,6 @@
   "warning.oneenoughitem.tag_exists": "Duplicate tag",
   "warning.oneenoughitem.no_recipes_found": "No recipes to remove were found.",
 
-  "oneenoughitem.modernfix.warning.line1": "OneEnoughItem: Detected the ModernFix mod ",
-  "oneenoughitem.modernfix.warning.line2": " To ensure replaced items work correctly with recipes,",
-  "oneenoughitem.modernfix.warning.link": "please set option mixin.perf.faster_ingredients to false",
-  "oneenoughitem.modernfix.warning.suffix": "and restart the game",
-  "oneenoughitem.modernfix.warning.hover": "Click to open config file: %s",
-
   "key.categories.oneenoughitem": "OneEnoughItem",
   "key.oneenoughitem.open_editor": "Open Replacement Screen"
 }
