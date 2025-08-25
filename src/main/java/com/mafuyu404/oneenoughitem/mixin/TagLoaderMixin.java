@@ -25,12 +25,11 @@ public abstract class TagLoaderMixin<T> {
     private String directory;
 
     private static final String ITEMS_TAG_DIR = "tags/items";
-    private static final String BLOCKS_TAG_DIR = "tags/blocks";
 
     @Inject(method = "load(Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/Map;", at = @At("HEAD"))
     private void oei$beginOverrideForTags(ResourceManager resourceManager,
                                           CallbackInfoReturnable<Map<ResourceLocation, List<TagLoader.EntryWithSource>>> cir) {
-        if (!ITEMS_TAG_DIR.equals(this.directory) && !BLOCKS_TAG_DIR.equals(this.directory)) {
+        if (!ITEMS_TAG_DIR.equals(this.directory)) {
             return;
         }
         try {
@@ -51,9 +50,7 @@ public abstract class TagLoaderMixin<T> {
             return;
         }
 
-        final boolean isItemsDir = ITEMS_TAG_DIR.equals(this.directory);
-        final boolean isBlocksDir = BLOCKS_TAG_DIR.equals(this.directory);
-        if (!isItemsDir && !isBlocksDir) {
+        if (!ITEMS_TAG_DIR.equals(this.directory)) {
             return;
         }
 
@@ -97,22 +94,22 @@ public abstract class TagLoaderMixin<T> {
                     iterator.remove();
                     dropped++;
                     touched = true;
-                    Oneenoughitem.LOGGER.debug("{} tag rewrite: drop '{}' from {} (replaced by '{}')",
-                            isItemsDir ? "Item" : "Block", fromStr, tagId, mapped);
+                    Oneenoughitem.LOGGER.debug("Item tag rewrite: drop '{}' from {} (replaced by '{}')",
+                            fromStr, tagId, mapped);
                 }
             }
 
             if (touched) {
                 totalTags++;
                 totalDropped += dropped;
-                Oneenoughitem.LOGGER.info("{} tag rewrite: {} -> dropped={}",
-                        isItemsDir ? "Item" : "Block", tagId, dropped);
+                Oneenoughitem.LOGGER.info("Item tag rewrite: {} -> dropped={}",
+                        tagId, dropped);
             }
         }
 
         if (totalTags > 0) {
-            Oneenoughitem.LOGGER.info("{} tags rewrite summary (mode={}): affectedTags={}, totalDropped={}",
-                    (isItemsDir ? "Item" : "Block"), mode, totalTags, totalDropped);
+            Oneenoughitem.LOGGER.info("Item tags rewrite summary (mode={}): affectedTags={}, totalDropped={}",
+                    mode, totalTags, totalDropped);
         }
     }
 }
