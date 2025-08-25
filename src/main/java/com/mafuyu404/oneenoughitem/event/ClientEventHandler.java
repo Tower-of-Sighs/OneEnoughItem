@@ -10,6 +10,7 @@ import com.mafuyu404.oneenoughitem.client.util.ModernFixDetector;
 import com.mafuyu404.oneenoughitem.data.Replacements;
 import com.mafuyu404.oneenoughitem.init.Config;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
+import com.mafuyu404.oneenoughitem.init.access.CreativeModeTabIconRefresher;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.ClickEvent;
@@ -17,6 +18,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.event.TickEvent;
@@ -82,6 +85,7 @@ public class ClientEventHandler {
             Minecraft.getInstance().execute(() -> {
                 rebuildReplacementCache();
                 GlobalReplacementCache.rebuild();
+                refreshAllCreativeModeTabIcons();
                 Oneenoughitem.LOGGER.info("Replacement cache rebuilt due to data reload: {} entries loaded, {} invalid",
                         event.getLoadedCount(), event.getInvalidCount());
 
@@ -89,6 +93,19 @@ public class ClientEventHandler {
 
                 ReplacementCache.endReloadOverride();
             });
+        }
+    }
+
+    private static void refreshAllCreativeModeTabIcons() {
+        try {
+            for (CreativeModeTab tab : CreativeModeTabs.tabs()) {
+                if (tab instanceof CreativeModeTabIconRefresher refresher) {
+                    refresher.oei$refreshIconCache();
+                }
+            }
+            Oneenoughitem.LOGGER.info("Refreshed creative mode tab icons after replacement reload");
+        } catch (Exception e) {
+            Oneenoughitem.LOGGER.warn("Failed to refresh creative mode tab icons", e);
         }
     }
 

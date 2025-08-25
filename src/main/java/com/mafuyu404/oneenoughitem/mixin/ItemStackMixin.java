@@ -1,6 +1,7 @@
 package com.mafuyu404.oneenoughitem.mixin;
 
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
+import com.mafuyu404.oneenoughitem.client.ClientContext;
 import com.mafuyu404.oneenoughitem.init.Config;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.ReplacementControl;
@@ -126,18 +127,6 @@ public abstract class ItemStackMixin {
     }
 
     private boolean isInCreativeModeTabBuilding() {
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        for (StackTraceElement element : stackTrace) {
-            String className = element.getClassName();
-            String methodName = element.getMethodName();
-
-            if (className.contains("CreativeModeTab") ||
-                    className.contains("CreativeModeTabs") ||
-                    methodName.contains("buildContents") ||
-                    methodName.contains("accept")) {
-                return true;
-            }
-        }
-        return false;
+        return ClientContext.isBuilding();
     }
 }
