@@ -24,7 +24,7 @@ public class ModConfig extends AutoInitConfigContainer {
     public static final IConfigEntry<Boolean> ENABLE_LITE =
             new BooleanEntry("config.oei.common.enable_lite", false).json("Enable_Lite");
     public static final IConfigEntry<Integer> DATA_REWRITE_MODE =
-            new IntegerEntry("config.oei.common.data_rewrite_mode", 2, 0, 2).json("Rewrite_Mode");
+            new IntegerEntry("config.oei.common.data_rewrite_mode", 2, 0, 2).json("Data_Rewrite_Mode");
     public static final IConfigEntry<Integer> TAG_REWRITE_MODE =
             new IntegerEntry("config.oei.common.tag_rewrite_mode", 1, 0, 1).json("Tag_Rewrite_Mode");
     public static final IConfigEntry<List<DirRule>> DATA_DIR_RULES =
@@ -46,7 +46,8 @@ public class ModConfig extends AutoInitConfigContainer {
         this.createTab("common", "config.oei.common.category.common")
                 .add(DEEPER_REPLACE)
                 .add(ENABLE_LITE)
-                .add(DATA_REWRITE_MODE);
+                .add(DATA_REWRITE_MODE)
+                .add(TAG_REWRITE_MODE);
         this.createTab("recipe", "config.oei.common.category.recipe")
                 .add(DATA_DIR_RULES);
     }
