@@ -141,7 +141,7 @@ public class ReplacementEditorScreen extends Screen {
             }
         }
     }
-    // ... existing code ...
+
 
     private void saveToCache() {
         EditorCache.saveCache(
@@ -250,7 +250,7 @@ public class ReplacementEditorScreen extends Screen {
 
         this.rebuildPanels();
     }
-    // ... existing code ...
+
 
     private void toggleObjectDropdown() {
         this.showObjectDropdown = !this.showObjectDropdown;
@@ -292,8 +292,7 @@ public class ReplacementEditorScreen extends Screen {
 
         this.rebuildPanels();
     }
-    // ... existing code ...
-
+    
     private void removeMatchItemById(String itemId) {
         if (itemId != null) {
             ResourceLocation id = new ResourceLocation(itemId);
@@ -308,16 +307,13 @@ public class ReplacementEditorScreen extends Screen {
             }
         }
     }
-    // ... existing code ...
 
     private void updateObjectDropdown() {
-        // 清理旧按钮
         for (Button b : this.objectIndexButtons) {
-            this.removeWidget(b); // 兼容清理（即便它们未加入到Screen）
+            this.removeWidget(b);
         }
         this.objectIndexButtons.clear();
-
-        // 通过控制器重建面板
+        
         this.objectDropdownPanel = ObjectDropdownController.rebuildDropdownPanel(
                 this.objectDropdownButton,
                 this.showObjectDropdown,
@@ -326,15 +322,14 @@ public class ReplacementEditorScreen extends Screen {
                 this::selectObjectIndex,
                 this::deleteCurrentObjectElement
         );
-
-        // 更新按钮文本
+        
         if (this.objectDropdownButton != null) {
             this.objectDropdownButton.setMessage(
                     ObjectDropdownController.buildDropdownButtonText(this.showObjectDropdown, this.manager)
             );
         }
     }
-    // ... existing code ...
+
 
     private void selectObjectIndex(int index) {
         this.manager.setCurrentObjectIndex(index);
@@ -349,7 +344,7 @@ public class ReplacementEditorScreen extends Screen {
             this.updateObjectDropdown();
         }
     }
-    // ... existing code ...
+
 
     private void updateObjectDropdownVisibility() {
         if (this.objectDropdownButton != null) {
@@ -463,7 +458,10 @@ public class ReplacementEditorScreen extends Screen {
     }
 
     private void removeMatchItem(Item item) {
-        this.itemsController.removeMatchItem(item);
+        boolean removed = this.itemsController.removeMatchItem(item);
+        if (removed) {
+            this.syncManagerDataToWidgets();
+        }
     }
 
     private void reloadDatapacks() {
@@ -584,7 +582,7 @@ public class ReplacementEditorScreen extends Screen {
         this.matchTagWidgets.removeIf(widget -> widget.getTagId().equals(tagId));
         this.rebuildPanels();
     }
-
+    
     protected void rebuildPanels() {
         this.panelsHelper.rebuildPanels(
                 this.matchPanel,
