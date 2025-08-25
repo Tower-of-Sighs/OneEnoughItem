@@ -143,12 +143,6 @@
   "warning.oneenoughitem.tag_exists": "重复添加的标签",
   "warning.oneenoughitem.no_recipes_found": "未找到需要移除的配方",
 
-  "oneenoughitem.modernfix.warning.line1": "OneEnoughItem：检测到模组现代化修复",
-  "oneenoughitem.modernfix.warning.line2": "为了保证本模组替换物品后配方生效，",
-  "oneenoughitem.modernfix.warning.link": "请将配置选项 mixin.perf.faster_ingredients 改为 false",
-  "oneenoughitem.modernfix.warning.suffix": "，再重启游戏。",
-  "oneenoughitem.modernfix.warning.hover": "点击打开配置文件: %s",
-
   "key.categories.oneenoughitem": "OneEnoughItem",
   "key.oneenoughitem.open_editor": "打开替换界面"
 }
