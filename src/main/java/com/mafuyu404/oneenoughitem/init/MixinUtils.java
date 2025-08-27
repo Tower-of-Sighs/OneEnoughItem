@@ -2,15 +2,13 @@ package com.mafuyu404.oneenoughitem.init;
 
 import com.google.gson.*;
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
+import com.mafuyu404.oneenoughitem.data.Replacements;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 
 import java.io.Reader;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -28,14 +26,17 @@ public class MixinUtils {
         public boolean shouldDrop = false;
         public boolean allowCacheFallback;
         public String lastMappingOrigin = "N/A";
+        public final Map<String, Replacements.Rules> itemRules;
 
         public ReplaceContext(String dataType, FieldRule rule,
                               Map<String, String> itemMap,
-                              Set<String> sourceItemIds) {
+                              Set<String> sourceItemIds,
+                              Map<String, Replacements.Rules> itemRules) {
             this.dataType = dataType;
             this.rule = rule;
             this.itemMap = itemMap;
             this.sourceItemIds = sourceItemIds;
+            this.itemRules = itemRules;
             this.allowCacheFallback = (itemMap == null || itemMap.isEmpty());
         }
     }
@@ -105,14 +106,32 @@ public class MixinUtils {
         private static void replaceIdCommon(
                 String id,
                 ReplaceContext ctx,
-                boolean keepMode,
                 BiConsumer<String, String> logReplaceAction,
                 Consumer<JsonElement> setValueAction
         ) {
             String target = TargetResolver.resolveTarget(id, ctx);
             if (target == null) return;
 
-            if (!keepMode && "minecraft:air".equals(target)) {
+            // 先使用本次重载的规则判断是否应在该目录处理；若本次无规则且允许回落，再查缓存
+            boolean shouldProcess = false;
+            if (ctx.itemRules != null) {
+                Replacements.Rules rules = ctx.itemRules.get(id);
+                if (rules != null) {
+                    shouldProcess = rules.data()
+                            .map(m -> m.get(ctx.dataType))
+                            .map(mode -> mode == Replacements.ProcessingMode.REPLACE)
+                            .orElse(false);
+                } else if (ctx.allowCacheFallback) {
+                    shouldProcess = ReplacementCache.shouldReplaceInDataDir(id, ctx.dataType);
+                }
+            } else if (ctx.allowCacheFallback) {
+                shouldProcess = ReplacementCache.shouldReplaceInDataDir(id, ctx.dataType);
+            }
+            if (!shouldProcess) {
+                return; // 跳过不需要处理的物品
+            }
+
+            if ("minecraft:air".equals(target)) {
                 ctx.shouldDrop = true;
                 LogHelper.logDrop(ctx.dataType, id, target, ctx.lastMappingOrigin, "mapping");
                 return;
@@ -124,27 +143,25 @@ public class MixinUtils {
                 logReplaceAction.accept(id, target);
             }
 
-            if (!keepMode && ctx.rule.strict() && TargetResolver.isSourceIdWithCurrent(id, ctx)) {
+            if (ctx.rule.strict() && TargetResolver.isSourceIdWithCurrent(id, ctx)) {
                 ctx.shouldDrop = true;
                 LogHelper.logDrop(ctx.dataType, id, ctx.lastMappingOrigin, ctx.lastMappingOrigin, "strict residual source-id");
             }
         }
 
-        public static void tryReplaceId(JsonObject obj, String key, String id, ReplaceContext ctx, boolean keepMode) {
+        public static void tryReplaceId(JsonObject obj, String key, String id, ReplaceContext ctx) {
             replaceIdCommon(
                     id,
                     ctx,
-                    keepMode,
                     (oldId, newId) -> LogHelper.logReplace(ctx.dataType, oldId, newId, ctx.lastMappingOrigin, false),
                     value -> obj.add(key, value)
             );
         }
 
-        public static void tryReplaceId(JsonArray array, int index, String id, ReplaceContext ctx, boolean keepMode) {
+        public static void tryReplaceId(JsonArray array, int index, String id, ReplaceContext ctx) {
             replaceIdCommon(
                     id,
                     ctx,
-                    keepMode,
                     (oldId, newId) -> LogHelper.logReplace(ctx.dataType, oldId, newId, ctx.lastMappingOrigin, true),
                     value -> array.set(index, value)
             );
@@ -154,8 +171,18 @@ public class MixinUtils {
     public static class ReplacementLoader {
         private static final List<String> REPLACEMENT_DIR_CANDIDATES = List.of("replacements");
 
-        public static Map<String, String> loadCurrentReplacements(ResourceManager resourceManager) {
+        // 重载快照：物品映射 + 规则
+        public record CurrentSnapshot(
+                Map<String, String> itemMap,
+                Map<String, Replacements.Rules> itemRules,
+                Map<String, Replacements.Rules> tagRules
+        ) {
+        }
+
+        public static CurrentSnapshot loadCurrentSnapshot(ResourceManager resourceManager) {
             Map<String, String> map = new HashMap<>();
+            Map<String, Replacements.Rules> itemRules = new HashMap<>();
+            Map<String, Replacements.Rules> tagRules = new HashMap<>();
             Predicate<ResourceLocation> jsonPredicate = rl -> rl.getPath().endsWith(".json") && "oei".equals(rl.getNamespace());
 
             for (String baseDir : REPLACEMENT_DIR_CANDIDATES) {
@@ -166,7 +193,7 @@ public class MixinUtils {
                     for (Map.Entry<ResourceLocation, Resource> e : res.entrySet()) {
                         try (Reader reader = e.getValue().openAsReader()) {
                             JsonElement root = JsonParser.parseReader(reader);
-                            parseReplacementJson(root, map);
+                            parseReplacementJson(root, map, itemRules, tagRules);
                         } catch (Exception ex) {
                             LogHelper.logParseError(e.getKey(), ex);
                         }
@@ -174,16 +201,18 @@ public class MixinUtils {
                 } catch (Exception ignore) {
                 }
             }
-
-            return map;
+            return new CurrentSnapshot(map, itemRules, tagRules);
         }
 
-        private static void parseReplacementJson(JsonElement root, Map<String, String> out) {
+        private static void parseReplacementJson(JsonElement root,
+                                                 Map<String, String> outMap,
+                                                 Map<String, Replacements.Rules> outItemRules,
+                                                 Map<String, Replacements.Rules> outTagRules) {
             if (root == null) return;
 
             if (root.isJsonArray()) {
                 for (JsonElement el : root.getAsJsonArray()) {
-                    parseReplacementJson(el, out);
+                    parseReplacementJson(el, outMap, outItemRules, outTagRules);
                 }
                 return;
             }
@@ -193,21 +222,85 @@ public class MixinUtils {
                 if (obj.has("matchItems") && obj.get("matchItems").isJsonArray() && obj.has("resultItems")) {
                     String result = obj.get("resultItems").getAsString();
                     JsonArray arr = obj.get("matchItems").getAsJsonArray();
+
+                    Replacements.Rules rules = null;
+                    if (obj.has("rules") && obj.get("rules").isJsonObject()) {
+                        rules = parseRulesObject(obj.getAsJsonObject("rules"));
+                    }
+
                     for (JsonElement el : arr) {
                         if (el.isJsonPrimitive() && el.getAsJsonPrimitive().isString()) {
                             String src = el.getAsString();
-                            if (src != null && !src.isEmpty() && !src.startsWith("#")) {
-                                out.put(src, result);
+                            if (src != null && !src.isEmpty()) {
+                                if (src.startsWith("#")) {
+                                    String tagId = src.substring(1);
+                                    if (rules != null) {
+                                        outTagRules.put(tagId, rules);
+                                    }
+                                    outMap.put(src, result);
+                                } else {
+                                    outMap.put(src, result);
+                                    if (rules != null) {
+                                        outItemRules.put(src, rules);
+                                    }
+                                }
                             }
                         }
                     }
                 } else {
                     // 支持将多个对象放在一个文件的情况
                     for (Map.Entry<String, JsonElement> e : obj.entrySet()) {
-                        parseReplacementJson(e.getValue(), out);
+                        parseReplacementJson(e.getValue(), outMap, outItemRules, outTagRules);
                     }
                 }
             }
         }
+
+        private static Replacements.Rules parseRulesObject(JsonObject rulesObj) {
+            Optional<Map<String, Replacements.ProcessingMode>> dataOpt = Optional.empty();
+            Optional<Map<String, Replacements.ProcessingMode>> tagOpt = Optional.empty();
+
+            if (rulesObj.has("data") && rulesObj.get("data").isJsonObject()) {
+                Map<String, Replacements.ProcessingMode> data = parseModeMap(rulesObj.getAsJsonObject("data"));
+                dataOpt = data.isEmpty() ? Optional.empty() : Optional.of(data);
+            }
+
+            if (rulesObj.has("tag") && rulesObj.get("tag").isJsonObject()) {
+                Map<String, Replacements.ProcessingMode> tag = parseModeMap(rulesObj.getAsJsonObject("tag"));
+                tagOpt = tag.isEmpty() ? Optional.empty() : Optional.of(tag);
+            }
+
+            if (dataOpt.isEmpty() && tagOpt.isEmpty()) {
+                return null;
+            }
+
+            return new Replacements.Rules(dataOpt, tagOpt);
+        }
+
+        private static Map<String, Replacements.ProcessingMode> parseModeMap(JsonObject obj) {
+            Map<String, Replacements.ProcessingMode> map = new HashMap<>();
+            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                JsonElement value = entry.getValue();
+                if (value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
+                    String stringValue = value.getAsString();
+                    try {
+                        Replacements.ProcessingMode mode = Replacements.ProcessingMode.valueOf(stringValue.toUpperCase());
+                        map.put(entry.getKey(), mode);
+                    } catch (IllegalArgumentException ignored) {
+                        // 跳过无法识别的值
+                    }
+                }
+            }
+            return map;
+        }
+    }
+
+    public static FieldRule getDataDirFieldRule(String directory) {
+        return switch (directory) {
+            case "recipes" -> new FieldRule(Set.of("item", "id", "result"), true);
+            case "advancements" -> new FieldRule(Set.of("item"), true);
+            case "loot_tables" -> new FieldRule(Set.of("name"), true);
+            default -> new FieldRule(Set.of("item", "id", "result"), false);
+        };
     }
 }

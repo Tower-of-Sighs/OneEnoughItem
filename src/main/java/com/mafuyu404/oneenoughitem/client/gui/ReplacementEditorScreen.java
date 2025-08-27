@@ -1,6 +1,5 @@
 package com.mafuyu404.oneenoughitem.client.gui;
 
-import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.client.gui.cache.EditorCache;
 import com.mafuyu404.oneenoughitem.client.gui.cache.GlobalReplacementCache;
 import com.mafuyu404.oneenoughitem.client.gui.components.ItemDisplayWidget;
@@ -12,11 +11,11 @@ import com.mafuyu404.oneenoughitem.client.gui.editor.ObjectDropdownController;
 import com.mafuyu404.oneenoughitem.client.gui.editor.PanelsLayoutHelper;
 import com.mafuyu404.oneenoughitem.client.gui.manager.ReplacementEditorManager;
 import com.mafuyu404.oneenoughitem.client.gui.util.GuiUtils;
-import com.mafuyu404.oneenoughitem.client.gui.util.PathUtils;
 import com.mafuyu404.oneenoughitem.client.gui.util.ReplacementUtils;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.ReplacementControl;
 import com.mafuyu404.oneenoughitem.init.Utils;
+import com.mafuyu404.oneenoughitem.web.WebEditorServer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -30,12 +29,9 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.lwjgl.glfw.GLFW;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 public class ReplacementEditorScreen extends Screen {
     private static final int PANEL_WIDTH = 220;
@@ -59,6 +55,7 @@ public class ReplacementEditorScreen extends Screen {
     private Button reloadButton;
     private Button clearAllButton;
     private Button saveToJSONButton;
+    private Button openWebEditorButton;
 
     // 对象下拉菜单
     private Button objectDropdownButton;
@@ -198,6 +195,10 @@ public class ReplacementEditorScreen extends Screen {
         this.saveToJSONButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.save_to_json"),
                 button -> this.saveToJson(), centerX - 10, fileY + 25, 80, BUTTON_HEIGHT);
         this.addRenderableWidget(this.saveToJSONButton);
+        int webBtnX = (centerX - 10) + 80 + 8;
+        this.openWebEditorButton = GuiUtils.createButton(Component.literal("Web编辑器"),
+                button -> this.openWebEditor(), webBtnX, fileY + 25, 90, BUTTON_HEIGHT);
+        this.addRenderableWidget(this.openWebEditorButton);
 
         int panelY = fileY + 55;
         int leftPanelX = centerX - PANEL_WIDTH - MARGIN;
@@ -292,7 +293,7 @@ public class ReplacementEditorScreen extends Screen {
 
         this.rebuildPanels();
     }
-    
+
     private void removeMatchItemById(String itemId) {
         if (itemId != null) {
             ResourceLocation id = new ResourceLocation(itemId);
@@ -313,7 +314,7 @@ public class ReplacementEditorScreen extends Screen {
             this.removeWidget(b);
         }
         this.objectIndexButtons.clear();
-        
+
         this.objectDropdownPanel = ObjectDropdownController.rebuildDropdownPanel(
                 this.objectDropdownButton,
                 this.showObjectDropdown,
@@ -322,7 +323,7 @@ public class ReplacementEditorScreen extends Screen {
                 this::selectObjectIndex,
                 this::deleteCurrentObjectElement
         );
-        
+
         if (this.objectDropdownButton != null) {
             this.objectDropdownButton.setMessage(
                     ObjectDropdownController.buildDropdownButtonText(this.showObjectDropdown, this.manager)
@@ -437,6 +438,13 @@ public class ReplacementEditorScreen extends Screen {
         this.fileActions.saveToJson();
     }
 
+    private void openWebEditor() {
+        String message = WebEditorServer.openInBrowser();
+        if (message != null) {
+            this.showMessage(Component.literal(message).withStyle(ChatFormatting.YELLOW));
+        }
+    }
+
     private void selectFile() {
         this.fileActions.selectFile(this.minecraft, this);
     }
@@ -541,10 +549,7 @@ public class ReplacementEditorScreen extends Screen {
         }
 
         this.itemsController.addMatchTag(tagId);
-        TagDisplayWidget widget = new TagDisplayWidget(0, 0, tagId,
-                button -> this.removeMatchTag(tagId));
-        this.matchTagWidgets.add(widget);
-        this.rebuildPanels();
+        this.syncManagerDataToWidgets();
     }
 
     public void setResultItem(Item item) {
@@ -582,7 +587,7 @@ public class ReplacementEditorScreen extends Screen {
         this.matchTagWidgets.removeIf(widget -> widget.getTagId().equals(tagId));
         this.rebuildPanels();
     }
-    
+
     protected void rebuildPanels() {
         this.panelsHelper.rebuildPanels(
                 this.matchPanel,

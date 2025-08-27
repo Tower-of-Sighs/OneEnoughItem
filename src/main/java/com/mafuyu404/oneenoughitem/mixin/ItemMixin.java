@@ -1,9 +1,9 @@
 package com.mafuyu404.oneenoughitem.mixin;
 
 import com.mafuyu404.oneenoughitem.api.EditableItem;
-import com.mafuyu404.oneenoughitem.init.Config;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.Utils;
+import com.mafuyu404.oneenoughitem.init.config.Config;
 import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.item.Item;
 import org.spongepowered.asm.mixin.*;

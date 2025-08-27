@@ -2,6 +2,7 @@ package com.mafuyu404.oneenoughitem.client.gui;
 
 import com.mafuyu404.oneenoughitem.client.gui.components.TagListWidget;
 import com.mafuyu404.oneenoughitem.client.gui.util.GuiUtils;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -12,9 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraftforge.registries.ForgeRegistries;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class TagSelectionScreen extends Screen {
@@ -27,6 +26,10 @@ public class TagSelectionScreen extends Screen {
 
     private List<ResourceLocation> allTags;
     private List<ResourceLocation> filteredTags;
+
+    private final Set<ResourceLocation> selectedTags = new HashSet<>();
+    private Button confirmSelectionButton;
+    private Button clearSelectionButton;
 
     public TagSelectionScreen(ReplacementEditorScreen parent, boolean isForMatch) {
         super(Component.translatable("gui.oneenoughitem.tag_selection.title"));
@@ -56,12 +59,48 @@ public class TagSelectionScreen extends Screen {
 
         this.tagList = new TagListWidget(this.minecraft, this.width - 40, this.height - 100, 40, 22, this::selectTag);
         this.tagList.setLeftPos(20);
+        this.tagList.setSelectedTags(this.selectedTags);
         this.addRenderableWidget(this.tagList);
+        if (this.isForMatch) {
+            int buttonY = this.height - 50;
 
-        this.backButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.back"),
-                btn -> this.onClose(), centerX - 40, this.height - 50, 80, 18);
-        this.addRenderableWidget(this.backButton);
+            int totalWidth = 100 + 80 + 100 + 10;
+            int startX = centerX - totalWidth / 2;
 
+            this.confirmSelectionButton = GuiUtils.createButton(
+                    Component.translatable("gui.oneenoughitem.add_selected"),
+                    btn -> this.confirmSelectedTags(),
+                    startX, buttonY, 100, 18
+            );
+            this.addRenderableWidget(this.confirmSelectionButton);
+
+            this.backButton = GuiUtils.createButton(
+                    Component.translatable("gui.oneenoughitem.back"),
+                    btn -> this.onClose(),
+                    startX + 100 + 10, buttonY, 80, 18
+            );
+            this.addRenderableWidget(this.backButton);
+
+            this.clearSelectionButton = GuiUtils.createButton(
+                    Component.translatable("gui.oneenoughitem.clear_selected"),
+                    btn -> {
+                        this.selectedTags.clear();
+                        this.updateTagList();
+                        this.updateConfirmButtonsVisibility();
+                    },
+                    startX + 100 + 10 + 80 + 10, buttonY, 100, 18
+            );
+            this.addRenderableWidget(this.clearSelectionButton);
+
+            this.updateConfirmButtonsVisibility();
+        } else {
+            this.backButton = GuiUtils.createButton(
+                    Component.translatable("gui.oneenoughitem.back"),
+                    btn -> this.onClose(),
+                    centerX - 40, this.height - 50, 80, 18
+            );
+            this.addRenderableWidget(this.backButton);
+        }
         this.updateTagList();
     }
 
@@ -120,12 +159,55 @@ public class TagSelectionScreen extends Screen {
     }
 
     private void selectTag(ResourceLocation tagId) {
+        if (this.isForMatch && hasControlDown()) {
+            if (this.selectedTags.contains(tagId)) {
+                this.selectedTags.remove(tagId);
+            } else {
+                this.selectedTags.add(tagId);
+            }
+            this.updateTagList();
+            this.updateConfirmButtonsVisibility();
+            return;
+        }
+
         if (this.isForMatch) {
             this.parent.addMatchTag(tagId);
         } else {
             this.parent.setResultTag(tagId);
         }
         this.onClose();
+    }
+
+    private void confirmSelectedTags() {
+        if (!this.isForMatch || this.selectedTags.isEmpty()) return;
+
+        int added = 0;
+        for (ResourceLocation tagId : new ArrayList<>(this.selectedTags)) {
+            this.parent.addMatchTag(tagId);
+            added++;
+        }
+        this.selectedTags.clear();
+        this.updateTagList();
+        this.updateConfirmButtonsVisibility();
+
+        if (Minecraft.getInstance().player != null) {
+            Minecraft.getInstance().player.displayClientMessage(
+                    Component.translatable("message.oneenoughitem.multi_add_tags_result", added).withStyle(ChatFormatting.GREEN),
+                    false
+            );
+        }
+        this.onClose();
+    }
+
+    private void updateConfirmButtonsVisibility() {
+        if (!this.isForMatch) return;
+        boolean hasSelection = !this.selectedTags.isEmpty();
+        if (this.confirmSelectionButton != null) {
+            this.confirmSelectionButton.active = hasSelection;
+        }
+        if (this.clearSelectionButton != null) {
+            this.clearSelectionButton.active = hasSelection;
+        }
     }
 
     @Override

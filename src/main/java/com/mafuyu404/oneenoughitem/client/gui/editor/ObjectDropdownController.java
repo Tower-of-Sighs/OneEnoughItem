@@ -10,7 +10,8 @@ import java.util.List;
 import java.util.function.IntConsumer;
 
 public final class ObjectDropdownController {
-    private ObjectDropdownController() {}
+    private ObjectDropdownController() {
+    }
 
     public static ScrollablePanel rebuildDropdownPanel(Button anchorButton,
                                                        boolean show,

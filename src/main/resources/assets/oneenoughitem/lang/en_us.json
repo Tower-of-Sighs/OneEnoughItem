@@ -43,6 +43,8 @@
   "gui.oneenoughitem.add_button": "Add",
   "gui.oneenoughitem.modify_button": "Modify",
   "gui.oneenoughitem.remove_button": "Remove",
+  "gui.oneenoughitem.add_selected": "Add Selected",
+  "gui.oneenoughitem.clear_selected": "Clear Selected",
 
   "gui.oneenoughitem.file_selection.title": "Select JSON File",
   "gui.oneenoughitem.file_selection.search": "Search Files",
@@ -112,6 +114,8 @@
   "message.oneenoughitem.deduplication_complete": "Deduplication complete. Processed %s recipe-removal rules.",
   "message.oneenoughitem.deduplication_in_progress": "Deduplication in progress, please wait...",
   "message.oneenoughitem.script_generated": "Script generation complete: removed %s recipes. Saved to: %s",
+  "message.oneenoughitem.multi_add_tags_result": "Successfully added %d tags",
+  "message.oneenoughitem.multi_add_result": "Successfully added %d items",
 
   "error.oneenoughitem.file_name_empty": "File name cannot be empty",
   "error.oneenoughitem.object_parse_failed": "Failed to parse object index %d",
@@ -163,5 +167,8 @@
   "oneenoughitem.modernfix.warning.hover": "Click to open config file: %s",
 
   "key.categories.oneenoughitem": "OneEnoughItem",
-  "key.oneenoughitem.open_editor": "Open Replacement Editor"
+  "key.oneenoughitem.open_editor": "Open Replacement Editor",
+
+  "oneenoughitem.webeditor.open_browser": "Web editor started at %s, trying to open browser via system command",
+  "oneenoughitem.webeditor.open_browser_manual": "Web editor started at %s, please open it manually"
 }

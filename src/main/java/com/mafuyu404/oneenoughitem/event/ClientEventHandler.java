@@ -7,9 +7,9 @@ import com.mafuyu404.oneenoughitem.client.ModKeyMappings;
 import com.mafuyu404.oneenoughitem.client.gui.ReplacementEditorScreen;
 import com.mafuyu404.oneenoughitem.client.gui.cache.GlobalReplacementCache;
 import com.mafuyu404.oneenoughitem.data.Replacements;
-import com.mafuyu404.oneenoughitem.init.Config;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.access.CreativeModeTabIconRefresher;
+import com.mafuyu404.oneenoughitem.init.config.Config;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
@@ -18,7 +18,10 @@ import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.Optional;
 
 @Mod.EventBusSubscriber(modid = "oneenoughitem", value = Dist.CLIENT)
 public class ClientEventHandler {
@@ -49,8 +52,6 @@ public class ClientEventHandler {
                 refreshAllCreativeModeTabIcons();
                 Oneenoughitem.LOGGER.info("Replacement cache rebuilt due to data reload: {} entries loaded, {} invalid",
                         event.getLoadedCount(), event.getInvalidCount());
-
-                Oneenoughitem.LOGGER.info("Recipe JSON rewrite mode (client): {}", String.valueOf(Config.DATA_REWRITE_MODE.getValue()));
 
                 ReplacementCache.endReloadOverride();
             });
@@ -83,7 +84,8 @@ public class ClientEventHandler {
 
             var replacements = manager.getDataList();
             for (Replacements replacement : replacements) {
-                ReplacementCache.putReplacement(replacement);
+                Replacements toPut = getReplacements(replacement);
+                ReplacementCache.putReplacement(toPut);
             }
 
             Oneenoughitem.LOGGER.debug("Rebuilt replacement cache with {} rules from OELib data manager",
@@ -91,5 +93,20 @@ public class ClientEventHandler {
         } else {
             Oneenoughitem.LOGGER.warn("No replacement data manager found in OELib");
         }
+    }
+
+    private static @NotNull Replacements getReplacements(Replacements replacement) {
+        Replacements toPut = replacement;
+        if (replacement.rules().isEmpty()) {
+            var cfg = Config.DEFAULT_RULES.getValue();
+            if (cfg != null) {
+                toPut = new Replacements(
+                        replacement.matchItems(),
+                        replacement.resultItems(),
+                        Optional.of(cfg.toRules())
+                );
+            }
+        }
+        return toPut;
     }
 }

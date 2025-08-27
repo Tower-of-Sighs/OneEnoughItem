@@ -43,6 +43,8 @@
   "gui.oneenoughitem.add_button": "添加",
   "gui.oneenoughitem.modify_button": "更改",
   "gui.oneenoughitem.remove_button": "删除",
+  "gui.oneenoughitem.add_selected": "添加已选",
+  "gui.oneenoughitem.clear_selected": "清空已选",
 
   "gui.oneenoughitem.file_selection.title": "选择JSON文件",
   "gui.oneenoughitem.file_selection.search": "搜索文件",
@@ -114,6 +116,8 @@
   "message.oneenoughitem.deduplication_complete": "脚本重新生成成功，共处理 %s 个配方移除规则。",
   "message.oneenoughitem.deduplication_in_progress": "去重过程正在进行，请稍候...",
   "message.oneenoughitem.script_generated": "脚本生成完成，共移除 %s 个配方。脚本保存于：%s",
+  "message.oneenoughitem.multi_add_tags_result": "已成功添加 %d 个标签",
+  "message.oneenoughitem.multi_add_result": "已成功添加 %d 个物品",
 
   "error.oneenoughitem.file_name_empty": "文件名不能为空",
   "error.oneenoughitem.object_parse_failed": "无法解析对象索引 %d 的数据",
@@ -165,5 +169,8 @@
   "oneenoughitem.modernfix.warning.hover": "点击打开配置文件: %s",
 
   "key.categories.oneenoughitem": "OneEnoughItem",
-  "key.oneenoughitem.open_editor": "打开替换界面"
+  "key.oneenoughitem.open_editor": "打开替换界面",
+
+  "oneenoughitem.webeditor.open_browser": "Web编辑器已启动在 %s，尝试用系统命令打开浏览器",
+  "oneenoughitem.webeditor.open_browser_manual": "Web编辑器已启动在 %s，请手动打开浏览器访问"
 }

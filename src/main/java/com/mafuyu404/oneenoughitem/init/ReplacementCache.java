@@ -2,6 +2,7 @@ package com.mafuyu404.oneenoughitem.init;
 
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.data.Replacements;
+import com.mafuyu404.oneenoughitem.init.config.Config;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 
@@ -10,13 +11,13 @@ import java.util.*;
 public class ReplacementCache {
     private static final HashMap<String, String> ItemMapCache = new HashMap<>();
     private static final HashMap<String, String> TagMapCache = new HashMap<>();
-
+    private static final HashMap<String, Replacements.Rules> ItemRulesCache = new HashMap<>();
+    private static final HashMap<String, Replacements.Rules> TagRulesCache = new HashMap<>();
     private static volatile Map<String, String> ReloadOverrideItemMap = null;
 
     public static String matchItem(String id) {
         return Objects.requireNonNullElse(ReloadOverrideItemMap, ItemMapCache).getOrDefault(id, null);
     }
-
 
     public static String matchTag(String tagId) {
         return TagMapCache.getOrDefault(tagId, null);
@@ -34,6 +35,43 @@ public class ReplacementCache {
         return tagId != null && isTagReplaced(tagId.toString());
     }
 
+    public static Optional<Replacements.Rules> getItemRules(String itemId) {
+        return Optional.ofNullable(ItemRulesCache.get(itemId));
+    }
+
+    public static Optional<Replacements.Rules> getTagRules(String tagId) {
+        return Optional.ofNullable(TagRulesCache.get(tagId));
+    }
+
+    private static Optional<Replacements.Rules> getGlobalDefaultRules() {
+        try {
+            var cfg = Config.DEFAULT_RULES.getValue();
+            if (cfg != null) {
+                return Optional.of(cfg.toRules());
+            }
+        } catch (Exception ignored) {
+        }
+        return Optional.empty();
+    }
+
+    public static boolean shouldReplaceInDataDir(String itemId, String directory) {
+        return getItemRules(itemId)
+                .or(ReplacementCache::getGlobalDefaultRules)
+                .flatMap(Replacements.Rules::data)
+                .map(dataRules -> dataRules.get(directory))
+                .map(mode -> mode == Replacements.ProcessingMode.REPLACE)
+                .orElse(false);
+    }
+
+    public static boolean shouldReplaceInTagType(String itemId, String tagType) {
+        return getItemRules(itemId)
+                .or(ReplacementCache::getGlobalDefaultRules)
+                .flatMap(Replacements.Rules::tag)
+                .map(tagRules -> tagRules.get(tagType))
+                .map(mode -> mode == Replacements.ProcessingMode.REPLACE)
+                .orElse(false);
+    }
+
     public static void putReplacement(Replacements replacement) {
         List<Item> resolvedItems = Utils.resolveItemList(replacement.matchItems());
 
@@ -42,6 +80,8 @@ public class ReplacementCache {
             String id = Utils.getItemRegistryName(item);
             if (id != null) {
                 ItemMapCache.put(id, replacement.resultItems());
+                // 存储规则
+                replacement.rules().ifPresent(rules -> ItemRulesCache.put(id, rules));
                 Oneenoughitem.LOGGER.debug("Added item replacement mapping: {} -> {}", id, replacement.resultItems());
             }
         }
@@ -51,6 +91,8 @@ public class ReplacementCache {
             if (matchItem.startsWith("#")) {
                 String tagId = matchItem.substring(1); // 移除 # 前缀
                 TagMapCache.put(tagId, replacement.resultItems());
+                // 存储规则
+                replacement.rules().ifPresent(rules -> TagRulesCache.put(tagId, rules));
                 Oneenoughitem.LOGGER.debug("Added tag replacement mapping: {} -> {}", tagId, replacement.resultItems());
             }
         }
@@ -74,7 +116,6 @@ public class ReplacementCache {
         return Objects.requireNonNullElse(ReloadOverrideItemMap, ItemMapCache).containsKey(id);
     }
 
-
     public static boolean isSourceTagId(String id) {
         return id != null && TagMapCache.containsKey(id);
     }
@@ -84,6 +125,8 @@ public class ReplacementCache {
         int previousTagSize = TagMapCache.size();
         ItemMapCache.clear();
         TagMapCache.clear();
+        ItemRulesCache.clear();
+        TagRulesCache.clear();
         if (previousItemSize > 0 || previousTagSize > 0) {
             Oneenoughitem.LOGGER.info("Cleared {} cached item mappings and {} cached tag mappings",
                     previousItemSize, previousTagSize);
@@ -96,6 +139,7 @@ public class ReplacementCache {
     public static boolean removeItemReplacement(String itemId) {
         if (itemId != null && ItemMapCache.containsKey(itemId)) {
             String removed = ItemMapCache.remove(itemId);
+            ItemRulesCache.remove(itemId);
             Oneenoughitem.LOGGER.debug("Removed item replacement from runtime cache: {} -> {}", itemId, removed);
             return true;
         }
@@ -108,6 +152,7 @@ public class ReplacementCache {
     public static boolean removeTagReplacement(String tagId) {
         if (tagId != null && TagMapCache.containsKey(tagId)) {
             String removed = TagMapCache.remove(tagId);
+            TagRulesCache.remove(tagId);
             Oneenoughitem.LOGGER.debug("Removed tag replacement from runtime cache: {} -> {}", tagId, removed);
             return true;
         }
@@ -158,7 +203,7 @@ public class ReplacementCache {
         return result;
     }
 
-    // 开始/结束 “重载期覆盖映射”
+    // 开始/结束 "重载期覆盖映射"
     public static void beginReloadOverride(Map<String, String> currentItemMap) {
         if (currentItemMap == null || currentItemMap.isEmpty()) {
             ReloadOverrideItemMap = null;

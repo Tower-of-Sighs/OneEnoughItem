@@ -2,7 +2,7 @@ package com.mafuyu404.oneenoughitem;
 
 import com.mafuyu404.oelib.forge.data.DataRegistry;
 import com.mafuyu404.oneenoughitem.data.Replacements;
-import com.mafuyu404.oneenoughitem.init.Config;
+import com.mafuyu404.oneenoughitem.init.config.Config;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
