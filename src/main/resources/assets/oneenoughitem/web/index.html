@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8"/>
+    <title data-i18n="title">OEI Web 编辑器</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <link href="/web/style.css" rel="stylesheet"/>
+    <link rel="icon" type="image/png" href="/web/img/img.png"/>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1 data-i18n="title">OEI Replacements 规则编辑器</h1>
+        <div class="lang-switch">
+            <button id="langZh" class="lang-btn active">中文</button>
+            <button id="langEn" class="lang-btn">English</button>
+        </div>
+    </div>
+
+    <section class="card">
+        <div class="row">
+            <label data-i18n="datapack_path">数据包路径</label>
+            <input id="datapackPath" type="text" data-i18n-placeholder="datapack_path_placeholder"
+                   placeholder="例如：E:\.minecraft\versions\1.20.1-Forge_47.3.0\saves\New World\datapacks\OEI\data\oei\replacements"/>
+            <button id="scanBtn" class="scan-btn" data-i18n="scan_files">扫描文件</button>
+        </div>
+        <div class="row">
+            <label data-i18n="select_file">选择文件</label>
+            <select id="fileSelect" disabled>
+                <option value="" data-i18n="please_scan_first">请先扫描数据包路径</option>
+            </select>
+            <span id="scanStatus" class="status"></span>
+        </div>
+        <div class="row">
+            <button id="loadBtn" disabled data-i18n="load_rules">加载规则</button>
+            <span id="status" class="status"></span>
+        </div>
+    </section>
+
+    <section class="card" id="indexSection" style="display: none;">
+        <div class="row">
+            <label data-i18n="select_rule_index">选择规则索引</label>
+            <select id="indexSelect"></select>
+            <span class="rule-count" data-i18n="rule_count" data-i18n-args="0">共 <span
+                    id="ruleCount">0</span> 条规则</span>
+        </div>
+    </section>
+
+    <section class="grid" id="rulesSection" style="display: none;">
+        <div class="card">
+            <h2 data-i18n="data_rules">Data 目录规则</h2>
+            <div id="dataRules"></div>
+            <div class="row">
+                <input id="dataKey" type="text" placeholder="e.g. recipe / advancement"/>
+                <select id="dataMode">
+                    <option value="replace">replace</option>
+                    <option value="retain">retain</option>
+                </select>
+                <button id="addDataRule" data-i18n="add_update">添加/更新</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 data-i18n="tag_rules">Tag 类型规则</h2>
+            <div id="tagRules"></div>
+            <div class="row">
+                <input id="tagKey" type="text" placeholder="e.g. item / block / fluid"/>
+                <select id="tagMode">
+                    <option value="replace">replace</option>
+                    <option value="retain">retain</option>
+                </select>
+                <button id="addTagRule" data-i18n="add_update">添加/更新</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="card" id="saveSection" style="display: none;">
+        <div class="row">
+            <button id="saveBtn" class="primary" data-i18n="save_current_rules">保存当前索引的 rules</button>
+            <span id="saveStatus" class="status"></span>
+            <label class="auto-save-label">
+                <input type="checkbox" id="autoSave"/> <span data-i18n="auto_save">自动保存</span>
+            </label>
+        </div>
+    </section>
+
+    <footer>
+        <small data-i18n="footer_tip">提示：本页面仅在本地运行。规则保存后，可在游戏中执行数据重载。</small>
+    </footer>
+</div>
+
+<script src="/web/main.js"></script>
+</body>
+</html>

@@ -13,13 +13,12 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class ItemSelectionScreen extends Screen {
@@ -35,12 +34,16 @@ public class ItemSelectionScreen extends Screen {
     private Button prevPageButton;
     private Button nextPageButton;
     private Button backButton;
+    private Button confirmSelectionButton;
+    private Button clearSelectionButton;
+
 
     private ItemGridWidget itemGrid;
     private List<Item> allItems;
     private List<Item> filteredItems;
     private int currentPage = 0;
     private SortMode sortMode = SortMode.NAME;
+    private final Set<String> selectedItemIds = new HashSet<>();
 
     public ItemSelectionScreen(ReplacementEditorScreen parent, boolean isForMatch) {
         super(Component.translatable("gui.oneenoughitem.item_selection.title"));
@@ -78,6 +81,7 @@ public class ItemSelectionScreen extends Screen {
         int gridStartX = centerX - (GRID_WIDTH * 18) / 2;
         int gridStartY = 45;
         this.itemGrid = new ItemGridWidget(gridStartX, gridStartY, GRID_WIDTH, GRID_HEIGHT, this::selectItem);
+        this.itemGrid.setSelectedItemIds(this.selectedItemIds);
         this.addRenderableWidget(this.itemGrid);
 
         int buttonY = gridStartY + GRID_HEIGHT * 18 + 10;
@@ -95,6 +99,27 @@ public class ItemSelectionScreen extends Screen {
                 btn -> this.onClose(),
                 centerX - 40, buttonY, 80, 18);
         this.addRenderableWidget(this.backButton);
+
+        if (this.isForMatch) {
+            this.confirmSelectionButton = GuiUtils.createButton(
+                    Component.translatable("gui.oneenoughitem.add_selected"),
+                    btn -> this.confirmSelectedItems(),
+                    centerX - 120, buttonY + 25, 100, 18
+            );
+            this.addRenderableWidget(this.confirmSelectionButton);
+
+            this.clearSelectionButton = GuiUtils.createButton(
+                    Component.translatable("gui.oneenoughitem.clear_selected"),
+                    btn -> {
+                        this.selectedItemIds.clear();
+                        this.updateGrid();
+                        this.updateConfirmButtonsVisibility();
+                    },
+                    centerX + 20, buttonY + 25, 100, 18
+            );
+            this.addRenderableWidget(this.clearSelectionButton);
+            this.updateConfirmButtonsVisibility();
+        }
 
         this.updateGrid();
         this.updateNavigationButtons();
@@ -216,45 +241,22 @@ public class ItemSelectionScreen extends Screen {
 
     private void selectItem(ItemStack itemStack) {
         String itemId = Utils.getItemRegistryName(itemStack.getItem());
-        if (itemId != null) {
-            // 检查物品是否已被替换（优先检查运行时缓存）
-            String runtimeReplacement = ReplacementCache.matchItem(itemId);
-            String globalReplacement = GlobalReplacementCache.getItemReplacement(itemId);
-
-            if (runtimeReplacement != null || globalReplacement != null) {
-                // 显示错误消息
-                if (this.minecraft.player != null) {
-                    this.minecraft.player.displayClientMessage(
-                            Component.translatable("error.oneenoughitem.item_already_replaced").withStyle(ChatFormatting.RED),
-                            false
-                    );
-                }
-                return;
+        if (itemId == null) {
+            return;
+        }
+        if (this.isForMatch && hasControlDown()) {
+            if (this.selectedItemIds.contains(itemId)) {
+                this.selectedItemIds.remove(itemId);
+            } else if (checkItemSelectable(itemId, true)) {
+                this.selectedItemIds.add(itemId);
             }
+            this.updateGrid();
+            this.updateConfirmButtonsVisibility();
+            return;
+        }
 
-            if (this.isForMatch) {
-                // 对于匹配项，检查是否已经是其他规则的结果物品
-                if (GlobalReplacementCache.isItemUsedAsResult(itemId)) {
-                    if (this.minecraft.player != null) {
-                        this.minecraft.player.displayClientMessage(
-                                Component.translatable("error.oneenoughitem.item_used_as_result").withStyle(ChatFormatting.RED),
-                                false
-                        );
-                    }
-                    return;
-                }
-            } else {
-                // 对于结果项，检查是否已经是其他规则的匹配项
-                if (GlobalReplacementCache.isItemReplaced(itemId)) {
-                    if (this.minecraft.player != null) {
-                        this.minecraft.player.displayClientMessage(
-                                Component.translatable("error.oneenoughitem.result_item_used_as_match").withStyle(ChatFormatting.RED),
-                                false
-                        );
-                    }
-                    return;
-                }
-            }
+        if (!checkItemSelectable(itemId, this.isForMatch)) {
+            return;
         }
 
         if (this.isForMatch) {
@@ -263,6 +265,82 @@ public class ItemSelectionScreen extends Screen {
             this.parent.setResultItem(itemStack.getItem());
         }
         this.onClose();
+    }
+
+    private boolean checkItemSelectable(String itemId, boolean isForMatch) {
+        String runtimeReplacement = ReplacementCache.matchItem(itemId);
+        String globalReplacement = GlobalReplacementCache.getItemReplacement(itemId);
+
+        if (runtimeReplacement != null || globalReplacement != null) {
+            showError("error.oneenoughitem.item_already_replaced");
+            return false;
+        }
+
+        if (isForMatch) {
+            if (GlobalReplacementCache.isItemUsedAsResult(itemId)) {
+                showError("error.oneenoughitem.item_used_as_result");
+                return false;
+            }
+        } else {
+            if (GlobalReplacementCache.isItemReplaced(itemId)) {
+                showError("error.oneenoughitem.result_item_used_as_match");
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void showError(String translationKey) {
+        if (this.minecraft.player != null) {
+            this.minecraft.player.displayClientMessage(
+                    Component.translatable(translationKey).withStyle(ChatFormatting.RED),
+                    false
+            );
+        }
+    }
+
+
+    private void confirmSelectedItems() {
+        if (!this.isForMatch || this.selectedItemIds.isEmpty()) return;
+
+        int added = 0;
+        for (String id : new ArrayList<>(this.selectedItemIds)) {
+            var rl = ResourceLocation.tryParse(id);
+            if (rl == null) continue;
+            Item item = BuiltInRegistries.ITEM.get(rl);
+            if (item == Items.AIR) continue;
+
+            String runtimeReplacement = ReplacementCache.matchItem(id);
+            String globalReplacement = GlobalReplacementCache.getItemReplacement(id);
+            if (runtimeReplacement != null || globalReplacement != null) continue;
+            if (GlobalReplacementCache.isItemUsedAsResult(id)) continue;
+
+            this.parent.addMatchItem(item);
+            added++;
+        }
+        this.selectedItemIds.clear();
+        this.updateGrid();
+        this.updateConfirmButtonsVisibility();
+
+        if (this.minecraft.player != null) {
+            this.minecraft.player.displayClientMessage(
+                    Component.translatable("message.oneenoughitem.multi_add_result", added).withStyle(ChatFormatting.GREEN),
+                    false
+            );
+        }
+        this.onClose();
+    }
+
+    private void updateConfirmButtonsVisibility() {
+        if (!this.isForMatch) return;
+        boolean hasSelection = !this.selectedItemIds.isEmpty();
+        if (this.confirmSelectionButton != null) {
+            this.confirmSelectionButton.active = hasSelection;
+        }
+        if (this.clearSelectionButton != null) {
+            this.clearSelectionButton.active = hasSelection;
+        }
     }
 
     @Override

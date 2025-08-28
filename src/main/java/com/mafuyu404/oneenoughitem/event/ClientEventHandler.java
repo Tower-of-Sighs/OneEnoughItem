@@ -8,13 +8,17 @@ import com.mafuyu404.oneenoughitem.client.ModKeyMappings;
 import com.mafuyu404.oneenoughitem.client.gui.ReplacementEditorScreen;
 import com.mafuyu404.oneenoughitem.client.gui.cache.GlobalReplacementCache;
 import com.mafuyu404.oneenoughitem.data.Replacements;
+import com.mafuyu404.oneenoughitem.init.config.ModConfig;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.access.CreativeModeTabIconRefresher;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.Optional;
 
 public class ClientEventHandler {
 
@@ -38,7 +42,6 @@ public class ClientEventHandler {
             refreshAllCreativeModeTabIcons();
             Oneenoughitem.LOGGER.info("Replacement cache rebuilt due to data reload: {} entries loaded, {} invalid",
                     loadedCount, invalidCount);
-            Oneenoughitem.LOGGER.info("Recipe JSON rewrite mode (client): {}", String.valueOf(com.mafuyu404.oneenoughitem.init.ModConfig.DATA_REWRITE_MODE.getValue()));
 
             ReplacementCache.endReloadOverride();
         }
@@ -70,7 +73,8 @@ public class ClientEventHandler {
 
             var replacements = manager.getDataList();
             for (Replacements replacement : replacements) {
-                ReplacementCache.putReplacement(replacement);
+                Replacements toPut = getReplacements(replacement);
+                ReplacementCache.putReplacement(toPut);
             }
 
             Oneenoughitem.LOGGER.debug("Rebuilt replacement cache with {} rules from OELib data manager",
@@ -78,5 +82,20 @@ public class ClientEventHandler {
         } else {
             Oneenoughitem.LOGGER.warn("No replacement data manager found in OELib");
         }
+    }
+
+    private static @NotNull Replacements getReplacements(Replacements replacement) {
+        Replacements toPut = replacement;
+        if (replacement.rules().isEmpty()) {
+            var cfg = ModConfig.DEFAULT_RULES.getValue();
+            if (cfg != null) {
+                toPut = new Replacements(
+                        replacement.matchItems(),
+                        replacement.resultItems(),
+                        Optional.of(cfg.toRules())
+                );
+            }
+        }
+        return toPut;
     }
 }

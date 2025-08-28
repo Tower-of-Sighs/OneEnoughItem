@@ -9,11 +9,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class TagListWidget extends ObjectSelectionList<TagListWidget.TagEntry> {
     private final Consumer<ResourceLocation> onTagSelect;
+    private Set<ResourceLocation> selectedTags = Collections.emptySet();
 
     public TagListWidget(Minecraft minecraft, int width, int height, int y, int itemHeight, Consumer<ResourceLocation> onTagSelect) {
         super(minecraft, width, height, y, y + height, itemHeight);
@@ -27,6 +30,10 @@ public class TagListWidget extends ObjectSelectionList<TagListWidget.TagEntry> {
         for (ResourceLocation tag : tags) {
             this.addEntry(new TagEntry(tag));
         }
+    }
+
+    public void setSelectedTags(java.util.Set<ResourceLocation> selectedTags) {
+        this.selectedTags = selectedTags != null ? selectedTags : Collections.emptySet();
     }
 
     public TagEntry getEntryAtMouse(double mouseX, double mouseY) {
@@ -53,6 +60,10 @@ public class TagListWidget extends ObjectSelectionList<TagListWidget.TagEntry> {
         @Override
         public void render(GuiGraphics graphics, int index, int y, int x, int entryWidth, int entryHeight,
                            int mouseX, int mouseY, boolean isMouseOver, float partialTick) {
+            if (TagListWidget.this.selectedTags.contains(this.tagId)) {
+                graphics.fill(x, y, x + entryWidth, y + entryHeight, 0x8033AAFF);
+            }
+
             String tagText = "#" + this.tagId.toString();
             ReplacementUtils.ReplacementInfo replacementInfo = ReplacementUtils.getTagReplacementInfo(this.tagId);
 

@@ -1,0 +1,302 @@
+:root {
+    --bg: #111;
+    --card: #1b1b1b;
+    --text: #eee;
+    --muted: #aaa;
+    --accent: #4caf50;
+    --warn: #ff9800;
+    --danger: #f44336;
+    --border: #2a2a2a;
+    --success: #7bd88f;
+    --info: #82aaff;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    background: radial-gradient(circle at 20% 20%, #121212, #0a0a0a 60%);
+    color: var(--text);
+    transition: all 0.3s ease;
+}
+
+.container {
+    max-width: 980px;
+    margin: 20px auto;
+    padding: 0 16px;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+h1 {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0;
+}
+
+h2 {
+    font-size: 18px;
+    margin: 8px 0 12px;
+}
+
+.lang-switch {
+    display: flex;
+    gap: 4px;
+}
+
+.lang-btn {
+    padding: 6px 12px;
+    background: #161616;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 12px;
+}
+
+.lang-btn:hover {
+    background: #1f1f1f;
+    color: var(--text);
+}
+
+.lang-btn.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.card {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.0));
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 14px;
+    backdrop-filter: blur(6px);
+    transition: all 0.3s ease;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.card.fade-in {
+    animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+label {
+    width: 100px;
+    color: var(--muted);
+}
+
+input, select, button {
+    background: #161616;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+input:focus, select:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+}
+
+input, select {
+    flex: 1;
+}
+
+button {
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+button:hover {
+    background: #1f1f1f;
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+button.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+button.primary:hover {
+    background: #45a049;
+}
+
+button.scan-btn {
+    background: var(--info);
+    border-color: var(--info);
+    color: #fff;
+    min-width: 80px;
+}
+
+.status {
+    margin-left: 10px;
+    color: var(--muted);
+    transition: all 0.3s ease;
+}
+
+.status.loading::after {
+    content: "";
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    margin-left: 8px;
+    border: 2px solid var(--muted);
+    border-top: 2px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.rule-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #191919;
+    border: 1px solid var(--border);
+    padding: 6px 8px;
+    border-radius: 999px;
+    margin: 4px 6px 0 0;
+    transition: all 0.2s ease;
+    animation: chipIn 0.3s ease-out;
+}
+
+.rule-chip:hover {
+    background: #222;
+    transform: translateY(-1px);
+}
+
+.rule-chip .key {
+    color: #bbb;
+}
+
+.rule-chip .mode.replace {
+    color: var(--success);
+}
+
+.rule-chip .mode.retain {
+    color: var(--info);
+}
+
+.rule-chip button {
+    border: none;
+    background: transparent;
+    color: #f6685e;
+    padding: 0 4px;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rule-chip button:hover {
+    background: rgba(246, 104, 94, 0.2);
+}
+
+@keyframes chipIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.rule-count {
+    color: var(--muted);
+    font-size: 14px;
+    margin-left: auto;
+}
+
+.auto-save-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+    width: auto;
+    cursor: pointer;
+    color: var(--muted);
+}
+
+.auto-save-label input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+}
+
+.success-flash {
+    animation: successFlash 0.6s ease-out;
+}
+
+@keyframes successFlash {
+    0%, 100% {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.0));
+    }
+    50% {
+        background: linear-gradient(180deg, rgba(123, 216, 143, 0.1), rgba(123, 216, 143, 0.05));
+    }
+}
+
+footer {
+    color: var(--muted);
+    text-align: center;
+    margin: 14px 0 30px;
+}

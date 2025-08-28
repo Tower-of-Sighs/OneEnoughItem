@@ -23,10 +23,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class ReplacementEditorManager {
@@ -423,7 +420,7 @@ public class ReplacementEditorManager {
             }
 
             // 创建替换对象并编码
-            Replacements replacement = new Replacements(allMatchItems, data.resultItemString());
+            Replacements replacement = new Replacements(allMatchItems, data.resultItemString(), Optional.empty());
             var result = Replacements.CODEC.encodeStart(JsonOps.INSTANCE, replacement);
 
             if (result.result().isEmpty()) {

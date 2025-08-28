@@ -15,6 +15,7 @@ import com.mafuyu404.oneenoughitem.client.gui.util.*;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.ReplacementControl;
 import com.mafuyu404.oneenoughitem.init.Utils;
+import com.mafuyu404.oneenoughitem.web.WebEditorServer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -57,7 +58,7 @@ public class ReplacementEditorScreen extends Screen {
     private Button reloadButton;
     private Button clearAllButton;
     private Button saveToJSONButton;
-    private Button deduplicateRecipesButton;
+    private Button openWebEditorButton;
 
     private Button objectDropdownButton;
     private boolean showObjectDropdown = false;
@@ -194,6 +195,11 @@ public class ReplacementEditorScreen extends Screen {
         this.saveToJSONButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.save_to_json"),
                 button -> this.saveToJson(), centerX - 10, fileY + 25, 80, BUTTON_HEIGHT);
         this.addRenderableWidget(this.saveToJSONButton);
+
+        int webBtnX = (centerX - 10) + 80 + 8;
+        this.openWebEditorButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.web_rules_injector"),
+                button -> this.openWebEditor(), webBtnX, fileY + 25, 90, BUTTON_HEIGHT);
+        this.addRenderableWidget(this.openWebEditorButton);
 
         int panelY = fileY + 55;
         int leftPanelX = centerX - PANEL_WIDTH - MARGIN;
@@ -431,6 +437,13 @@ public class ReplacementEditorScreen extends Screen {
         this.fileActions.saveToJson();
     }
 
+    private void openWebEditor() {
+        String message = WebEditorServer.openInBrowser();
+        if (message != null) {
+            this.showMessage(Component.literal(message).withStyle(ChatFormatting.YELLOW));
+        }
+    }
+
     private void selectFile() {
         this.fileActions.selectFile(this.minecraft, this);
     }
@@ -539,10 +552,7 @@ public class ReplacementEditorScreen extends Screen {
         }
 
         this.itemsController.addMatchTag(tagId);
-        TagDisplayWidget widget = new TagDisplayWidget(0, 0, tagId,
-                button -> this.removeMatchTag(tagId));
-        this.matchTagWidgets.add(widget);
-        this.rebuildPanels();
+        this.syncManagerDataToWidgets();
     }
 
 

@@ -3,7 +3,7 @@ package com.mafuyu404.oneenoughitem;
 import com.mafuyu404.oelib.fabric.data.DataRegistry;
 import com.mafuyu404.oneenoughitem.data.Replacements;
 import com.mafuyu404.oneenoughitem.event.ModEventHandler;
-import com.mafuyu404.oneenoughitem.init.ModConfig;
+import com.mafuyu404.oneenoughitem.init.config.ModConfig;
 import net.fabricmc.api.ModInitializer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

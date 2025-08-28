@@ -1,7 +1,7 @@
 package com.mafuyu404.oneenoughitem.mixin;
 
 import com.mafuyu404.oneenoughitem.api.EditableItem;
-import com.mafuyu404.oneenoughitem.init.ModConfig;
+import com.mafuyu404.oneenoughitem.init.config.ModConfig;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.Utils;
 import net.minecraft.world.food.FoodProperties;

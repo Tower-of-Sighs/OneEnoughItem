@@ -8,6 +8,7 @@ import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.data.Replacements;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.Utils;
+import com.mafuyu404.oneenoughitem.init.config.ModConfig;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
@@ -15,6 +16,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Optional;
 
 public class ModEventHandler {
 
@@ -36,9 +40,7 @@ public class ModEventHandler {
 
             Oneenoughitem.LOGGER.info("Replacement cache rebuilt due to data reload: {} entries loaded, {} invalid",
                     loadedCount, invalidCount);
-            Oneenoughitem.LOGGER.info("Recipe JSON rewrite mode (server): {}", String.valueOf(com.mafuyu404.oneenoughitem.init.ModConfig.DATA_REWRITE_MODE.getValue()));
 
-            // 关键：Replacements 已重建，关闭本次重载的覆盖映射
             ReplacementCache.endReloadOverride();
         }
     }
@@ -51,7 +53,8 @@ public class ModEventHandler {
 
             var replacements = manager.getDataList();
             for (Replacements replacement : replacements) {
-                ReplacementCache.putReplacement(replacement);
+                Replacements toPut = getReplacements(replacement);
+                ReplacementCache.putReplacement(toPut);
             }
 
             Oneenoughitem.LOGGER.debug("Server rebuilt replacement cache (reason: {}) with {} rules", reason, replacements.size());
@@ -128,5 +131,20 @@ public class ModEventHandler {
         }
 
         return changed;
+    }
+
+    private static @NotNull Replacements getReplacements(Replacements replacement) {
+        Replacements toPut = replacement;
+        if (replacement.rules().isEmpty()) {
+            var cfg = ModConfig.DEFAULT_RULES.getValue();
+            if (cfg != null) {
+                toPut = new Replacements(
+                        replacement.matchItems(),
+                        replacement.resultItems(),
+                        Optional.of(cfg.toRules())
+                );
+            }
+        }
+        return toPut;
     }
 }
