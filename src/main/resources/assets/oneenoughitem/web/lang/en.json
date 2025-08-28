@@ -1,5 +1,5 @@
 {
-  "title": "OEI Replacements Rule Editor",
+  "title": "OEI Replacements Rule Injector",
   "datapack_path": "Datapack Path",
   "datapack_path_placeholder": "e.g.: E:\\.minecraft\\versions\\1.20.1-Forge_47.3.0\\saves\\New World\\datapacks\\OEI\\data\\oei\\replacements",
   "scan_files": "Scan Files",

@@ -45,6 +45,7 @@
   "gui.oneenoughitem.remove_button": "删除",
   "gui.oneenoughitem.add_selected": "添加已选",
   "gui.oneenoughitem.clear_selected": "清空已选",
+  "gui.oneenoughitem.web_rules_injector": "Web 规则注入器",
 
   "gui.oneenoughitem.file_selection.title": "选择JSON文件",
   "gui.oneenoughitem.file_selection.search": "搜索文件",

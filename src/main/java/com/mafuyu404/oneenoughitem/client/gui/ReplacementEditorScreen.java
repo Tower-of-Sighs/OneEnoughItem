@@ -196,7 +196,7 @@ public class ReplacementEditorScreen extends Screen {
                 button -> this.saveToJson(), centerX - 10, fileY + 25, 80, BUTTON_HEIGHT);
         this.addRenderableWidget(this.saveToJSONButton);
         int webBtnX = (centerX - 10) + 80 + 8;
-        this.openWebEditorButton = GuiUtils.createButton(Component.literal("Web编辑器"),
+        this.openWebEditorButton = GuiUtils.createButton(Component.translatable("gui.oneenoughitem.web_rules_injector"),
                 button -> this.openWebEditor(), webBtnX, fileY + 25, 90, BUTTON_HEIGHT);
         this.addRenderableWidget(this.openWebEditorButton);
 

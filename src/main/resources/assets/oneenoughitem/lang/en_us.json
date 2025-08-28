@@ -45,6 +45,7 @@
   "gui.oneenoughitem.remove_button": "Remove",
   "gui.oneenoughitem.add_selected": "Add Selected",
   "gui.oneenoughitem.clear_selected": "Clear Selected",
+  "gui.oneenoughitem.web_rules_injector": "Web Rules Injector",
 
   "gui.oneenoughitem.file_selection.title": "Select JSON File",
   "gui.oneenoughitem.file_selection.search": "Search Files",
