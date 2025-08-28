@@ -7,7 +7,7 @@ import com.mafuyu404.oneenoughitem.client.ModKeyMappings;
 import com.mafuyu404.oneenoughitem.client.gui.ReplacementEditorScreen;
 import com.mafuyu404.oneenoughitem.client.gui.cache.GlobalReplacementCache;
 import com.mafuyu404.oneenoughitem.data.Replacements;
-import com.mafuyu404.oneenoughitem.init.ModConfig;
+import com.mafuyu404.oneenoughitem.init.config.ModConfig;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.access.CreativeModeTabIconRefresher;
 import net.minecraft.client.Minecraft;
@@ -21,7 +21,10 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
+
+import java.util.Optional;
 
 @EventBusSubscriber(modid = Oneenoughitem.MOD_ID, value = Dist.CLIENT)
 public class ClientEventHandler {
@@ -56,7 +59,6 @@ public class ClientEventHandler {
                         var enabled = player.connection.enabledFeatures();
                         boolean hasPerm = player.hasPermissions(2);
                         HolderLookup.Provider registries = player.level().registryAccess();
-                        // 让屏幕在下次渲染前 rebuild contents，从而立即套用后处理替换
                         CreativeModeTabs.tryRebuildTabContents(enabled, hasPerm, registries);
                     }
                 } catch (Exception ignore) {
@@ -65,7 +67,6 @@ public class ClientEventHandler {
                 Oneenoughitem.LOGGER.info("Replacement cache rebuilt due to data reload: {} entries loaded, {} invalid",
                         event.getLoadedCount(), event.getInvalidCount());
 
-                Oneenoughitem.LOGGER.info("Recipe JSON rewrite mode (client): {}", ModConfig.DATA_REWRITE_MODE.getValue());
 
                 ReplacementCache.endReloadOverride();
             });
@@ -99,7 +100,8 @@ public class ClientEventHandler {
         if (server == null) {
             Oneenoughitem.LOGGER.warn("No server instance available, cannot rebuild replacement cache with registry lookup");
             for (Replacements replacement : replacements) {
-                ReplacementCache.putReplacement(replacement, null);
+                Replacements toPut = getReplacements(replacement);
+                ReplacementCache.putReplacement(toPut, null);
             }
             Oneenoughitem.LOGGER.debug(
                     "Rebuilt replacement cache (client provisional without registry) with {} rules",
@@ -116,5 +118,20 @@ public class ClientEventHandler {
                 "Rebuilt replacement cache with {} rules from OELib data manager",
                 replacements.size()
         );
+    }
+
+    private static @NotNull Replacements getReplacements(Replacements replacement) {
+        Replacements toPut = replacement;
+        if (replacement.rules().isEmpty()) {
+            var cfg = ModConfig.DEFAULT_RULES.getValue();
+            if (cfg != null) {
+                toPut = new Replacements(
+                        replacement.matchItems(),
+                        replacement.resultItems(),
+                        Optional.of(cfg.toRules())
+                );
+            }
+        }
+        return toPut;
     }
 }

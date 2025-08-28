@@ -1,9 +1,10 @@
 package com.mafuyu404.oneenoughitem.mixin;
 
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
+import com.mafuyu404.oneenoughitem.data.Replacements;
 import com.mafuyu404.oneenoughitem.init.MixinUtils;
-import com.mafuyu404.oneenoughitem.init.ModConfig;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
+import com.mafuyu404.oneenoughitem.init.config.ModConfig;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.tags.TagEntry;
@@ -36,10 +37,11 @@ public abstract class TagLoaderMixin<T> {
             return;
         }
         try {
-            Map<String, String> currentItemMap = MixinUtils.ReplacementLoader.loadCurrentReplacements(resourceManager);
+            MixinUtils.ReplacementLoader.CurrentSnapshot snapshot = MixinUtils.ReplacementLoader.loadCurrentSnapshot(resourceManager);
+            Map<String, String> currentItemMap = snapshot.itemMap();
             if (!currentItemMap.isEmpty() && !ReplacementCache.hasReloadOverride()) {
                 ReplacementCache.beginReloadOverride(currentItemMap);
-            } // fuck you cache
+            }
         } catch (Exception e) {
             Oneenoughitem.LOGGER.warn("Tag rewrite: begin reload-override failed for directory {}", this.directory, e);
         }
@@ -48,25 +50,34 @@ public abstract class TagLoaderMixin<T> {
     @Inject(method = "load(Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/Map;", at = @At("RETURN"))
     private void oei$replaceTagItems(ResourceManager resourceManager,
                                      CallbackInfoReturnable<Map<ResourceLocation, List<TagLoader.EntryWithSource>>> cir) {
-        int mode = ModConfig.TAG_REWRITE_MODE.getValue();
-        if (mode == 0) {
-            return;
-        }
 
-        if (!ITEMS_TAG_DIR.equals(this.directory)) {
-            return;
+        String tagType = getTagType(this.directory);
+        if (tagType == null) {
+            return; // 只处理已知的标签类型
         }
 
         Map<ResourceLocation, List<TagLoader.EntryWithSource>> tags = cir.getReturnValue();
         if (tags == null || tags.isEmpty()) return;
 
         Map<String, String> currentItemMap = Collections.emptyMap();
+        Map<String, Replacements.Rules> currentItemRules = Collections.emptyMap();
         try {
-            currentItemMap = MixinUtils.ReplacementLoader.loadCurrentReplacements(resourceManager);
+            MixinUtils.ReplacementLoader.CurrentSnapshot snapshot = MixinUtils.ReplacementLoader.loadCurrentSnapshot(resourceManager);
+            currentItemMap = snapshot.itemMap();
+            currentItemRules = snapshot.itemRules();
         } catch (Exception e) {
             Oneenoughitem.LOGGER.warn("Tag rewrite: failed to load current replacements (will fallback to cache if empty)", e);
         }
         final boolean fallbackEnabled = currentItemMap.isEmpty();
+
+        Replacements.Rules defaultRules = null;
+        try {
+            var cfg = ModConfig.DEFAULT_RULES.getValue();
+            if (cfg != null) {
+                defaultRules = cfg.toRules();
+            }
+        } catch (Exception ignored) {
+        }
 
         int totalTags = 0, totalDropped = 0;
 
@@ -94,11 +105,30 @@ public abstract class TagLoaderMixin<T> {
                 }
 
                 if (mapped != null) {
-                    iterator.remove();
-                    dropped++;
-                    touched = true;
-                    Oneenoughitem.LOGGER.debug("Item tag rewrite: drop '{}' from {} (replaced by '{}')",
-                            fromStr, tagId, mapped);
+                    boolean shouldReplace = false;
+
+                    Replacements.Rules rules = currentItemRules.get(fromStr);
+                    if (rules == null) {
+                        rules = defaultRules;
+                    }
+
+                    if (rules != null) {
+                        shouldReplace = rules.tag()
+                                .map(m -> m.get(tagType))
+                                .map(mode -> mode == Replacements.ProcessingMode.REPLACE)
+                                .orElse(false);
+                    } else if (fallbackEnabled) {
+                        // 若当前映射为空且无默认规则，维持原有回退逻辑
+                        shouldReplace = ReplacementCache.shouldReplaceInTagType(fromStr, tagType);
+                    }
+
+                    if (shouldReplace) {
+                        iterator.remove();
+                        dropped++;
+                        touched = true;
+                        Oneenoughitem.LOGGER.debug("Item tag rewrite: drop '{}' from {} (replaced by '{}', rule={})",
+                                fromStr, tagId, mapped, tagType);
+                    }
                 }
             }
 
@@ -111,8 +141,17 @@ public abstract class TagLoaderMixin<T> {
         }
 
         if (totalTags > 0) {
-            Oneenoughitem.LOGGER.info("Item tags rewrite summary (mode={}): affectedTags={}, totalDropped={}",
-                    mode, totalTags, totalDropped);
+            Oneenoughitem.LOGGER.info("Item tags rewrite summary (rule-based): affectedTags={}, totalDropped={}",
+                    totalTags, totalDropped);
         }
+    }
+
+    private String getTagType(String directory) {
+        return switch (directory) {
+            case "tags/item" -> "item";
+            case "tags/block" -> "block";
+            case "tags/fluid" -> "fluid";
+            default -> null;
+        };
     }
 }

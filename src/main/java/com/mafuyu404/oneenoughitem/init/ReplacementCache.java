@@ -2,6 +2,7 @@ package com.mafuyu404.oneenoughitem.init;
 
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.data.Replacements;
+import com.mafuyu404.oneenoughitem.init.config.ModConfig;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -12,6 +13,8 @@ public class ReplacementCache {
     private static final Map<String, String> ItemMapCache = new HashMap<>();
     private static final HashMap<String, String> TagMapCache = new HashMap<>();
     private static final Map<String, Set<String>> ResultToSources = new HashMap<>();
+    private static final HashMap<String, Replacements.Rules> ItemRulesCache = new HashMap<>();
+    private static final HashMap<String, Replacements.Rules> TagRulesCache = new HashMap<>();
     private static volatile Map<String, String> ReloadOverrideItemMap = null;
 
 
@@ -35,6 +38,43 @@ public class ReplacementCache {
         return tagId != null && isTagReplaced(tagId.toString());
     }
 
+    public static Optional<Replacements.Rules> getItemRules(String itemId) {
+        return Optional.ofNullable(ItemRulesCache.get(itemId));
+    }
+
+    public static Optional<Replacements.Rules> getTagRules(String tagId) {
+        return Optional.ofNullable(TagRulesCache.get(tagId));
+    }
+
+    private static Optional<Replacements.Rules> getGlobalDefaultRules() {
+        try {
+            var cfg = ModConfig.DEFAULT_RULES.getValue();
+            if (cfg != null) {
+                return Optional.of(cfg.toRules());
+            }
+        } catch (Exception ignored) {
+        }
+        return Optional.empty();
+    }
+
+    public static boolean shouldReplaceInDataDir(String itemId, String directory) {
+        return getItemRules(itemId)
+                .or(ReplacementCache::getGlobalDefaultRules)
+                .flatMap(Replacements.Rules::data)
+                .map(dataRules -> dataRules.get(directory))
+                .map(mode -> mode == Replacements.ProcessingMode.REPLACE)
+                .orElse(false);
+    }
+
+    public static boolean shouldReplaceInTagType(String itemId, String tagType) {
+        return getItemRules(itemId)
+                .or(ReplacementCache::getGlobalDefaultRules)
+                .flatMap(Replacements.Rules::tag)
+                .map(tagRules -> tagRules.get(tagType))
+                .map(mode -> mode == Replacements.ProcessingMode.REPLACE)
+                .orElse(false);
+    }
+
     private static void addMapping(String sourceItemId, String resultItemId) {
         String prev = ItemMapCache.put(sourceItemId, resultItemId);
         if (prev != null && !prev.equals(resultItemId)) {
@@ -56,10 +96,13 @@ public class ReplacementCache {
 
         if (registryLookup != null) {
             resolvedItems = Utils.resolveItemList(replacement.matchItems(), registryLookup);
+
             for (Item item : resolvedItems) {
                 String id = Utils.getItemRegistryName(item);
                 if (id != null) {
-                    addMapping(id, replacement.resultItems());
+                    ItemMapCache.put(id, replacement.resultItems());
+                    // 存储规则
+                    replacement.rules().ifPresent(rules -> ItemRulesCache.put(id, rules));
                     Oneenoughitem.LOGGER.debug("Added item replacement mapping: {} -> {}", id, replacement.resultItems());
                 }
             }
@@ -68,6 +111,7 @@ public class ReplacementCache {
                 if (matchItem != null && matchItem.startsWith("#")) {
                     String tagId = matchItem.substring(1);
                     TagMapCache.put(tagId, replacement.resultItems());
+                    replacement.rules().ifPresent(rules -> TagRulesCache.put(tagId, rules));
                     Oneenoughitem.LOGGER.debug("Added tag replacement mapping: {} -> {}", tagId, replacement.resultItems());
                 }
             }
@@ -127,10 +171,66 @@ public class ReplacementCache {
         int previousTagSize = TagMapCache.size();
         ItemMapCache.clear();
         TagMapCache.clear();
+        ItemRulesCache.clear();
+        TagRulesCache.clear();
         ResultToSources.clear();
         if (previousItemSize > 0 || previousTagSize > 0) {
             Oneenoughitem.LOGGER.info("Cleared {} cached item mappings and {} cached tag mappings",
                     previousItemSize, previousTagSize);
+        }
+    }
+
+    /**
+     * 从缓存中移除指定的物品替换
+     */
+    public static boolean removeItemReplacement(String itemId) {
+        if (itemId != null && ItemMapCache.containsKey(itemId)) {
+            String removed = ItemMapCache.remove(itemId);
+            ItemRulesCache.remove(itemId);
+            Oneenoughitem.LOGGER.debug("Removed item replacement from runtime cache: {} -> {}", itemId, removed);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 从缓存中移除指定的标签替换
+     */
+    public static boolean removeTagReplacement(String tagId) {
+        if (tagId != null && TagMapCache.containsKey(tagId)) {
+            String removed = TagMapCache.remove(tagId);
+            TagRulesCache.remove(tagId);
+            Oneenoughitem.LOGGER.debug("Removed tag replacement from runtime cache: {} -> {}", tagId, removed);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * 批量移除物品和标签替换
+     */
+    public static void removeReplacements(Collection<String> itemIds, Collection<String> tagIds) {
+        boolean changed = false;
+
+        if (itemIds != null) {
+            for (String itemId : itemIds) {
+                if (removeItemReplacement(itemId)) {
+                    changed = true;
+                }
+            }
+        }
+
+        if (tagIds != null) {
+            for (String tagId : tagIds) {
+                if (removeTagReplacement(tagId)) {
+                    changed = true;
+                }
+            }
+        }
+
+        if (changed) {
+            Oneenoughitem.LOGGER.info("Removed {} item replacements and {} tag replacements from runtime cache",
+                    itemIds != null ? itemIds.size() : 0, tagIds != null ? tagIds.size() : 0);
         }
     }
 

@@ -43,6 +43,9 @@
   "gui.oneenoughitem.add_button": "添加",
   "gui.oneenoughitem.modify_button": "更改",
   "gui.oneenoughitem.remove_button": "删除",
+  "gui.oneenoughitem.add_selected": "添加已选",
+  "gui.oneenoughitem.clear_selected": "清空已选",
+  "gui.oneenoughitem.web_rules_injector": "Web 规则注入器",
 
   "gui.oneenoughitem.file_selection.title": "选择JSON文件",
   "gui.oneenoughitem.file_selection.search": "搜索文件",
@@ -103,7 +106,19 @@
   "message.oneenoughitem.confirm_recipe_removal": "找到 %s 个包含指定物品的配方，确定要移除吗？",
   "message.oneenoughitem.recipes_removed": "成功移除 %s 个配方",
   "message.oneenoughitem.no_recipes_removed": "没有配方被移除",
-  "message.oneenoughitem.script_generated": "成功生成KubeJS脚本，包含 %s 个配方移除规则，保存至: %s",
+  "message.oneenoughitem.script_generated_with_count": "成功生成包含 %s 个配方移除规则的脚本",
+  "message.oneenoughitem.reload_required_again": "请再次执行 /reload 命令以应用新的配方移除规则",
+  "message.oneenoughitem.deduplication_step1": "步骤1/3: 删除现有脚本...",
+  "message.oneenoughitem.deduplication_step2": "步骤2/3: 执行重载命令...",
+  "message.oneenoughitem.deduplication_step3": "步骤3/3: 重新生成脚本...",
+  "message.oneenoughitem.generating_script_directly": "正在根据当前数据直接生成脚本...",
+  "message.oneenoughitem.reload_required": "请运行 /reload 应用更改。",
+  "message.oneenoughitem.script_deleted": "已删除旧脚本。",
+  "message.oneenoughitem.deduplication_complete": "脚本重新生成成功，共处理 %s 个配方移除规则。",
+  "message.oneenoughitem.deduplication_in_progress": "去重过程正在进行，请稍候...",
+  "message.oneenoughitem.script_generated": "脚本生成完成，共移除 %s 个配方。脚本保存于：%s",
+  "message.oneenoughitem.multi_add_tags_result": "已成功添加 %d 个标签",
+  "message.oneenoughitem.multi_add_result": "已成功添加 %d 个物品",
 
   "error.oneenoughitem.file_name_empty": "文件名不能为空",
   "error.oneenoughitem.object_parse_failed": "无法解析对象索引 %d 的数据",
@@ -138,11 +153,25 @@
   "error.oneenoughitem.recipe_removal_failed": "移除配方时出错",
   "error.oneenoughitem.script_generation_failed": "脚本生成失败: %s",
   "error.oneenoughitem.script_write_failed": "脚本文件写入失败: %s",
+  "error.oneenoughitem.file_already_exists": "文件已存在",
+  "error.oneenoughitem.script_delete_failed": "删除现有脚本失败",
+  "error.oneenoughitem.kubejs_not_loaded": "KubeJS模组未加载",
+  "error.oneenoughitem.script_directory_creation_failed": "创建脚本目录失败",
 
   "warning.oneenoughitem.item_exists": "重复添加的物品",
   "warning.oneenoughitem.tag_exists": "重复添加的标签",
   "warning.oneenoughitem.no_recipes_found": "未找到需要移除的配方",
+  "warning.oneenoughitem.no_match_items": "未找到匹配的物品或标签",
+
+  "oneenoughitem.modernfix.warning.line1": "OneEnoughItem：检测到模组现代化修复",
+  "oneenoughitem.modernfix.warning.line2": "为了保证本模组替换物品后配方生效，",
+  "oneenoughitem.modernfix.warning.link": "请将配置选项 mixin.perf.faster_ingredients 改为 false",
+  "oneenoughitem.modernfix.warning.suffix": "，再重启游戏。",
+  "oneenoughitem.modernfix.warning.hover": "点击打开配置文件: %s",
 
   "key.categories.oneenoughitem": "OneEnoughItem",
-  "key.oneenoughitem.open_editor": "打开替换界面"
+  "key.oneenoughitem.open_editor": "打开替换界面",
+
+  "oneenoughitem.webeditor.open_browser": "Web编辑器已启动在 %s，尝试用系统命令打开浏览器",
+  "oneenoughitem.webeditor.open_browser_manual": "Web编辑器已启动在 %s，请手动打开浏览器访问"
 }

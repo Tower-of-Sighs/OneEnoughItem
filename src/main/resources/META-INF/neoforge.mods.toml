@@ -9,6 +9,7 @@ version = "1.0.5"
 displayName = "oneenoughitem"
 authors = "zhenshiz"
 description = '''
+logoFile = "assets/oneenoughitem/web/img/img.png" #optional
 
 '''
 

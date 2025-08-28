@@ -8,6 +8,7 @@ import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.client.gui.cache.GlobalReplacementCache;
 import com.mafuyu404.oneenoughitem.client.gui.util.PathUtils;
 import com.mafuyu404.oneenoughitem.data.Replacements;
+import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import com.mafuyu404.oneenoughitem.init.Utils;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.ChatFormatting;
@@ -22,10 +23,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class ReplacementEditorManager {
@@ -242,6 +240,7 @@ public class ReplacementEditorManager {
             }
 
             GlobalReplacementCache.removeReplacement(matchItemsList, matchTagsList);
+            ReplacementCache.removeReplacements(matchItemsList, matchTagsList);
             Oneenoughitem.LOGGER.debug("Removed replacement from global cache: items={}, tags={}",
                     matchItemsList, matchTagsList);
         }
@@ -414,7 +413,7 @@ public class ReplacementEditorManager {
             }
 
             // 创建替换对象并编码
-            Replacements replacement = new Replacements(allMatchItems, data.resultItemString());
+            Replacements replacement = new Replacements(allMatchItems, data.resultItemString(), Optional.empty());
             var result = Replacements.CODEC.encodeStart(JsonOps.INSTANCE, replacement);
 
             if (result.result().isEmpty()) {

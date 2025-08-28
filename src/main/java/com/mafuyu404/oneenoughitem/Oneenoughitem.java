@@ -2,7 +2,7 @@ package com.mafuyu404.oneenoughitem;
 
 import com.mafuyu404.oelib.neoforge.data.DataRegistry;
 import com.mafuyu404.oneenoughitem.data.Replacements;
-import com.mafuyu404.oneenoughitem.init.ModConfig;
+import com.mafuyu404.oneenoughitem.init.config.ModConfig;
 import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.api.distmarker.Dist;

@@ -4,7 +4,6 @@ import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.init.ReplacementControl;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -24,7 +23,6 @@ import java.util.List;
 public class ItemDisplayWidget extends AbstractWidget {
     private final ItemStack itemStack;
     private final Button.OnPress removeAction;
-    private final Font font = Minecraft.getInstance().font;
     private final String originalItemId;
     private final boolean skipReplacement;
 

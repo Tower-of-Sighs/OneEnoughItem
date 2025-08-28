@@ -4,13 +4,16 @@ import com.mafuyu404.oelib.neoforge.data.DataManager;
 import com.mafuyu404.oelib.neoforge.event.DataReloadEvent;
 import com.mafuyu404.oneenoughitem.Oneenoughitem;
 import com.mafuyu404.oneenoughitem.data.Replacements;
-import com.mafuyu404.oneenoughitem.init.ModConfig;
+import com.mafuyu404.oneenoughitem.init.config.ModConfig;
 import com.mafuyu404.oneenoughitem.init.ReplacementCache;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.Item;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Optional;
 
 @EventBusSubscriber(modid = Oneenoughitem.MOD_ID)
 public class ModEventHandler {
@@ -20,8 +23,6 @@ public class ModEventHandler {
             rebuildReplacementCache("data-reload");
             Oneenoughitem.LOGGER.info("Server replacement cache rebuilt due to data reload: {} entries loaded, {} invalid",
                     event.getLoadedCount(), event.getInvalidCount());
-            Oneenoughitem.LOGGER.info("Recipe JSON rewrite mode (server): {}", ModConfig.DATA_REWRITE_MODE.getValue());
-
             ReplacementCache.endReloadOverride();
         }
     }
@@ -45,7 +46,8 @@ public class ModEventHandler {
 
         var replacements = manager.getDataList();
         for (Replacements replacement : replacements) {
-            ReplacementCache.putReplacement(replacement, registryLookup);
+            Replacements toPut = getReplacements(replacement);
+            ReplacementCache.putReplacement(toPut, registryLookup);
         }
 
         Oneenoughitem.LOGGER.debug(
@@ -56,4 +58,18 @@ public class ModEventHandler {
         );
     }
 
+    private static @NotNull Replacements getReplacements(Replacements replacement) {
+        Replacements toPut = replacement;
+        if (replacement.rules().isEmpty()) {
+            var cfg = ModConfig.DEFAULT_RULES.getValue();
+            if (cfg != null) {
+                toPut = new Replacements(
+                        replacement.matchItems(),
+                        replacement.resultItems(),
+                        Optional.of(cfg.toRules())
+                );
+            }
+        }
+        return toPut;
+    }
 }
