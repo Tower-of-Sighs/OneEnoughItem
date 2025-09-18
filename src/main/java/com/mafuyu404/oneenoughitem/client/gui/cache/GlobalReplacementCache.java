@@ -30,21 +30,27 @@ public class GlobalReplacementCache extends BaseCache {
     private final Map<String, String> replacedTags = new ConcurrentHashMap<>();
     private final Map<String, String> resultItems = new ConcurrentHashMap<>();
     private final Map<String, String> resultTags = new ConcurrentHashMap<>();
+    private volatile boolean needsRebuild = false;
 
     private GlobalReplacementCache() {
-        super("global_replacement_cache.dat", 1);
+        super("global_replacement_cache.dat", 2);
     }
 
     @Override
     protected void onInitialized() {
         Oneenoughitem.LOGGER.info("Global replacement cache initialized with {} items and {} tags",
                 replacedItems.size(), replacedTags.size());
+        if (needsRebuild) {
+            Oneenoughitem.LOGGER.warn("Global replacement cache scheduled rebuild due to version mismatch or old format; rebuilding now");
+            needsRebuild = false;
+            rebuild();
+        }
     }
 
     @Override
     protected void onVersionMismatch(int foundVersion) {
-        Oneenoughitem.LOGGER.warn("Global replacement cache version mismatch, rebuilding cache");
-        rebuild();
+        Oneenoughitem.LOGGER.warn("Global replacement cache version mismatch (found {} != expected {}), will rebuild after initialization", foundVersion, this.cacheVersion);
+        needsRebuild = true;
     }
 
     @Override
@@ -57,14 +63,12 @@ public class GlobalReplacementCache extends BaseCache {
         readStringMap(dis, replacedItems);
         readStringMap(dis, replacedTags);
 
-        // 读取结果物品（如果版本支持）
         try {
             readStringMap(dis, resultItems);
             readStringMap(dis, resultTags);
         } catch (IOException e) {
-            // 旧版本文件，重建缓存以获取结果物品信息
-            Oneenoughitem.LOGGER.info("Old cache format detected, rebuilding to include result tracking");
-            rebuild();
+            Oneenoughitem.LOGGER.info("Old cache format detected, scheduling rebuild to include result tracking");
+            needsRebuild = true;
         }
     }
 
@@ -178,7 +182,8 @@ public class GlobalReplacementCache extends BaseCache {
     }
 
     public static void rebuild() {
-        INSTANCE.withInitializedWriteLock(() -> {
+        // 避免调用 withInitializedWriteLock() 再次触发 initialize()，直接加写锁
+        INSTANCE.withWriteLock(() -> {
             Oneenoughitem.LOGGER.info("Starting global replacement cache rebuild...");
 
             int oldItemCount = INSTANCE.replacedItems.size();

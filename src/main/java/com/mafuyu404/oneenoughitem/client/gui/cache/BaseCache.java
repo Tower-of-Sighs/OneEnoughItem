@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 
 public abstract class BaseCache {
     protected static final Path OEI_DIR = Paths.get("oei");
@@ -160,7 +161,7 @@ public abstract class BaseCache {
     /**
      * 读写锁保护的操作
      */
-    protected <T> T withReadLock(java.util.function.Supplier<T> operation) {
+    protected <T> T withReadLock(Supplier<T> operation) {
         lock.readLock().lock();
         try {
             return operation.get();
@@ -178,7 +179,7 @@ public abstract class BaseCache {
         }
     }
 
-    protected <T> T withWriteLock(java.util.function.Supplier<T> operation) {
+    protected <T> T withWriteLock(Supplier<T> operation) {
         lock.writeLock().lock();
         try {
             return operation.get();

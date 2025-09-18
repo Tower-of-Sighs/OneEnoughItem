@@ -7,12 +7,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ReplacementCache {
-    private static final HashMap<String, String> ItemMapCache = new HashMap<>();
-    private static final HashMap<String, String> TagMapCache = new HashMap<>();
-    private static final HashMap<String, Replacements.Rules> ItemRulesCache = new HashMap<>();
-    private static final HashMap<String, Replacements.Rules> TagRulesCache = new HashMap<>();
+    private static final ConcurrentHashMap<String, String> ItemMapCache = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, String> TagMapCache = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, Replacements.Rules> ItemRulesCache = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, Replacements.Rules> TagRulesCache = new ConcurrentHashMap<>();
     private static volatile Map<String, String> ReloadOverrideItemMap = null;
 
     public static String matchItem(String id) {
