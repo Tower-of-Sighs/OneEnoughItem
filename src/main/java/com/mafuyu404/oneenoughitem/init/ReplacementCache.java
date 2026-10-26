@@ -80,7 +80,7 @@ public class ReplacementCache {
         for (Item item : resolvedItems) {
             String id = Utils.getItemRegistryName(item);
             if (id != null) {
-                ItemMapCache.put(id, replacement.resultItems());
+                ReverseItemLookup.put(ItemMapCache, id, replacement.resultItems());
                 // 存储规则
                 replacement.rules().ifPresent(rules -> ItemRulesCache.put(id, rules));
                 Oneenoughitem.LOGGER.debug("Added item replacement mapping: {} -> {}", id, replacement.resultItems());
@@ -124,7 +124,7 @@ public class ReplacementCache {
     public static void clearCache() {
         int previousItemSize = ItemMapCache.size();
         int previousTagSize = TagMapCache.size();
-        ItemMapCache.clear();
+        ReverseItemLookup.clear(ItemMapCache);
         TagMapCache.clear();
         ItemRulesCache.clear();
         TagRulesCache.clear();
@@ -139,7 +139,7 @@ public class ReplacementCache {
      */
     public static boolean removeItemReplacement(String itemId) {
         if (itemId != null && ItemMapCache.containsKey(itemId)) {
-            String removed = ItemMapCache.remove(itemId);
+            String removed = ReverseItemLookup.remove(ItemMapCache, itemId);
             ItemRulesCache.remove(itemId);
             Oneenoughitem.LOGGER.debug("Removed item replacement from runtime cache: {} -> {}", itemId, removed);
             return true;
@@ -189,11 +189,7 @@ public class ReplacementCache {
     }
 
     public static Collection<String> trackSourceIdOf(String id) {
-        Collection<String> result = new HashSet<>();
-        ItemMapCache.forEach((matchItem, resultItem) -> {
-            if (resultItem.equals(id)) result.add(matchItem);
-        });
-        return result;
+        return ReverseItemLookup.lookup(ItemMapCache, id);
     }
 
     public static Collection<Item> trackSourceOf(String id) {
